@@ -15,11 +15,12 @@ datadir=C:\Users\..\bitcoin-pqc\data #ex.
 - Debug x64
 **기본 설정법은 notion의 "윈도우에서 비트코인 빌드 방법" 참고:smile:** 
 ## usage ##
+"bitcoin-pqc\Build\x64Debug" 경로 아래에서, <br>
 - PQCnet 서버 실행
-- "bitcoin-pqc\Build\x64Debug" 경로 아래에서,
 ```
 bitcoind -pqcnet
 ```
+- (예시) 지갑 생성
 ```
 bitcoin-cli -pqcnet createwallet "test_wallet"
 ```
