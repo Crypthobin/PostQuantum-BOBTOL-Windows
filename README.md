@@ -13,7 +13,7 @@ datadir=C:\Users\..\bitcoin-pqc\data #ex.
 ```
 ## build ##
 - Debug x64
-- 빌드 시, "bitcoin-pqc\Build\x64Debug" 경로에 실행파일 생성
+- 빌드 시, "bitcoin-pqc\Build\x64Debug" 경로에 실행파일 생성 <br>
 **기본 설정법은 notion의 "윈도우에서 비트코인 빌드 방법" 참고:smile:** 
 ## usage ##
 - PQCnet 서버 실행
