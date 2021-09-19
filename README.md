@@ -9,6 +9,6 @@ post quantum으로 교체 작업 중<br>
 # Options only for pqcnet
 [pqcnet]
 
-datadir=C:\Users\..\bitcoin-pqc\data // ex.
+datadir=C:\Users\..\bitcoin-pqc\data #ex.
 ```
 
