@@ -9,7 +9,7 @@ post quantum으로 교체 작업 중<br>
 # Options only for pqcnet
 [pqcnet]
 
-datadir=C:\Users\..\bitcoin-pqc\data # 본인이 생성한 data 폴더의 경로입니다.
+datadir=C:\Users\..\bitcoin-pqc\Src\bitcoin-pqc\data # 본인이 생성한 data 폴더의 경로입니다.
 ```
 ## build ##
 - Debug x64 <br>
