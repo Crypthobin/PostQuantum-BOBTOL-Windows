@@ -151,3 +151,6 @@ dist/
 *.background.tiff
 
 /guix-build-*
+
+#data 폴더
+data/*
