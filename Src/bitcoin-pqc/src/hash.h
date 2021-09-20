@@ -20,7 +20,7 @@
 #include <vector>
 
 typedef uint256 ChainCode;
-//typedef uint512 PQChainCode; // 추가
+typedef uint512 PQChainCode; // 추가
 
 /** A hasher class for Bitcoin's 256-bit hash (double SHA-256). */
 class CHash256
@@ -284,7 +284,7 @@ inline uint512 Hash512(const T1& in1, const T2& in2)
     return result;
 }
 
-/** A writer stream (for serialization) that computes a 256-bit hash. */
+/** A writer stream (for serialization) that computes a 512-bit hash. */
 class CPQHashWriter
 {
 private:
@@ -320,12 +320,12 @@ public:
      *
      * Invalidates this object.
      */
-    /* uint512 GetSHA512()
+     uint512 GetSHA512()
     {
         uint512 result;
         ctx.Finalize(result.begin());
         return result;
-    }*/
+    }
 
     /**
      * Returns the first 64 bits from the resulting hash. /// 이부분
