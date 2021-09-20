@@ -392,3 +392,84 @@ void ECC_Stop() {
         secp256k1_context_destroy(ctx);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+bool CBOBKey::Check(const unsigned char* vch)
+{
+    return true;
+}
+
+void CBOBKey::MakeNewKey()
+{
+   
+}
+
+CPrivKey CBOBKey::GetPrivKey() const
+{
+    CPrivKey reeturn1;
+  
+    return reeturn1;
+}
+
+
+CBOBPubKey CBOBKey::GetPubKey() const
+{
+    CBOBPubKey reeturn2;
+
+    return reeturn2;
+}
+
+bool CBOBKey::Sign(const uint512& hash, std::vector<unsigned char>& vchSig, uint32_t test_case) const
+{
+    return true;
+}
+
+bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
+{
+    return true;
+}
+
+
+//bool CPQKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
+//	if (!fValid)
+//		return false;
+//	/*vchSig.resize(CPubKey::COMPACT_SIGNATURE_SIZE);*/
+//	vchSig.resize(CPQPubKey::SIGNATURE_SIZE);
+//	/*int rec = -1;*/
+//	/*secp256k1_ecdsa_recoverable_signature sig;*/
+//	unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
+//	unsigned char sig[CPQPubKey::SIGNATURE_SIZE + 32];
+//	unsigned int sigLen = 0;
+//	/*int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, nullptr);*/
+//	int ret = pqNTRU_sign_keypair_gen(begin(), PRIVATE_KEY_SIZE, pk, sk);
+//	assert(ret);
+//	ret = pqNTRU_sign(sig, (unsigned long long *)&sigLen, hash.begin(), hash.size(), sk);
+//	assert(ret);
+//	/*secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, (unsigned char*)&vchSig[1], &rec, &sig);*/
+//	/*assert(rec != -1);*/
+//	/*vchSig[0] = 27 + rec + (fCompressed ? 4 : 0);*/
+//	memcpy((unsigned char*)vchSig.data(), sig, sigLen);
+//	vchSig.resize(sigLen);import_der
+//	return true;
+//}
+
+bool CBOBKey::Load(CPrivKey& privkey, CBOBPubKey& vchPubKey, bool fSkipCheck = false)
+{
+    return true;
+}
+
+bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const
+{
+    return true;
+}
+
