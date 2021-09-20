@@ -27,6 +27,4 @@ bitcoin-cli -pqcnet createwallet "test_wallet"
 ```
 ## 커밋 시 유의사항 ##
 - 각자 브랜치 생성
-- Src 폴더만 커밋
-- ..\bitcoin-pqc\Src\bitcoin-pqc\data 안에 파일들 지워주기<br>
-- 혹시 bitcoin-pqc\Src\bitcoin-pqc\build_msvc 이 안에 빌드 산출물이 생긴다면.. 지워주기.. (이부분 더 찾아볼게요 :joy:)
+- .gitignore 참고
