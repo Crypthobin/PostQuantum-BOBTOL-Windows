@@ -25,3 +25,7 @@ libtest_util/libtest_util.vcxproj
 libbitcoin_qt/QtGeneratedFiles/*
 test_bitcoin-qt/QtGeneratedFiles/*
 vcpkg_installed
+
+# 디버깅하면 나오는 거
+x64/*
+Win32/*
