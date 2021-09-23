@@ -127,7 +127,7 @@ public:
      *                  0x1D = second key with even y, 0x1E = second key with odd y,
      *                  add 0x04 for compressed keys.
      */
-    bool SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const;
+    /*bool SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const;*/
 
     /**
      * Create a BIP-340 Schnorr signature, for the xonly-pubkey corresponding to *this,
@@ -145,7 +145,7 @@ public:
      *                              Merkle root of the script tree).
      */
     bool SignSchnorr(const uint256& hash, Span<unsigned char> sig, const uint256* merkle_root = nullptr, const uint256* aux = nullptr) const;
-
+   
     //! Derive BIP32 child key.
     bool Derive(CKey& keyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const;
 

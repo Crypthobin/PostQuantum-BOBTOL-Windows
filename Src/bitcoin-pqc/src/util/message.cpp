@@ -60,9 +60,10 @@ bool MessageSign(
 {
     std::vector<unsigned char> signature_bytes;
 
-    if (!privkey.SignCompact(MessageHash(message), signature_bytes)) {
-        return false;
-    }
+    //if (!privkey.
+    // (MessageHash(message), signature_bytes)) {
+    //    return false;
+    //}  crypthobin
 
     signature = EncodeBase64(signature_bytes);
 

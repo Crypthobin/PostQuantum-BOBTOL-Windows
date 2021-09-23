@@ -175,7 +175,10 @@ void CKey::MakeNewKey(bool fCompressedIn)
         GetStrongRandBytes(keydata.data(), keydata.size());
     } while (!Check(keydata.data()));
     fValid = true;
-    fCompressed = fCompressedIn;
+    /*fCompressed = fCompressedIn;
+    * crypthobin
+    */
+    fCompressed = false;
 }
 
 bool CKey::Negate()
@@ -212,52 +215,7 @@ CPubKey CKey::GetPubKey() const
     secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
     assert(result.size() == clen);
     assert(result.IsValid());
-
-    // Dilithium 테스트 코드 추가(시작) <by. Crypthobin>
-    size_t i, mlen, smlen;
-
-    uint8_t m[59 + CRYPTO_BYTES] = {0};      // Message                      dynamic
-    uint8_t m2[59 + CRYPTO_BYTES] = {0};     // Verify Message               dynamic
-    uint8_t sm[59 + CRYPTO_BYTES] = {0};     // Signed Message               2420 + m_len
-    uint8_t pk[CRYPTO_PUBLICKEYBYTES] = {0}; // Public Key                   1312
-    uint8_t sk[CRYPTO_SECRETKEYBYTES] = {0}; // Secret Key(Private Key)      2528
-
-    printf("[MLEN] : %d\n", 59);
-    printf("[CRYPTO_BYTES] : %d\n", CRYPTO_BYTES);
-    printf("[CRYPTO_PUBLICKEYBYTES] : %d\n", CRYPTO_PUBLICKEYBYTES);
-    printf("[CRYPTO_SECRETKEYBYTES] : %d\n\n", CRYPTO_SECRETKEYBYTES);
-
-    randombytes(m, MLEN);
-
-    crypto_sign_keypair_priv(sk);    // 개인 키 생성
-    crypto_sign_keypair_pub(pk, sk); // 공개 키 생성
-    crypto_sign(sm, &smlen, m, MLEN, sk);
-    ret = crypto_sign_open(m2, &mlen, sm, smlen, pk);
-
-
-    printf("[Plain Text] : ");
-    for (i = 0; i < MLEN; i++)
-        printf("%02X ", m[i]);
-    printf("\n\n");
-    printf("[Public Key] : ");
-    for (i = 0; i < CRYPTO_PUBLICKEYBYTES; i++)
-        printf("%02X ", pk[i]);
-    printf("\n\n");
-    printf("[Private Key] : ");
-    for (i = 0; i < CRYPTO_SECRETKEYBYTES; i++)
-        printf("%02X ", sk[i]);
-    printf("\n\n");
-    printf("\n[Signed Text] : ");
-    for (i = 0; i < MLEN + CRYPTO_BYTES; i++)
-        printf("%02X ", sm[i]);
-    printf("\n\n");
-
-    printf("[Verify Text] : ");
-    for (i = 0; i < MLEN; i++)
-        printf("%02X ", m2[i]);
-    printf("\n\n");
-    // Dilithium 테스트 코드 추가(종료) <by. Crypthobin>
-
+    
     return result;
 }
 
@@ -312,21 +270,22 @@ bool CKey::VerifyPubKey(const CPubKey& pubkey) const
     return pubkey.Verify(hash, vchSig);
 }
 
-bool CKey::SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const
-{
-    if (!fValid)
-        return false;
-    vchSig.resize(CPubKey::COMPACT_SIGNATURE_SIZE);
-    int rec = -1;
-    secp256k1_ecdsa_recoverable_signature sig;
-    int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, nullptr);
-    assert(ret);
-    ret = secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, &vchSig[1], &rec, &sig);
-    assert(ret);
-    assert(rec != -1);
-    vchSig[0] = 27 + rec + (fCompressed ? 4 : 0);
-    return true;
-}
+//bool CKey::SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const
+//{
+//    if (!fValid)
+//        return false;
+//    vchSig.resize(CPubKey::COMPACT_SIGNATURE_SIZE);
+//    int rec = -1;
+//    secp256k1_ecdsa_recoverable_signature sig;
+//    int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, nullptr);
+//    assert(ret);
+//    ret = secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, &vchSig[1], &rec, &sig);
+//    assert(ret);
+//    assert(rec != -1);
+//    vchSig[0] = 27 + rec + (fCompressed ? 4 : 0);
+//    return true;
+//}
+//
 
 bool CKey::SignSchnorr(const uint256& hash, Span<unsigned char> sig, const uint256* merkle_root, const uint256* aux) const
 {
@@ -541,7 +500,7 @@ bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 //	memcpy((unsigned char*)vchSig.data(), sig, sigLen);
 //	vchSig.resize(sigLen);import_der
 //	return true;
-//}
+//} crypthobin
 
 bool CBOBKey::Load(CPrivKey& privkey, CBOBPubKey& vchPubKey, bool fSkipCheck = false)
 {

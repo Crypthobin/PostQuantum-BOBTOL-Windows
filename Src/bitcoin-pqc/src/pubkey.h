@@ -161,8 +161,9 @@ public:
     {
         return CKeyID(Hash160(MakeSpan(vch).first(size())));
     }
-    /*
+    
     //! Get the 256-bit hash of this public key.
+
     uint256 GetHash() const
     {
         return Hash(MakeSpan(vch).first(size()));
