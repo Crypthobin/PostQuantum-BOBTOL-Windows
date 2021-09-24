@@ -332,10 +332,10 @@ public:
     /**
      * secp256k1:
      */
-    static constexpr unsigned int SIZE = 65;
-    static constexpr unsigned int COMPRESSED_SIZE = 33;
-    static constexpr unsigned int SIGNATURE_SIZE = 72;
-    static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
+    static const unsigned int PUBLIC_KEY_SIZE = 1312; /*65;*/
+    /*static const unsigned int COMPRESSED_PUBLIC_KEY_SIZE = 33;*/
+    static const unsigned int SIGNATURE_SIZE = 1312; /*72;*/
+    /*static const unsigned int COMPACT_SIGNATURE_SIZE = 65;*/
 
     /**
      * see www.keylength.com
@@ -350,7 +350,7 @@ private:
      * Just store the serialized data.
      * Its length can very cheaply be computed from the first byte.
      */
-    unsigned char vch[SIZE];
+    unsigned char vch[PUBLIC_KEY_SIZE];
    /* unsigned char vch[SIZE];*/
 
     //! Compute the length of a pubkey with a given first byte.
@@ -362,7 +362,7 @@ private:
             return SIZE;
         return 0;*/
         if (chHeader == 4)
-            return SIZE;
+            return PUBLIC_KEY_SIZE;
         return 0;
         //zzng coin에서 바꿔준건데 되는지는 모르겠습니다 .Crypthobin
     }
@@ -498,17 +498,17 @@ public:
         /*return size() == COMPRESSED_SIZE;*/
         return 1;
     }
-    bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);
+
     /**
      * Verify a DER signature (~72 bytes).
      * If this public key is not fully valid, the return value will be false.
      */
-    bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const;
+   /* bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const;*/
 
     /**
      * Check whether a signature is normalized (lower-S).
      */
-    static bool CheckLowS(const std::vector<unsigned char>& vchSig);
+    /*static bool CheckLowS(const std::vector<unsigned char>& vchSig);*/
 
     //! Recover a public key from a compact signature.
    /* bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);*/
@@ -517,7 +517,7 @@ public:
     bool Decompress();
 
     //! Derive BIP32 child pubkey.
-    bool Derive(CBOBPubKey& pubkeyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const;
+   /* bool Derive(CPubKey& pubkeyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const;*/
 };
 
 //class XOnlyPubKey

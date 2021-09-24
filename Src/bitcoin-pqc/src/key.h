@@ -213,15 +213,17 @@ public:
 	* 실제 개인키 길이: 2604 byte
 	* 공개키 길이: 2065 byte
 	*/
-    static const unsigned int SIZE = 279;
-    static const unsigned int COMPRESSED_SIZE = 214;
+    static const unsigned int SEED_KEY_SIZE = 32; /*279;*/
+    static const unsigned int PRIVATE_KEY_SIZE = 2528;
+    //공개키 : 1312
+    //서명 + message : 2420 + message
     /**
-     * see www.keylength.com
-     * script supports up to 75 for single byte push
-     */
+	* see www.keylength.com
+	* script supports up to 75 for single byte push
+	*/
     static_assert(
-        SIZE >= COMPRESSED_SIZE,
-        "COMPRESSED_SIZE is larger than SIZE");
+        SEED_KEY_SIZE < PRIVATE_KEY_SIZE,
+        "PRIVATE_KEY_SIZE is larger than SEED_KEY_SIZE");
 
 private:
     //! Whether this private key is valid. We check for correctness when modifying the key
@@ -236,10 +238,6 @@ private:
 
     //! Check whether the 32-byte array pointed to by vch is valid keydata.
     bool static Check(const unsigned char* vch);
-
-    bool Negate();
-
-    bool fCompressed;
 
 public:
     //! Construct an invalid private key.
@@ -301,7 +299,8 @@ public:
 	* Create a DER-serialized signature.
 	* The test_case parameter tweaks the deterministic nonce.
 	*/
-    bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
+    bool Sign(const uint512& hash, std::vector<unsigned char>& vchSig, uint32_t test_case = 0) const;
+
     /**
 	* Create a compact signature (65 bytes), which allows reconstructing the used public key.
 	* The format is one header byte, followed by two times 32 bytes for the serialized r and s values.
