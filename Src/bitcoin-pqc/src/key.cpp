@@ -9,7 +9,7 @@
 #include <crypto/hmac_sha512.h>
 #include <hash.h>
 #include <random.h>
-
+#include <stdio.h>
 #include <secp256k1.h>
 #include <secp256k1_extrakeys.h>
 #include <secp256k1_recovery.h>
@@ -289,7 +289,7 @@ bool CKey::VerifyPubKey(const CPubKey& pubkey) const
 
 bool CKey::SignSchnorr(const uint256& hash, Span<unsigned char> sig, const uint256* merkle_root, const uint256* aux) const
 {
-    assert(sig.size() == 64);
+  /*  assert(sig.size() == 64);
     secp256k1_keypair keypair;
     if (!secp256k1_keypair_create(secp256k1_context_sign, &keypair, begin())) return false;
     if (merkle_root) {
@@ -302,7 +302,9 @@ bool CKey::SignSchnorr(const uint256& hash, Span<unsigned char> sig, const uint2
     }
     bool ret = secp256k1_schnorrsig_sign(secp256k1_context_sign, sig.data(), hash.data(), &keypair, aux ? (unsigned char*)aux->data() : nullptr);
     memory_cleanse(&keypair, sizeof(keypair));
-    return ret;
+    
+    return ret;*/
+    return 1;
 }
 
 bool CKey::Load(const CPrivKey& seckey, const CPubKey& vchPubKey, bool fSkipCheck = false)
@@ -445,37 +447,92 @@ void ECC_Stop()
 
 bool CBOBKey::Check(const unsigned char* vch)
 {
-    return true;
+    return secp256k1_ec_seckey_verify(secp256k1_context_sign, vch);
 }
 
 void CBOBKey::MakeNewKey()
 {
-   
+    do {
+        GetStrongRandBytes(keydata.data(), keydata.size());
+    } while (!Check(keydata.data()));
+    fValid = true;
+    /*fCompressed = fCompressedIn;
+    * crypthobin
+    */
+    fCompressed = false;
+}
+
+bool CBOBKey::Negate()
+{
+    assert(fValid);
+    return secp256k1_ec_seckey_negate(secp256k1_context_sign, keydata.data());
 }
 
 CPrivKey CBOBKey::GetPrivKey() const
 {
-    CPrivKey reeturn1;
-  
-    return reeturn1;
+    assert(fValid);
+    CPrivKey seckey;
+    int ret;
+    size_t seckeylen;
+    seckey.resize(SIZE);
+    seckeylen = SIZE;
+    ret = ec_seckey_export_der(secp256k1_context_sign, seckey.data(), &seckeylen, begin(), fCompressed);
+    assert(ret);
+    seckey.resize(seckeylen);
+    return seckey;
 }
 
 
 CBOBPubKey CBOBKey::GetPubKey() const
 {
-    CBOBPubKey reeturn2;
-
-    return reeturn2;
+    assert(fValid);
+    secp256k1_pubkey pubkey;
+    size_t clen = CPubKey::SIZE;
+    CBOBPubKey result;
+    int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
+    assert(ret);
+    secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
+    assert(result.size() == clen);
+    assert(result.IsValid());
+    return result;
 }
 
-bool CBOBKey::Sign(const uint512& hash, std::vector<unsigned char>& vchSig, uint32_t test_case) const
+bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind, uint32_t test_case) const
 {
+    if (!fValid)
+        return false;
+    vchSig.resize(CBOBPubKey::SIGNATURE_SIZE);
+    size_t nSigLen = CBOBPubKey::SIGNATURE_SIZE;
+    unsigned char extra_entropy[32] = {0};
+    WriteLE32(extra_entropy, test_case);
+    secp256k1_ecdsa_signature sig;
+    uint32_t counter = 0;
+    int ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, (!grind && test_case) ? extra_entropy : nullptr);
+
+    // Grind for low R
+    while (ret && !SigHasLowR(&sig) && grind) {
+        WriteLE32(extra_entropy, ++counter);
+        ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, extra_entropy);
+    }
+    assert(ret);
+    secp256k1_ecdsa_signature_serialize_der(secp256k1_context_sign, vchSig.data(), &nSigLen, &sig);
+    vchSig.resize(nSigLen);
     return true;
 }
 
 bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 {
-    return true;
+    if (pubkey.IsCompressed() != fCompressed) {
+        return false;
+    }
+    unsigned char rnd[8];
+    std::string str = "Bitcoin key verification\n";
+    GetRandBytes(rnd, sizeof(rnd));
+    uint256 hash;
+    CHash256().Write(MakeUCharSpan(str)).Write(rnd).Finalize(hash);
+    std::vector<unsigned char> vchSig;
+    Sign(hash, vchSig);
+    return pubkey.Verify(hash, vchSig);
 }
 
 
@@ -502,13 +559,38 @@ bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 //	return true;
 //} crypthobin
 
-bool CBOBKey::Load(CPrivKey& privkey, CBOBPubKey& vchPubKey, bool fSkipCheck = false)
+bool CBOBKey::Load(CPrivKey& seckey, CBOBPubKey& vchPubKey, bool fSkipCheck = false)
 {
-    return true;
+    if (!ec_seckey_import_der(secp256k1_context_sign, (unsigned char*)begin(), seckey.data(), seckey.size()))
+        return false;
+    fCompressed = vchPubKey.IsCompressed();
+    fValid = true;
+
+
+    if (fSkipCheck)
+        return true;
+
+    return VerifyPubKey(vchPubKey);
 }
 
 bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const
 {
-    return true;
+    assert(IsValid());
+    assert(IsCompressed());
+    std::vector<unsigned char, secure_allocator<unsigned char>> vout(64);
+    if ((nChild >> 31) == 0) {
+        CBOBPubKey pubkey = GetPubKey();
+        assert(pubkey.size() == CBOBPubKey::COMPRESSED_SIZE);
+        BIP32Hash(cc, nChild, *pubkey.begin(), pubkey.begin() + 1, vout.data());
+    } else {
+        assert(size() == 32);
+        BIP32Hash(cc, nChild, 0, begin(), vout.data());
+    }
+    memcpy(ccChild.begin(), vout.data() + 32, 32);
+    memcpy((unsigned char*)keyChild.begin(), begin(), 32);
+    bool ret = secp256k1_ec_seckey_tweak_add(secp256k1_context_sign, (unsigned char*)keyChild.begin(), vout.data());
+    keyChild.fCompressed = true;
+    keyChild.fValid = ret;
+    return ret;
 }
 
