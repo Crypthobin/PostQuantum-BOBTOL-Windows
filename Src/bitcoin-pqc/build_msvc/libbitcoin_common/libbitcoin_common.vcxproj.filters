@@ -128,9 +128,4 @@
       <Filter>dilithium</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\dilithium\precomp.gp">
-      <Filter>dilithium</Filter>
-    </None>
-  </ItemGroup>
 </Project>
