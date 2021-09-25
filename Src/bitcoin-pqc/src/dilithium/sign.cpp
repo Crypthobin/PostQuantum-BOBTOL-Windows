@@ -291,7 +291,7 @@ int crypto_sign(uint8_t *sm,
 *
 * Description: Verifies signature.
 *
-* Arguments:   - uint8_t *m: pointer to input signature
+* Arguments:   - uint8_t *sig: pointer to input signature
 *              - size_t siglen: length of signature
 *              - const uint8_t *m: pointer to message
 *              - size_t mlen: length of message

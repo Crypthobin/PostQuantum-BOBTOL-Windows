@@ -15,8 +15,10 @@
 #include <stdexcept>
 #include <vector>
 
+#include <dilithium/sign.h>
+#include <dilithium/randombytes.h>
 
-/**
+    /**
  * CPrivKey is a serialized private key, with all parameters included
  * (SIZE bytes)
  */
@@ -29,15 +31,19 @@ public:
     /**
      * secp256k1:
      */
-    static const unsigned int SIZE            = 279;
+    //static const unsigned int SIZE            = 279;
     static const unsigned int COMPRESSED_SIZE = 214;
+    static const unsigned int SIZE = 1312;
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
+
+    /*
     static_assert(
         SIZE >= COMPRESSED_SIZE,
         "COMPRESSED_SIZE is larger than SIZE");
+        */
 
 private:
     //! Whether this private key is valid. We check for correctness when modifying the key
@@ -45,7 +51,7 @@ private:
     bool fValid;
 
     //! Whether the public key corresponding to this private key is (to be) compressed.
-    bool fCompressed;
+    //bool fCompressed;
 
     //! The actual byte data
     std::vector<unsigned char, secure_allocator<unsigned char> > keydata;
@@ -55,15 +61,16 @@ private:
 
 public:
     //! Construct an invalid private key.
-    CKey() : fValid(false), fCompressed(false)
+    CKey() : fValid(false)//, fCompressed(false)
     {
         // Important: vch must be 32 bytes in length to not break serialization
-        keydata.resize(32);
+        //keydata.resize(32);
+        keydata.resize(164);
     }
 
     friend bool operator==(const CKey& a, const CKey& b)
     {
-        return a.fCompressed == b.fCompressed &&
+        return /* a.fCompressed == b.fCompressed &&*/
             a.size() == b.size() &&
             memcmp(a.keydata.data(), b.keydata.data(), a.size()) == 0;
     }
@@ -77,7 +84,8 @@ public:
         } else if (Check(&pbegin[0])) {
             memcpy(keydata.data(), (unsigned char*)&pbegin[0], keydata.size());
             fValid = true;
-            fCompressed = fCompressedIn;
+            //fCompressed = fCompressedIn;
+            fConpressed = false;
         } else {
             fValid = false;
         }
@@ -92,7 +100,7 @@ public:
     bool IsValid() const { return fValid; }
 
     //! Check whether the public key corresponding to this private key is (to be) compressed.
-    bool IsCompressed() const { return fCompressed; }
+    //bool IsCompressed() const { return fCompressed; }
 
     //! Generate a new private key using a cryptographic PRNG.
     void MakeNewKey(bool fCompressed);
@@ -116,7 +124,8 @@ public:
      * Create a DER-serialized signature.
      * The test_case parameter tweaks the deterministic nonce.
      */
-    bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
+    //bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
+    bool Sign(const uint512& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
 
     /**
      * Create a compact signature (65 bytes), which allows reconstructing the used public key.
@@ -125,7 +134,8 @@ public:
      *                  0x1D = second key with even y, 0x1E = second key with odd y,
      *                  add 0x04 for compressed keys.
      */
-    bool SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const;
+
+    //bool SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const;
 
     /**
      * Create a BIP-340 Schnorr signature, for the xonly-pubkey corresponding to *this,
@@ -142,7 +152,8 @@ public:
      *                              (this is used for key path spending, with specific
      *                              Merkle root of the script tree).
      */
-    bool SignSchnorr(const uint256& hash, Span<unsigned char> sig, const uint256* merkle_root = nullptr, const uint256* aux = nullptr) const;
+
+    //bool SignSchnorr(const uint256& hash, Span<unsigned char> sig, const uint256* merkle_root = nullptr, const uint256* aux = nullptr) const;
 
     //! Derive BIP32 child key.
     bool Derive(CKey& keyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const;
@@ -181,12 +192,12 @@ struct CExtKey {
 };
 
 /** Initialize the elliptic curve support. May not be called twice without calling ECC_Stop first. */
-void ECC_Start();
+//void ECC_Start();
 
 /** Deinitialize the elliptic curve support. No-op if ECC_Start wasn't called first. */
-void ECC_Stop();
+//void ECC_Stop();
 
 /** Check that required EC support is available at runtime. */
-bool ECC_InitSanityCheck();
+//bool ECC_InitSanityCheck();
 
 #endif // BITCOIN_KEY_H

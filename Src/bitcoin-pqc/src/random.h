@@ -70,15 +70,15 @@ void GetRandBytes(unsigned char* buf, int num) noexcept;
 /** Generate a uniform random integer in the range [0..range). Precondition: range > 0 */
 uint64_t GetRand(uint64_t nMax) noexcept;
 /** Generate a uniform random duration in the range [0..max). Precondition: max.count() > 0 */
-template <typename D>
-D GetRandomDuration(typename std::common_type<D>::type max) noexcept
+template <typename DD>
+DD GetRandomDuration(typename std::common_type<DD>::type max) noexcept
 // Having the compiler infer the template argument from the function argument
 // is dangerous, because the desired return value generally has a different
 // type than the function argument. So std::common_type is used to force the
 // call site to specify the type of the return value.
 {
     assert(max.count() > 0);
-    return D{GetRand(max.count())};
+    return DD{GetRand(max.count())};
 };
 constexpr auto GetRandMicros = GetRandomDuration<std::chrono::microseconds>;
 constexpr auto GetRandMillis = GetRandomDuration<std::chrono::milliseconds>;

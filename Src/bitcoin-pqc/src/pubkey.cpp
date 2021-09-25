@@ -6,21 +6,21 @@
 #include <pubkey.h>
 
 #include <hash.h>
-#include <secp256k1.h>
-#include <secp256k1_extrakeys.h>
-#include <secp256k1_recovery.h>
-#include <secp256k1_schnorrsig.h>
+//#include <secp256k1.h>
+//#include <secp256k1_extrakeys.h>
+//#include <secp256k1_recovery.h>
+//#include <secp256k1_schnorrsig.h>
 #include <span.h>
 #include <uint256.h>
 
 #include <algorithm>
 #include <cassert>
 
-namespace
-{
-/* Global secp256k1_context object used for verification. */
-secp256k1_context* secp256k1_context_verify = nullptr;
-} // namespace
+//namespace
+//{
+///* Global secp256k1_context object used for verification. */
+//secp256k1_context* secp256k1_context_verify = nullptr;
+//} // namespace
 
 /** This function is taken from the libsecp256k1 distribution and implements
  *  DER parsing for ECDSA signatures, while supporting an arbitrary subset of
@@ -32,151 +32,153 @@ secp256k1_context* secp256k1_context_verify = nullptr;
  *  strict DER before being passed to this module, and we know it supports all
  *  violations present in the blockchain before that point.
  */
-int ecdsa_signature_parse_der_lax(const secp256k1_context* ctx, secp256k1_ecdsa_signature* sig, const unsigned char *input, size_t inputlen) {
-    size_t rpos, rlen, spos, slen;
-    size_t pos = 0;
-    size_t lenbyte;
-    unsigned char tmpsig[64] = {0};
-    int overflow = 0;
 
-    /* Hack to initialize sig with a correctly-parsed but invalid signature. */
-    secp256k1_ecdsa_signature_parse_compact(ctx, sig, tmpsig);
-
-    /* Sequence tag byte */
-    if (pos == inputlen || input[pos] != 0x30) {
-        return 0;
-    }
-    pos++;
-
-    /* Sequence length bytes */
-    if (pos == inputlen) {
-        return 0;
-    }
-    lenbyte = input[pos++];
-    if (lenbyte & 0x80) {
-        lenbyte -= 0x80;
-        if (lenbyte > inputlen - pos) {
-            return 0;
-        }
-        pos += lenbyte;
-    }
-
-    /* Integer tag byte for R */
-    if (pos == inputlen || input[pos] != 0x02) {
-        return 0;
-    }
-    pos++;
-
-    /* Integer length for R */
-    if (pos == inputlen) {
-        return 0;
-    }
-    lenbyte = input[pos++];
-    if (lenbyte & 0x80) {
-        lenbyte -= 0x80;
-        if (lenbyte > inputlen - pos) {
-            return 0;
-        }
-        while (lenbyte > 0 && input[pos] == 0) {
-            pos++;
-            lenbyte--;
-        }
-        static_assert(sizeof(size_t) >= 4, "size_t too small");
-        if (lenbyte >= 4) {
-            return 0;
-        }
-        rlen = 0;
-        while (lenbyte > 0) {
-            rlen = (rlen << 8) + input[pos];
-            pos++;
-            lenbyte--;
-        }
-    } else {
-        rlen = lenbyte;
-    }
-    if (rlen > inputlen - pos) {
-        return 0;
-    }
-    rpos = pos;
-    pos += rlen;
-
-    /* Integer tag byte for S */
-    if (pos == inputlen || input[pos] != 0x02) {
-        return 0;
-    }
-    pos++;
-
-    /* Integer length for S */
-    if (pos == inputlen) {
-        return 0;
-    }
-    lenbyte = input[pos++];
-    if (lenbyte & 0x80) {
-        lenbyte -= 0x80;
-        if (lenbyte > inputlen - pos) {
-            return 0;
-        }
-        while (lenbyte > 0 && input[pos] == 0) {
-            pos++;
-            lenbyte--;
-        }
-        static_assert(sizeof(size_t) >= 4, "size_t too small");
-        if (lenbyte >= 4) {
-            return 0;
-        }
-        slen = 0;
-        while (lenbyte > 0) {
-            slen = (slen << 8) + input[pos];
-            pos++;
-            lenbyte--;
-        }
-    } else {
-        slen = lenbyte;
-    }
-    if (slen > inputlen - pos) {
-        return 0;
-    }
-    spos = pos;
-
-    /* Ignore leading zeroes in R */
-    while (rlen > 0 && input[rpos] == 0) {
-        rlen--;
-        rpos++;
-    }
-    /* Copy R value */
-    if (rlen > 32) {
-        overflow = 1;
-    } else {
-        memcpy(tmpsig + 32 - rlen, input + rpos, rlen);
-    }
-
-    /* Ignore leading zeroes in S */
-    while (slen > 0 && input[spos] == 0) {
-        slen--;
-        spos++;
-    }
-    /* Copy S value */
-    if (slen > 32) {
-        overflow = 1;
-    } else {
-        memcpy(tmpsig + 64 - slen, input + spos, slen);
-    }
-
-    if (!overflow) {
-        overflow = !secp256k1_ecdsa_signature_parse_compact(ctx, sig, tmpsig);
-    }
-    if (overflow) {
-        /* Overwrite the result again with a correctly-parsed but invalid
-           signature if parsing failed. */
-        memset(tmpsig, 0, 64);
-        secp256k1_ecdsa_signature_parse_compact(ctx, sig, tmpsig);
-    }
-    return 1;
-}
+//int ecdsa_signature_parse_der_lax(const secp256k1_context* ctx, secp256k1_ecdsa_signature* sig, const unsigned char *input, size_t inputlen) {
+//    size_t rpos, rlen, spos, slen;
+//    size_t pos = 0;
+//    size_t lenbyte;
+//    unsigned char tmpsig[64] = {0};
+//    int overflow = 0;
+//
+//    /* Hack to initialize sig with a correctly-parsed but invalid signature. */
+//    secp256k1_ecdsa_signature_parse_compact(ctx, sig, tmpsig);
+//
+//    /* Sequence tag byte */
+//    if (pos == inputlen || input[pos] != 0x30) {
+//        return 0;
+//    }
+//    pos++;
+//
+//    /* Sequence length bytes */
+//    if (pos == inputlen) {
+//        return 0;
+//    }
+//    lenbyte = input[pos++];
+//    if (lenbyte & 0x80) {
+//        lenbyte -= 0x80;
+//        if (lenbyte > inputlen - pos) {
+//            return 0;
+//        }
+//        pos += lenbyte;
+//    }
+//
+//    /* Integer tag byte for R */
+//    if (pos == inputlen || input[pos] != 0x02) {
+//        return 0;
+//    }
+//    pos++;
+//
+//    /* Integer length for R */
+//    if (pos == inputlen) {
+//        return 0;
+//    }
+//    lenbyte = input[pos++];
+//    if (lenbyte & 0x80) {
+//        lenbyte -= 0x80;
+//        if (lenbyte > inputlen - pos) {
+//            return 0;
+//        }
+//        while (lenbyte > 0 && input[pos] == 0) {
+//            pos++;
+//            lenbyte--;
+//        }
+//        static_assert(sizeof(size_t) >= 4, "size_t too small");
+//        if (lenbyte >= 4) {
+//            return 0;
+//        }
+//        rlen = 0;
+//        while (lenbyte > 0) {
+//            rlen = (rlen << 8) + input[pos];
+//            pos++;
+//            lenbyte--;
+//        }
+//    } else {
+//        rlen = lenbyte;
+//    }
+//    if (rlen > inputlen - pos) {
+//        return 0;
+//    }
+//    rpos = pos;
+//    pos += rlen;
+//
+//    /* Integer tag byte for S */
+//    if (pos == inputlen || input[pos] != 0x02) {
+//        return 0;
+//    }
+//    pos++;
+//
+//    /* Integer length for S */
+//    if (pos == inputlen) {
+//        return 0;
+//    }
+//    lenbyte = input[pos++];
+//    if (lenbyte & 0x80) {
+//        lenbyte -= 0x80;
+//        if (lenbyte > inputlen - pos) {
+//            return 0;
+//        }
+//        while (lenbyte > 0 && input[pos] == 0) {
+//            pos++;
+//            lenbyte--;
+//        }
+//        static_assert(sizeof(size_t) >= 4, "size_t too small");
+//        if (lenbyte >= 4) {
+//            return 0;
+//        }
+//        slen = 0;
+//        while (lenbyte > 0) {
+//            slen = (slen << 8) + input[pos];
+//            pos++;
+//            lenbyte--;
+//        }
+//    } else {
+//        slen = lenbyte;
+//    }
+//    if (slen > inputlen - pos) {
+//        return 0;
+//    }
+//    spos = pos;
+//
+//    /* Ignore leading zeroes in R */
+//    while (rlen > 0 && input[rpos] == 0) {
+//        rlen--;
+//        rpos++;
+//    }
+//    /* Copy R value */
+//    if (rlen > 32) {
+//        overflow = 1;
+//    } else {
+//        memcpy(tmpsig + 32 - rlen, input + rpos, rlen);
+//    }
+//
+//    /* Ignore leading zeroes in S */
+//    while (slen > 0 && input[spos] == 0) {
+//        slen--;
+//        spos++;
+//    }
+//    /* Copy S value */
+//    if (slen > 32) {
+//        overflow = 1;
+//    } else {
+//        memcpy(tmpsig + 64 - slen, input + spos, slen);
+//    }
+//
+//    if (!overflow) {
+//        overflow = !secp256k1_ecdsa_signature_parse_compact(ctx, sig, tmpsig);
+//    }
+//    if (overflow) {
+//        /* Overwrite the result again with a correctly-parsed but invalid
+//           signature if parsing failed. */
+//        memset(tmpsig, 0, 64);
+//        secp256k1_ecdsa_signature_parse_compact(ctx, sig, tmpsig);
+//    }
+//    return 1;
+//}
 
 XOnlyPubKey::XOnlyPubKey(Span<const unsigned char> bytes)
 {
-    assert(bytes.size() == 32);
+    //assert(bytes.size() == 32);
+    assert(bytes.size() == 164);
     std::copy(bytes.begin(), bytes.end(), m_keydata.begin());
 }
 
@@ -186,23 +188,32 @@ std::vector<CKeyID> XOnlyPubKey::GetKeyIDs() const
     // For now, use the old full pubkey-based key derivation logic. As it is indexed by
     // Hash160(full pubkey), we need to return both a version prefixed with 0x02, and one
     // with 0x03.
-    unsigned char b[33] = {0x02};
+
+    //unsigned char b[33] = {0x02};
+    unsigned char b[165] = {0x02};
     std::copy(m_keydata.begin(), m_keydata.end(), b + 1);
     CPubKey fullpubkey;
-    fullpubkey.Set(b, b + 33);
+    //fullpubkey.Set(b, b + 33);
+    fullpubkey.Set(b, b + 165);
     out.push_back(fullpubkey.GetID());
     b[0] = 0x03;
-    fullpubkey.Set(b, b + 33);
+    //fullpubkey.Set(b, b + 33);
+    fullpubkey.Set(b, b + 165);
     out.push_back(fullpubkey.GetID());
     return out;
 }
 
+
 bool XOnlyPubKey::IsFullyValid() const
 {
-    secp256k1_xonly_pubkey pubkey;
-    return secp256k1_xonly_pubkey_parse(secp256k1_context_verify, &pubkey, m_keydata.data());
-}
+    //secp256k1_xonly_pubkey pubkey;
+    //return secp256k1_xonly_pubkey_parse(secp256k1_context_verify, &pubkey, m_keydata.data());
+    if (!IsNull())
+        return true;
+    return false;
+}   
 
+/*
 bool XOnlyPubKey::VerifySchnorr(const uint256& msg, Span<const unsigned char> sigbytes) const
 {
     assert(sigbytes.size() == 64);
@@ -210,7 +221,9 @@ bool XOnlyPubKey::VerifySchnorr(const uint256& msg, Span<const unsigned char> si
     if (!secp256k1_xonly_pubkey_parse(secp256k1_context_verify, &pubkey, m_keydata.data())) return false;
     return secp256k1_schnorrsig_verify(secp256k1_context_verify, sigbytes.data(), msg.begin(), 32, &pubkey);
 }
+*/
 
+/*
 static const CHashWriter HASHER_TAPTWEAK = TaggedHash("TapTweak");
 
 uint256 XOnlyPubKey::ComputeTapTweakHash(const uint256* merkle_root) const
@@ -248,26 +261,44 @@ std::optional<std::pair<XOnlyPubKey, bool>> XOnlyPubKey::CreateTapTweak(const ui
     ret.second = parity;
     return ret;
 }
+*/
 
-
-bool CPubKey::Verify(const uint256 &hash, const std::vector<unsigned char>& vchSig) const {
+bool CPubKey::Verify(/* const uint256& hash,*/ const uint512& hash, const std::vector<unsigned char>& vchSig) const
+{
     if (!IsValid())
         return false;
-    secp256k1_pubkey pubkey;
-    secp256k1_ecdsa_signature sig;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
+    //secp256k1_pubkey pubkey;
+    //secp256k1_ecdsa_signature sig;
+    //assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
+
+    unsigned char pubkey[SIZE];
+    unsigned char sig[SIGNATURE_SIZE + 1];
+
+    /*if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
         return false;
     }
     if (!ecdsa_signature_parse_der_lax(secp256k1_context_verify, &sig, vchSig.data(), vchSig.size())) {
         return false;
-    }
+    }*/
+
     /* libsecp256k1's ECDSA verification requires lower-S signatures, which have
      * not historically been enforced in Bitcoin, so normalize them first. */
-    secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
-    return secp256k1_ecdsa_verify(secp256k1_context_verify, &sig, hash.begin(), &pubkey);
+
+    //secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
+    //return secp256k1_ecdsa_verify(secp256k1_context_verify, &sig, hash.begin(), &pubkey);
+
+    memcpy(pubkey, vch, size());
+    memcpy(sig, vchSig.data(), vchSig.size());
+
+    int ret = crypto_sign_verify(sig, vchSig.size(), hash.begin(), 512, pubkey);
+
+    if (ret == 0)
+        return true;
+    else
+        return false;
 }
 
+/*
 bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
     if (vchSig.size() != COMPACT_SIGNATURE_SIZE)
         return false;
@@ -288,19 +319,21 @@ bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned cha
     Set(pub, pub + publen);
     return true;
 }
+*/
 
 bool CPubKey::IsFullyValid() const {
     if (!IsValid())
         return false;
-    secp256k1_pubkey pubkey;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    return secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size());
+    //secp256k1_pubkey pubkey;
+    //assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
+    //return secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size());
+    return true;
 }
 
 bool CPubKey::Decompress() {
     if (!IsValid())
         return false;
-    secp256k1_pubkey pubkey;
+    /*secp256k1_pubkey pubkey;
     assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
     if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
         return false;
@@ -309,9 +342,11 @@ bool CPubKey::Decompress() {
     size_t publen = SIZE;
     secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_UNCOMPRESSED);
     Set(pub, pub + publen);
+    return true;*/
     return true;
 }
 
+/*
 bool CPubKey::Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const {
     assert(IsValid());
     assert((nChild >> 31) == 0);
@@ -333,6 +368,7 @@ bool CPubKey::Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChi
     pubkeyChild.Set(pub, pub + publen);
     return true;
 }
+*/
 
 void CExtPubKey::Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const {
     code[0] = nDepth;
@@ -340,8 +376,9 @@ void CExtPubKey::Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const {
     code[5] = (nChild >> 24) & 0xFF; code[6] = (nChild >> 16) & 0xFF;
     code[7] = (nChild >>  8) & 0xFF; code[8] = (nChild >>  0) & 0xFF;
     memcpy(code+9, chaincode.begin(), 32);
-    assert(pubkey.size() == CPubKey::COMPRESSED_SIZE);
-    memcpy(code+41, pubkey.begin(), CPubKey::COMPRESSED_SIZE);
+    //assert(pubkey.size() == CPubKey::COMPRESSED_SIZE);
+    //memcpy(code+41, pubkey.begin(), CPubKey::COMPRESSED_SIZE);
+    memcpy(code + 41, pubkey.begin(), CPubKey::SIZE);
 }
 
 void CExtPubKey::Decode(const unsigned char code[BIP32_EXTKEY_SIZE]) {
@@ -353,45 +390,46 @@ void CExtPubKey::Decode(const unsigned char code[BIP32_EXTKEY_SIZE]) {
     if ((nDepth == 0 && (nChild != 0 || ReadLE32(vchFingerprint) != 0)) || !pubkey.IsFullyValid()) pubkey = CPubKey();
 }
 
-bool CExtPubKey::Derive(CExtPubKey &out, unsigned int _nChild) const {
-    out.nDepth = nDepth + 1;
-    CKeyID id = pubkey.GetID();
-    memcpy(out.vchFingerprint, &id, 4);
-    out.nChild = _nChild;
-    return pubkey.Derive(out.pubkey, out.chaincode, _nChild, chaincode);
-}
-
-/* static */ bool CPubKey::CheckLowS(const std::vector<unsigned char>& vchSig) {
-    secp256k1_ecdsa_signature sig;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    if (!ecdsa_signature_parse_der_lax(secp256k1_context_verify, &sig, vchSig.data(), vchSig.size())) {
-        return false;
-    }
-    return (!secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, nullptr, &sig));
-}
-
-/* static */ int ECCVerifyHandle::refcount = 0;
-
-ECCVerifyHandle::ECCVerifyHandle()
-{
-    if (refcount == 0) {
-        assert(secp256k1_context_verify == nullptr);
-        secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
-        assert(secp256k1_context_verify != nullptr);
-    }
-    refcount++;
-}
-
-ECCVerifyHandle::~ECCVerifyHandle()
-{
-    refcount--;
-    if (refcount == 0) {
-        assert(secp256k1_context_verify != nullptr);
-        secp256k1_context_destroy(secp256k1_context_verify);
-        secp256k1_context_verify = nullptr;
-    }
-}
-
-const secp256k1_context* GetVerifyContext() {
-    return secp256k1_context_verify;
-}
+//bool CExtPubKey::Derive(CExtPubKey &out, unsigned int _nChild) const {
+//    out.nDepth = nDepth + 1;
+//    CKeyID id = pubkey.GetID();
+//    memcpy(out.vchFingerprint, &id, 4);
+//    out.nChild = _nChild;
+//    return pubkey.Derive(out.pubkey, out.chaincode, _nChild, chaincode);
+//}
+//
+//
+///* static */ bool CPubKey::CheckLowS(const std::vector<unsigned char>& vchSig) {
+//    secp256k1_ecdsa_signature sig;
+//    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
+//    if (!ecdsa_signature_parse_der_lax(secp256k1_context_verify, &sig, vchSig.data(), vchSig.size())) {
+//        return false;
+//    }
+//    return (!secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, nullptr, &sig));
+//}
+//
+///* static */ int ECCVerifyHandle::refcount = 0;
+//
+//ECCVerifyHandle::ECCVerifyHandle()
+//{
+//    if (refcount == 0) {
+//        assert(secp256k1_context_verify == nullptr);
+//        secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+//        assert(secp256k1_context_verify != nullptr);
+//    }
+//    refcount++;
+//}
+//
+//ECCVerifyHandle::~ECCVerifyHandle()
+//{
+//    refcount--;
+//    if (refcount == 0) {
+//        assert(secp256k1_context_verify != nullptr);
+//        secp256k1_context_destroy(secp256k1_context_verify);
+//        secp256k1_context_verify = nullptr;
+//    }
+//}
+//
+//const secp256k1_context* GetVerifyContext() {
+//    return secp256k1_context_verify;
+//}

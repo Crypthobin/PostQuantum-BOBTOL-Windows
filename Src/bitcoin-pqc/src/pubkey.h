@@ -16,7 +16,10 @@
 #include <optional>
 #include <vector>
 
-const unsigned int BIP32_EXTKEY_SIZE = 74;
+#include <dilithium/sign.h>
+
+//const unsigned int BIP32_EXTKEY_SIZE = 74;
+const unsigned int BIP32_EXTKEY_SIZE = 41 + 1313; // 41 + 1312 + 1 (tag) ??
 
 /** A reference to a CKey: the Hash160 of its serialized public key */
 class CKeyID : public uint160
@@ -27,6 +30,7 @@ public:
 };
 
 typedef uint256 ChainCode;
+//typedef uint512 ChainCode;
 
 /** An encapsulated public key. */
 class CPubKey
@@ -35,17 +39,22 @@ public:
     /**
      * secp256k1:
      */
-    static constexpr unsigned int SIZE                   = 65;
+    //static constexpr unsigned int SIZE                   = 65;
+    static constexpr unsigned int SIZE                   = 1313; // 1312 + 1 ???
     static constexpr unsigned int COMPRESSED_SIZE        = 33;
-    static constexpr unsigned int SIGNATURE_SIZE         = 72;
-    static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
+    //static constexpr unsigned int SIGNATURE_SIZE         = 72;
+    static constexpr unsigned int SIGNATURE_SIZE         = 2420;
+    //static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
+
+    /*
     static_assert(
         SIZE >= COMPRESSED_SIZE,
         "COMPRESSED_SIZE is larger than SIZE");
+        */
 
 private:
 
@@ -58,8 +67,8 @@ private:
     //! Compute the length of a pubkey with a given first byte.
     unsigned int static GetLen(unsigned char chHeader)
     {
-        if (chHeader == 2 || chHeader == 3)
-            return COMPRESSED_SIZE;
+        /* if (chHeader == 2 || chHeader == 3)
+            return COMPRESSED_SIZE; */
         if (chHeader == 4 || chHeader == 6 || chHeader == 7)
             return SIZE;
         return 0;
@@ -191,16 +200,19 @@ public:
     bool IsFullyValid() const;
 
     //! Check whether this is a compressed public key.
+    /*
     bool IsCompressed() const
     {
         return size() == COMPRESSED_SIZE;
     }
+    */
 
     /**
      * Verify a DER signature (~72 bytes).
      * If this public key is not fully valid, the return value will be false.
      */
-    bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const;
+    //bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const;
+    bool Verify(const uint512& hash, const std::vector<unsigned char>& vchSig) const;
 
     /**
      * Check whether a signature is normalized (lower-S).
@@ -208,7 +220,7 @@ public:
     static bool CheckLowS(const std::vector<unsigned char>& vchSig);
 
     //! Recover a public key from a compact signature.
-    bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);
+    //bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);
 
     //! Turn this public key into an uncompressed public key.
     bool Decompress();
@@ -220,7 +232,8 @@ public:
 class XOnlyPubKey
 {
 private:
-    uint256 m_keydata;
+    //uint256 m_keydata;
+    uint512 m_keydata;
 
 public:
     /** Construct an empty x-only pubkey. */
@@ -248,7 +261,7 @@ public:
      *
      * sigbytes must be exactly 64 bytes.
      */
-    bool VerifySchnorr(const uint256& msg, Span<const unsigned char> sigbytes) const;
+    //bool VerifySchnorr(const uint256& msg, Span<const unsigned char> sigbytes) const;
 
     /** Compute the Taproot tweak as specified in BIP341, with *this as internal
      * key:
@@ -312,6 +325,8 @@ struct CExtPubKey {
 
 /** Users of this module must hold an ECCVerifyHandle. The constructor and
  *  destructor of these are not allowed to run in parallel, though. */
+
+/*
 class ECCVerifyHandle
 {
     static int refcount;
@@ -320,11 +335,13 @@ public:
     ECCVerifyHandle();
     ~ECCVerifyHandle();
 };
+*/
 
-typedef struct secp256k1_context_struct secp256k1_context;
+
+//typedef struct secp256k1_context_struct secp256k1_context;
 
 /** Access to the internal secp256k1 context used for verification. Only intended to be used
  *  by key.cpp. */
-const secp256k1_context* GetVerifyContext();
+//const secp256k1_context* GetVerifyContext();
 
 #endif // BITCOIN_PUBKEY_H
