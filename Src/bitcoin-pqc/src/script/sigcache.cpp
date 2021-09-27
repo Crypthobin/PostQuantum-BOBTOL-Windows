@@ -50,7 +50,7 @@ public:
     }
 
     void
-    ComputeEntryECDSA(uint256& entry, const uint256 &hash, const std::vector<unsigned char>& vchSig, const CPubKey& pubkey) const
+    ComputeEntryECDSA(uint256& entry, const uint256& hash, const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey) const
     {
         CSHA256 hasher = m_salted_hasher_ecdsa;
         hasher.Write(hash.begin(), 32).Write(pubkey.data(), pubkey.size()).Write(vchSig.data(), vchSig.size()).Finalize(entry.begin());
@@ -102,7 +102,7 @@ void InitSignatureCache()
             (nElems*sizeof(uint256)) >>20, (nMaxCacheSize*2)>>20, nElems);
 }
 
-bool CachingTransactionSignatureChecker::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const
+bool CachingTransactionSignatureChecker::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint256& sighash) const
 {
     uint256 entry;
     signatureCache.ComputeEntryECDSA(entry, sighash, vchSig, pubkey);

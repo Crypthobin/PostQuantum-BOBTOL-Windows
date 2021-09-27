@@ -62,17 +62,17 @@ static inline void popstack(std::vector<valtype>& stack)
 }
 
 bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
-    if (vchPubKey.size() < CPubKey::COMPRESSED_SIZE) {
+    if (vchPubKey.size() < CBOBPubKey::COMPRESSED_SIZE) {
         //  Non-canonical public key: too short
         return false;
     }
     if (vchPubKey[0] == 0x04) {
-        if (vchPubKey.size() != CPubKey::SIZE) {
+        if (vchPubKey.size() != CBOBPubKey::SIZE) {
             //  Non-canonical public key: invalid length for uncompressed key
             return false;
         }
     } else if (vchPubKey[0] == 0x02 || vchPubKey[0] == 0x03) {
-        if (vchPubKey.size() != CPubKey::COMPRESSED_SIZE) {
+        if (vchPubKey.size() != CBOBPubKey::COMPRESSED_SIZE) {
             //  Non-canonical public key: invalid length for compressed key
             return false;
         }
@@ -84,7 +84,7 @@ bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
 }
 
 bool static IsCompressedPubKey(const valtype &vchPubKey) {
-    if (vchPubKey.size() != CPubKey::COMPRESSED_SIZE) {
+    if (vchPubKey.size() != CBOBPubKey::COMPRESSED_SIZE) {
         //  Non-canonical public key: invalid length for compressed key
         return false;
     }
@@ -181,7 +181,7 @@ bool static IsLowDERSignature(const valtype &vchSig, ScriptError* serror) {
     // If the S value is above the order of the curve divided by two, its
     // complement modulo the order could have been used instead, which is
     // one byte shorter when encoded correctly.
-    if (!CPubKey::CheckLowS(vchSigCopy)) {
+    if (!CBOBPubKey::CheckLowS(vchSigCopy)) {
         return set_error(serror, SCRIPT_ERR_SIG_HIGH_S);
     }
     return true;
@@ -1766,7 +1766,7 @@ uint512 PQSignatureHash(const CScript& scriptCode, const T& txTo, unsigned int n
 }
 
 template <class T>
-bool GenericTransactionSignatureChecker<T>::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const
+bool GenericTransactionSignatureChecker<T>::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint256& sighash) const
 {
     return pubkey.Verify(sighash, vchSig);
 }
@@ -1780,7 +1780,7 @@ bool GenericTransactionSignatureChecker<T>::VerifySchnorrSignature(Span<const un
 template <class T>
 bool GenericTransactionSignatureChecker<T>::CheckECDSASignature(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
 {
-    CPubKey pubkey(vchPubKey);
+    CBOBPubKey pubkey(vchPubKey);
     if (!pubkey.IsValid())
         return false;
 

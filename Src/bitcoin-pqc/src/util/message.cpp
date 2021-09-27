@@ -54,7 +54,7 @@ MessageVerificationResult MessageVerify(
 }
 
 bool MessageSign(
-    const CKey& privkey,
+    const CBOBKey& privkey,
     const std::string& message,
     std::string& signature)
 {

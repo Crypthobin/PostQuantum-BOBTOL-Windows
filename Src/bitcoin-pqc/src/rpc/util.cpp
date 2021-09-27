@@ -188,12 +188,12 @@ std::string HelpExampleRpcNamed(const std::string& methodname, const RPCArgList&
 }
 
 // Converts a hex string to a public key if possible
-CPubKey HexToPubKey(const std::string& hex_in)
+CBOBPubKey HexToPubKey(const std::string& hex_in)
 {
     if (!IsHex(hex_in)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid public key: " + hex_in);
     }
-    CPubKey vchPubKey(ParseHex(hex_in));
+    CBOBPubKey vchPubKey(ParseHex(hex_in));
     if (!vchPubKey.IsFullyValid()) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid public key: " + hex_in);
     }
@@ -201,7 +201,7 @@ CPubKey HexToPubKey(const std::string& hex_in)
 }
 
 // Retrieves a public key for an address from the given FillableSigningProvider
-CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string& addr_in)
+CBOBPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string& addr_in)
 {
     CTxDestination dest = DecodeDestination(addr_in);
     if (!IsValidDestination(dest)) {
@@ -211,7 +211,7 @@ CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string&
     if (key.IsNull()) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("%s does not refer to a key", addr_in));
     }
-    CPubKey vchPubKey;
+    CBOBPubKey vchPubKey;
     if (!keystore.GetPubKey(key, vchPubKey)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("no full public key for address %s", addr_in));
     }
@@ -222,7 +222,7 @@ CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string&
 }
 
 // Creates a multisig address from a given list of public keys, number of signatures required, and the address type
-CTxDestination AddAndGetMultisigDestination(const int required, const std::vector<CPubKey>& pubkeys, OutputType type, FillableSigningProvider& keystore, CScript& script_out)
+CTxDestination AddAndGetMultisigDestination(const int required, const std::vector<CBOBPubKey>& pubkeys, OutputType type, FillableSigningProvider& keystore, CScript& script_out)
 {
     // Gather public keys
     if (required < 1) {
@@ -238,7 +238,7 @@ CTxDestination AddAndGetMultisigDestination(const int required, const std::vecto
     script_out = GetScriptForMultisig(required, pubkeys);
 
     // Check if any keys are uncompressed. If so, the type is legacy
-    for (const CPubKey& pk : pubkeys) {
+    for (const CBOBPubKey& pk : pubkeys) {
         if (!pk.IsCompressed()) {
             type = OutputType::LEGACY;
             break;

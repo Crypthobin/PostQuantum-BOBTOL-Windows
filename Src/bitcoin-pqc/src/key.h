@@ -323,3 +323,28 @@ public:
     //! Load private key and check that public key matches.
     bool Load(CPrivKey& privkey, CBOBPubKey& vchPubKey, bool fSkipCheck);
 };
+
+
+
+struct CExtBOBKey {
+    unsigned char nDepth;
+    unsigned char vchFingerprint[4];
+    unsigned int nChild;
+    ChainCode chaincode;
+    CBOBKey key;
+
+    friend bool operator==(const CExtBOBKey& a, const CExtBOBKey& b)
+    {
+        return a.nDepth == b.nDepth &&
+               memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
+               a.nChild == b.nChild &&
+               a.chaincode == b.chaincode &&
+               a.key == b.key;
+    }
+
+    void Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const;
+    void Decode(const unsigned char code[BIP32_EXTKEY_SIZE]);
+    bool Derive(CExtBOBKey& out, unsigned int nChild) const;
+    CExtBOBPubKey Neuter() const;
+    void SetSeed(const unsigned char* seed, unsigned int nSeedLen);
+};

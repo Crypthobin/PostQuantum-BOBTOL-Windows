@@ -26,9 +26,11 @@ ScriptHash::ScriptHash(const CScript& in) : BaseHash(Hash160(in)) {}
 ScriptHash::ScriptHash(const CScriptID& in) : BaseHash(static_cast<uint160>(in)) {}
 
 PKHash::PKHash(const CPubKey& pubkey) : BaseHash(pubkey.GetID()) {}
+PKHash::PKHash(const CBOBPubKey& pubkey) : BaseHash(pubkey.GetID()) {}
 PKHash::PKHash(const CKeyID& pubkey_id) : BaseHash(pubkey_id) {}
 
 WitnessV0KeyHash::WitnessV0KeyHash(const CPubKey& pubkey) : BaseHash(pubkey.GetID()) {}
+WitnessV0KeyHash::WitnessV0KeyHash(const CBOBPubKey& pubkey) : BaseHash(pubkey.GetID()) {}
 WitnessV0KeyHash::WitnessV0KeyHash(const PKHash& pubkey_hash) : BaseHash(static_cast<uint160>(pubkey_hash)) {}
 
 CKeyID ToKeyID(const PKHash& key_hash)
@@ -353,21 +355,39 @@ CScript GetScriptForDestination(const CTxDestination& dest)
     return std::visit(CScriptVisitor(), dest);
 }
 
-CScript GetScriptForRawPubKey(const CPubKey& pubKey)
+CScript GetScriptForRawPubKey(const CBOBPubKey& pubKey)
 {
     return CScript() << std::vector<unsigned char>(pubKey.begin(), pubKey.end()) << OP_CHECKSIG;
 }
 
-CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys)
+CScript GetScriptForMultisig(int nRequired, const std::vector<CBOBPubKey>& keys)
 {
     CScript script;
 
     script << nRequired;
-    for (const CPubKey& key : keys)
+    for (const CBOBPubKey& key : keys)
         script << ToByteVector(key);
     script << keys.size() << OP_CHECKMULTISIG;
 
     return script;
+}
+
+CScript GetScriptForWitness(const CScript& redeemscript)
+{
+    CScript ret;
+
+    std::vector<std::vector<unsigned char>> vSolutions;
+
+    TxoutType typ = Solver(redeemscript, vSolutions);
+    if (typ == TxoutType::PUBKEY ) {
+        return GetScriptForDestination(WitnessV0KeyHash(Hash160(vSolutions[0].begin(), vSolutions[0].end())));
+    } else if (typ == TxoutType::PUBKEYHASH) {
+        return GetScriptForDestination(WitnessV0KeyHash(Hash160(vSolutions[0])));
+    }
+    
+    uint256 hash;
+    CSHA256().Write(&redeemscript[0], redeemscript.size()).Finalize(hash.begin());
+    return GetScriptForDestination(WitnessV0ScriptHash(hash));
 }
 
 bool IsValidDestination(const CTxDestination& dest) {

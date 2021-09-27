@@ -104,14 +104,14 @@ public:
     //! The time at which the key was generated. Set in AddKeypoolPubKeyWithDB
     int64_t nTime;
     //! The public key
-    CPubKey vchPubKey;
+    CBOBPubKey vchPubKey;
     //! Whether this keypool entry is in the internal keypool (for change outputs)
     bool fInternal;
     //! Whether this key was generated for a keypool before the wallet was upgraded to HD-split
     bool m_pre_split;
 
     CKeyPool();
-    CKeyPool(const CPubKey& vchPubKeyIn, bool internalIn);
+    CKeyPool(const CBOBPubKey& vchPubKeyIn, bool internalIn);
 
     template<typename Stream>
     void Serialize(Stream& s) const
@@ -254,11 +254,11 @@ private:
     bool fDecryptionThoroughlyChecked = true;
 
     using WatchOnlySet = std::set<CScript>;
-    using WatchKeyMap = std::map<CKeyID, CPubKey>;
+    using WatchKeyMap = std::map<CKeyID, CBOBPubKey>;
 
     WalletBatch *encrypted_batch GUARDED_BY(cs_KeyStore) = nullptr;
 
-    using CryptedKeyMap = std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char>>>;
+    using CryptedKeyMap = std::map<CKeyID, std::pair<CBOBPubKey, std::vector<unsigned char>>>;
 
     CryptedKeyMap mapCryptedKeys GUARDED_BY(cs_KeyStore);
     WatchOnlySet setWatchOnly GUARDED_BY(cs_KeyStore);
@@ -266,8 +266,8 @@ private:
 
     int64_t nTimeFirstKey GUARDED_BY(cs_KeyStore) = 0;
 
-    bool AddKeyPubKeyInner(const CKey& key, const CPubKey &pubkey);
-    bool AddCryptedKeyInner(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
+    bool AddKeyPubKeyInner(const CBOBKey& key, const CBOBPubKey &pubkey);
+    bool AddCryptedKeyInner(const CBOBPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
 
     /**
      * Private version of AddWatchOnly method which does not accept a
@@ -285,22 +285,22 @@ private:
     bool AddWatchOnlyWithDB(WalletBatch &batch, const CScript& dest, int64_t create_time) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
     //! Adds a key to the store, and saves it to disk.
-    bool AddKeyPubKeyWithDB(WalletBatch &batch,const CKey& key, const CPubKey &pubkey) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
+    bool AddKeyPubKeyWithDB(WalletBatch &batch,const CBOBKey& key, const CBOBPubKey &pubkey) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
-    void AddKeypoolPubkeyWithDB(const CPubKey& pubkey, const bool internal, WalletBatch& batch);
+    void AddKeypoolPubkeyWithDB(const CBOBPubKey& pubkey, const bool internal, WalletBatch& batch);
 
     //! Adds a script to the store and saves it to disk
     bool AddCScriptWithDB(WalletBatch& batch, const CScript& script);
 
     /** Add a KeyOriginInfo to the wallet */
-    bool AddKeyOriginWithDB(WalletBatch& batch, const CPubKey& pubkey, const KeyOriginInfo& info);
+    bool AddKeyOriginWithDB(WalletBatch& batch, const CBOBPubKey& pubkey, const KeyOriginInfo& info);
 
     /* the HD chain data model (external chain counters) */
     CHDChain m_hd_chain;
     std::unordered_map<CKeyID, CHDChain, SaltedSipHasher> m_inactive_hd_chains;
 
     /* HD derive new child key (on internal or external chain) */
-    void DeriveNewChildKey(WalletBatch& batch, CKeyMetadata& metadata, CKey& secret, CHDChain& hd_chain, bool internal = false) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
+    void DeriveNewChildKey(WalletBatch& batch, CKeyMetadata& metadata, CBOBKey& secret, CHDChain& hd_chain, bool internal = false) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
     std::set<int64_t> setInternalKeyPool GUARDED_BY(cs_KeyStore);
     std::set<int64_t> setExternalKeyPool GUARDED_BY(cs_KeyStore);
@@ -311,7 +311,7 @@ private:
     std::map<int64_t, CKeyID> m_index_to_reserved_key;
 
     //! Fetches a key from the keypool
-    bool GetKeyFromPool(CPubKey &key, const OutputType type, bool internal = false);
+    bool GetKeyFromPool(CBOBPubKey &key, const OutputType type, bool internal = false);
 
     /**
      * Reserves a key from the keypool and sets nIndex to its index
@@ -344,13 +344,13 @@ private:
 public:
     using ScriptPubKeyMan::ScriptPubKeyMan;
 
-    bool GetNewDestination(const OutputType type, CTxDestination& dest, bilingual_str& error) override;
+   // bool GetNewDestination(const OutputType type, CTxDestination& dest, bilingual_str& error) override;
     isminetype IsMine(const CScript& script) const override;
 
     bool CheckDecryptionKey(const CKeyingMaterial& master_key, bool accept_no_keys = false) override;
     bool Encrypt(const CKeyingMaterial& master_key, WalletBatch* batch) override;
 
-    bool GetReservedDestination(const OutputType type, bool internal, CTxDestination& address, int64_t& index, CKeyPool& keypool, bilingual_str& error) override;
+  //  bool GetReservedDestination(const OutputType type, bool internal, CTxDestination& address, int64_t& index, CKeyPool& keypool, bilingual_str& error) override;
     void KeepDestination(int64_t index, const OutputType& type) override;
     void ReturnDestination(int64_t index, bool internal, const CTxDestination&) override;
 
@@ -398,13 +398,13 @@ public:
     std::map<CScriptID, CKeyMetadata> m_script_metadata GUARDED_BY(cs_KeyStore);
 
     //! Adds a key to the store, and saves it to disk.
-    bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;
+    bool AddKeyPubKey(const CBOBKey& key, const CBOBPubKey &pubkey) override;
     //! Adds a key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadKey(const CKey& key, const CPubKey &pubkey);
+    bool LoadKey(const CBOBKey& key, const CBOBPubKey &pubkey);
     //! Adds an encrypted key to the store, and saves it to disk.
-    bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
+    bool AddCryptedKey(const CBOBPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     //! Adds an encrypted key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret, bool checksum_valid);
+    bool LoadCryptedKey(const CBOBPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret, bool checksum_valid);
     void UpdateTimeFirstKey(int64_t nCreateTime) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
     //! Adds a CScript to the store
     bool LoadCScript(const CScript& redeemScript);
@@ -412,7 +412,7 @@ public:
     void LoadKeyMetadata(const CKeyID& keyID, const CKeyMetadata &metadata);
     void LoadScriptMetadata(const CScriptID& script_id, const CKeyMetadata &metadata);
     //! Generate a new key
-    CPubKey GenerateNewKey(WalletBatch& batch, CHDChain& hd_chain, bool internal = false) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
+    CBOBPubKey GenerateNewKey(WalletBatch& batch, CHDChain& hd_chain, bool internal = false) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
     /* Set the HD chain model (chain child index counters) and writes it to the database */
     void AddHDChain(const CHDChain& chain);
@@ -432,12 +432,12 @@ public:
     bool AddWatchOnly(const CScript& dest, int64_t nCreateTime) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
     //! Fetches a pubkey from mapWatchKeys if it exists there
-    bool GetWatchPubKey(const CKeyID &address, CPubKey &pubkey_out) const;
+    bool GetWatchPubKey(const CKeyID &address, CBOBPubKey &pubkey_out) const;
 
     /* SigningProvider overrides */
     bool HaveKey(const CKeyID &address) const override;
-    bool GetKey(const CKeyID &address, CKey& keyOut) const override;
-    bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;
+    bool GetKey(const CKeyID &address, CBOBKey& keyOut) const override;
+    bool GetPubKey(const CKeyID &address, CBOBPubKey& vchPubKeyOut) const override;
     bool AddCScript(const CScript& redeemScript) override;
     bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const override;
 
@@ -447,24 +447,24 @@ public:
     void MarkPreSplitKeys() EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
     bool ImportScripts(const std::set<CScript> scripts, int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
-    bool ImportPrivKeys(const std::map<CKeyID, CKey>& privkey_map, const int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
-    bool ImportPubKeys(const std::vector<CKeyID>& ordered_pubkeys, const std::map<CKeyID, CPubKey>& pubkey_map, const std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>>& key_origins, const bool add_keypool, const bool internal, const int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
+    bool ImportPrivKeys(const std::map<CKeyID, CBOBKey>& privkey_map, const int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
+    bool ImportPubKeys(const std::vector<CKeyID>& ordered_pubkeys, const std::map<CKeyID, CBOBPubKey>& pubkey_map, const std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>>& key_origins, const bool add_keypool, const bool internal, const int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
     bool ImportScriptPubKeys(const std::set<CScript>& script_pub_keys, const bool have_solving_data, const int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore);
 
     /* Returns true if the wallet can generate new keys */
     bool CanGenerateKeys() const;
 
     /* Generates a new HD seed (will not be activated) */
-    CPubKey GenerateNewSeed();
+    CBOBPubKey GenerateNewSeed();
 
     /* Derives a new HD seed (will not be activated) */
-    CPubKey DeriveNewSeed(const CKey& key);
+    CBOBPubKey DeriveNewSeed(const CBOBKey& key);
 
     /* Set the current HD seed (will reset the chain child index counters)
        Sets the seed's version based on the current wallet version (so the
        caller must ensure the current wallet version is correct before calling
        this function). */
-    void SetHDSeed(const CPubKey& key);
+    void SetHDSeed(const CBOBPubKey& key);
 
     /**
      * Explicitly make the wallet learn the related scripts for outputs to the
@@ -472,13 +472,13 @@ public:
      * software, as FillableSigningProvider automatically does this implicitly for all
      * keys now.
      */
-    void LearnRelatedScripts(const CPubKey& key, OutputType);
+    void LearnRelatedScripts(const CBOBPubKey& key, OutputType);
 
     /**
      * Same as LearnRelatedScripts, but when the OutputType is not known (and could
      * be anything).
      */
-    void LearnAllRelatedScripts(const CPubKey& key);
+    void LearnAllRelatedScripts(const CBOBPubKey& key);
 
     /**
      * Marks all keys in the keypool up to and including reserve_key as used.
@@ -499,8 +499,8 @@ public:
 
     bool GetCScript(const CScriptID &scriptid, CScript& script) const override { return m_spk_man.GetCScript(scriptid, script); }
     bool HaveCScript(const CScriptID &scriptid) const override { return m_spk_man.HaveCScript(scriptid); }
-    bool GetPubKey(const CKeyID &address, CPubKey& pubkey) const override { return m_spk_man.GetPubKey(address, pubkey); }
-    bool GetKey(const CKeyID &address, CKey& key) const override { return false; }
+    bool GetPubKey(const CKeyID &address, CBOBPubKey& pubkey) const override { return m_spk_man.GetPubKey(address, pubkey); }
+    bool GetKey(const CKeyID &address, CBOBKey& key) const override { return false; }
     bool HaveKey(const CKeyID &address) const override { return false; }
     bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const override { return m_spk_man.GetKeyOrigin(keyid, info); }
 };
@@ -509,9 +509,9 @@ class DescriptorScriptPubKeyMan : public ScriptPubKeyMan
 {
 private:
     using ScriptPubKeyMap = std::map<CScript, int32_t>; // Map of scripts to descriptor range index
-    using PubKeyMap = std::map<CPubKey, int32_t>; // Map of pubkeys involved in scripts to descriptor range index
-    using CryptedKeyMap = std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char>>>;
-    using KeyMap = std::map<CKeyID, CKey>;
+    using PubKeyMap = std::map<CBOBPubKey, int32_t>; // Map of pubkeys involved in scripts to descriptor range index
+    using CryptedKeyMap = std::map<CKeyID, std::pair<CBOBPubKey, std::vector<unsigned char>>>;
+    using KeyMap = std::map<CKeyID, CBOBKey>;
 
     ScriptPubKeyMap m_map_script_pub_keys GUARDED_BY(cs_desc_man);
     PubKeyMap m_map_pubkeys GUARDED_BY(cs_desc_man);
@@ -523,14 +523,14 @@ private:
     //! keeps track of whether Unlock has run a thorough check before
     bool m_decryption_thoroughly_checked = false;
 
-    bool AddDescriptorKeyWithDB(WalletBatch& batch, const CKey& key, const CPubKey &pubkey) EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
+    bool AddDescriptorKeyWithDB(WalletBatch& batch, const CBOBKey& key, const CBOBPubKey &pubkey) EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
 
     KeyMap GetKeys() const EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
 
     // Fetch the SigningProvider for the given script and optionally include private keys
     std::unique_ptr<FlatSigningProvider> GetSigningProvider(const CScript& script, bool include_private = false) const;
     // Fetch the SigningProvider for the given pubkey and always include private keys. This should only be called by signing code.
-    std::unique_ptr<FlatSigningProvider> GetSigningProvider(const CPubKey& pubkey) const;
+    std::unique_ptr<FlatSigningProvider> GetSigningProvider(const CBOBPubKey& pubkey) const;
     // Fetch the SigningProvider for a given index and optionally include private keys. Called by the above functions.
     std::unique_ptr<FlatSigningProvider> GetSigningProvider(int32_t index, bool include_private = false) const EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
 
@@ -568,7 +568,7 @@ public:
     bool IsHDEnabled() const override;
 
     //! Setup descriptors based on the given CExtkey
-    bool SetupDescriptorGeneration(const CExtKey& master_key, OutputType addr_type, bool internal);
+    bool SetupDescriptorGeneration(const CExtBOBKey& master_key, OutputType addr_type, bool internal);
 
     /** Provide a descriptor at setup time
     * Returns false if already setup or setup fails, true if setup is successful
@@ -598,13 +598,13 @@ public:
 
     void SetCache(const DescriptorCache& cache);
 
-    bool AddKey(const CKeyID& key_id, const CKey& key);
-    bool AddCryptedKey(const CKeyID& key_id, const CPubKey& pubkey, const std::vector<unsigned char>& crypted_key);
+    bool AddKey(const CKeyID& key_id, const CBOBKey& key);
+    bool AddCryptedKey(const CKeyID& key_id, const CBOBPubKey& pubkey, const std::vector<unsigned char>& crypted_key);
 
     bool HasWalletDescriptor(const WalletDescriptor& desc) const;
     void UpdateWalletDescriptor(WalletDescriptor& descriptor);
     bool CanUpdateToWalletDescriptor(const WalletDescriptor& descriptor, std::string& error);
-    void AddDescriptorKey(const CKey& key, const CPubKey &pubkey);
+    void AddDescriptorKey(const CBOBKey& key, const CBOBPubKey &pubkey);
     void WriteDescriptor();
 
     const WalletDescriptor GetWalletDescriptor() const EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);

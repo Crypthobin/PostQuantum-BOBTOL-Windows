@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdint.h>
 
-class CPubKey;
+class CBOBPubKey;
 class XOnlyPubKey;
 class CScript;
 class CTransaction;
@@ -286,7 +286,7 @@ private:
     const PrecomputedTransactionData* txdata;
 
 protected:
-    virtual bool VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
+    virtual bool VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& vchPubKey, const uint256& sighash) const;
     virtual bool VerifySchnorrSignature(Span<const unsigned char> sig, const XOnlyPubKey& pubkey, const uint256& sighash) const;
 
 public:

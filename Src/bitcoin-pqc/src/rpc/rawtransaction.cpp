@@ -796,7 +796,7 @@ static RPCHelpMan signrawtransactionwithkey()
     const UniValue& keys = request.params[1].get_array();
     for (unsigned int idx = 0; idx < keys.size(); ++idx) {
         UniValue k = keys[idx];
-        CKey key = DecodeSecret(k.get_str());
+        CBOBKey key = DecodeSecret(k.get_str());
         if (!key.IsValid()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
         }

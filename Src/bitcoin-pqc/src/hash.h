@@ -70,9 +70,22 @@ public:
         CRIPEMD160().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(output.data());
     }
 
+    void Finalize2(unsigned char hash[OUTPUT_SIZE])
+    {
+        unsigned char buf[CSHA256::OUTPUT_SIZE];
+        sha.Finalize(buf);
+        CRIPEMD160().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
+    }
+
     CHash160& Write(Span<const unsigned char> input)
     {
         sha.Write(input.data(), input.size());
+        return *this;
+    }
+
+    CHash160& Write2(const unsigned char* data, size_t len)
+    {
+        sha.Write(data, len);
         return *this;
     }
 
@@ -101,7 +114,7 @@ inline uint256 Hash(const T1& in1, const T2& in2)
     return result;
 }
 
-/** Compute the 160-bit hash an object. */
+///** Compute the 160-bit hash an object. */
 template <typename T1>
 inline uint160 Hash160(const T1& in1)
 {
@@ -109,6 +122,30 @@ inline uint160 Hash160(const T1& in1)
     CHash160().Write(MakeUCharSpan(in1)).Finalize(result);
     return result;
 }
+
+/** Compute the 160-bit hash of the concatenation of two objects. */
+//template <typename T1>
+//inline uint160 Hash160(const T1& in1, const T1& in2)
+//{
+//    uint160 result;
+//    CHash160().Write(MakeUCharSpan(in1)).Write(MakeUCharSpan(in2)).Finalize(result);
+//    return result;
+//}
+
+template <typename T1>
+inline uint160 Hash160(const T1 pbegin, const T1 pend)
+{
+    static unsigned char pblank[1] = {};
+    uint160 result;
+    CHash160().Write2(pbegin == pend ? pblank : (unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0])).Finalize2((unsigned char*)&result);
+    return result;
+}
+
+//template <unsigned int N>
+//inline uint160 Hash160(const prevector<N, unsigned char>& vch)
+//{
+//    return Hash160(vch.begin(), vch.end());
+//}
 
 /** A writer stream (for serialization) that computes a 256-bit hash. */
 class CHashWriter

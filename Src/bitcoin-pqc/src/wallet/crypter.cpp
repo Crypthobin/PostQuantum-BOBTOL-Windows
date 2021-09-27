@@ -124,7 +124,7 @@ bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned
     return cKeyCrypter.Decrypt(vchCiphertext, vchPlaintext);
 }
 
-bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCryptedSecret, const CPubKey& vchPubKey, CKey& key)
+bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCryptedSecret, const CBOBPubKey& vchPubKey, CBOBKey& key)
 {
     CKeyingMaterial vchSecret;
     if(!DecryptSecret(vMasterKey, vchCryptedSecret, vchPubKey.GetHash(), vchSecret))

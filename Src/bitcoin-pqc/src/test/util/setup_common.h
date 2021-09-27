@@ -140,7 +140,7 @@ struct TestChain100Setup : public RegTestingSetup {
     CMutableTransaction CreateValidMempoolTransaction(CTransactionRef input_transaction,
                                                       int input_vout,
                                                       int input_height,
-                                                      CKey input_signing_key,
+                                                      CBOBKey input_signing_key,
                                                       CScript output_destination,
                                                       CAmount output_amount = CAmount(1 * COIN),
                                                       bool submit = true);

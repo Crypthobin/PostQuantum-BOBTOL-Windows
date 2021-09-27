@@ -221,9 +221,9 @@ public:
     bool WriteTx(const CWalletTx& wtx);
     bool EraseTx(uint256 hash);
 
-    bool WriteKeyMetadata(const CKeyMetadata& meta, const CPubKey& pubkey, const bool overwrite);
-    bool WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata &keyMeta);
-    bool WriteCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, const CKeyMetadata &keyMeta);
+    bool WriteKeyMetadata(const CKeyMetadata& meta, const CBOBPubKey& pubkey, const bool overwrite);
+    bool WriteKey(const CBOBPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta);
+    bool WriteCryptedKey(const CBOBPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, const CKeyMetadata& keyMeta);
     bool WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey);
 
     bool WriteCScript(const uint160& hash, const CScript& redeemScript);
@@ -242,12 +242,12 @@ public:
 
     bool WriteMinVersion(int nVersion);
 
-    bool WriteDescriptorKey(const uint256& desc_id, const CPubKey& pubkey, const CPrivKey& privkey);
-    bool WriteCryptedDescriptorKey(const uint256& desc_id, const CPubKey& pubkey, const std::vector<unsigned char>& secret);
+    bool WriteDescriptorKey(const uint256& desc_id, const CBOBPubKey& pubkey, const CPrivKey& privkey);
+    bool WriteCryptedDescriptorKey(const uint256& desc_id, const CBOBPubKey& pubkey, const std::vector<unsigned char>& secret);
     bool WriteDescriptor(const uint256& desc_id, const WalletDescriptor& descriptor);
-    bool WriteDescriptorDerivedCache(const CExtPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index, uint32_t der_index);
-    bool WriteDescriptorParentCache(const CExtPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index);
-    bool WriteDescriptorLastHardenedCache(const CExtPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index);
+    bool WriteDescriptorDerivedCache(const CExtBOBPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index, uint32_t der_index);
+    bool WriteDescriptorParentCache(const CExtBOBPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index);
+    bool WriteDescriptorLastHardenedCache(const CExtBOBPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index);
     bool WriteDescriptorCacheItems(const uint256& desc_id, const DescriptorCache& cache);
 
     /// Write destination data key,value tuple to database

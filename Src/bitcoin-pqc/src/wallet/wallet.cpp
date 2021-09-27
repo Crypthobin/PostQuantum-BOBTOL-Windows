@@ -1488,7 +1488,7 @@ bool CWallet::ImportScripts(const std::set<CScript> scripts, int64_t timestamp)
     return spk_man->ImportScripts(scripts, timestamp);
 }
 
-bool CWallet::ImportPrivKeys(const std::map<CKeyID, CKey>& privkey_map, const int64_t timestamp)
+bool CWallet::ImportPrivKeys(const std::map<CKeyID, CBOBKey>& privkey_map, const int64_t timestamp)
 {
     auto spk_man = GetLegacyScriptPubKeyMan();
     if (!spk_man) {
@@ -1498,7 +1498,7 @@ bool CWallet::ImportPrivKeys(const std::map<CKeyID, CKey>& privkey_map, const in
     return spk_man->ImportPrivKeys(privkey_map, timestamp);
 }
 
-bool CWallet::ImportPubKeys(const std::vector<CKeyID>& ordered_pubkeys, const std::map<CKeyID, CPubKey>& pubkey_map, const std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>>& key_origins, const bool add_keypool, const bool internal, const int64_t timestamp)
+bool CWallet::ImportPubKeys(const std::vector<CKeyID>& ordered_pubkeys, const std::map<CKeyID, CBOBPubKey>& pubkey_map, const std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>>& key_origins, const bool add_keypool, const bool internal, const int64_t timestamp)
 {
     auto spk_man = GetLegacyScriptPubKeyMan();
     if (!spk_man) {
@@ -2902,7 +2902,7 @@ CKeyPool::CKeyPool()
     m_pre_split = false;
 }
 
-CKeyPool::CKeyPool(const CPubKey& vchPubKeyIn, bool internalIn)
+CKeyPool::CKeyPool(const CBOBPubKey& vchPubKeyIn, bool internalIn)
 {
     nTime = GetTime();
     vchPubKey = vchPubKeyIn;
@@ -3122,13 +3122,13 @@ void CWallet::SetupDescriptorScriptPubKeyMans()
 
     if (!IsWalletFlagSet(WALLET_FLAG_EXTERNAL_SIGNER)) {
         // Make a seed
-        CKey seed_key;
-        seed_key.MakeNewKey(true);
-        CPubKey seed = seed_key.GetPubKey();
+        CBOBKey seed_key;
+        seed_key.MakeNewKey();
+        CBOBPubKey seed = seed_key.GetPubKey();
         assert(seed_key.VerifyPubKey(seed));
 
         // Get the extended key
-        CExtKey master_key;
+        CExtBOBKey master_key;
         master_key.SetSeed(seed_key.begin(), seed_key.size());
 
         for (bool internal : {false, true}) {
@@ -3273,7 +3273,7 @@ ScriptPubKeyMan* CWallet::AddWalletDescriptor(WalletDescriptor& desc, const Flat
 
     // Add the private keys to the descriptor
     for (const auto& entry : signing_provider.keys) {
-        const CKey& key = entry.second;
+        const CBOBKey& key = entry.second;
         spk_man->AddDescriptorKey(key, key.GetPubKey());
     }
 
