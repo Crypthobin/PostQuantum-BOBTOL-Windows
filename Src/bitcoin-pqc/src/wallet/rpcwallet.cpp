@@ -78,9 +78,9 @@ static bool ParseIncludeWatchonly(const UniValue& include_watchonly, const CWall
 
 
 /** Checks if a CKey is in the given CWallet compressed or otherwise*/
-bool HaveKey(const SigningProvider& wallet, const CKey& key)
+bool HaveKey(const SigningProvider& wallet, const CBOBKey& key)
 {
-    CKey key2;
+    CBOBKey key2;
     key2.Set(key.begin(), key.end(), !key.IsCompressed());
     return wallet.HaveKey(key.GetPubKey().GetID()) || wallet.HaveKey(key2.GetPubKey().GetID());
 }
@@ -1003,7 +1003,7 @@ static RPCHelpMan addmultisigaddress()
 
     // Get the public keys
     const UniValue& keys_or_addrs = request.params[1].get_array();
-    std::vector<CPubKey> pubkeys;
+    std::vector<CBOBPubKey> pubkeys;
     for (unsigned int i = 0; i < keys_or_addrs.size(); ++i) {
         if (IsHex(keys_or_addrs[i].get_str()) && (keys_or_addrs[i].get_str().length() == 66 || keys_or_addrs[i].get_str().length() == 130)) {
             pubkeys.push_back(HexToPubKey(keys_or_addrs[i].get_str()));
@@ -3768,7 +3768,7 @@ public:
             obj.pushKV("sigsrequired", solutions_data[0][0]);
             UniValue pubkeys(UniValue::VARR);
             for (size_t i = 1; i < solutions_data.size() - 1; ++i) {
-                CPubKey key(solutions_data[i].begin(), solutions_data[i].end());
+                CBOBPubKey key(solutions_data[i].begin(), solutions_data[i].end());
                 pubkeys.push_back(HexStr(key));
             }
             obj.pushKV("pubkeys", std::move(pubkeys));
@@ -3783,7 +3783,7 @@ public:
     {
         CKeyID keyID{ToKeyID(pkhash)};
         UniValue obj(UniValue::VOBJ);
-        CPubKey vchPubKey;
+        CBOBPubKey vchPubKey;
         if (provider && provider->GetPubKey(keyID, vchPubKey)) {
             obj.pushKV("pubkey", HexStr(vchPubKey));
             obj.pushKV("iscompressed", vchPubKey.IsCompressed());
@@ -3805,7 +3805,7 @@ public:
     UniValue operator()(const WitnessV0KeyHash& id) const
     {
         UniValue obj(UniValue::VOBJ);
-        CPubKey pubkey;
+        CBOBPubKey pubkey;
         if (provider && provider->GetPubKey(ToKeyID(id), pubkey)) {
             obj.pushKV("pubkey", HexStr(pubkey));
         }
@@ -4353,11 +4353,11 @@ static RPCHelpMan sethdseed()
         flush_key_pool = request.params[0].get_bool();
     }
 
-    CPubKey master_pub_key;
+    CBOBPubKey master_pub_key;
     if (request.params[1].isNull()) {
         master_pub_key = spk_man.GenerateNewSeed();
     } else {
-        CKey key = DecodeSecret(request.params[1].get_str());
+        CBOBKey key = DecodeSecret(request.params[1].get_str());
         if (!key.IsValid()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
         }

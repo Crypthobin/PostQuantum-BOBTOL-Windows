@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-using ExtPubKeyMap = std::unordered_map<uint32_t, CExtPubKey>;
+using ExtPubKeyMap = std::unordered_map<uint32_t, CExtBOBPubKey>;
 
 /** Cache for single descriptor's derived extended pubkeys */
 class DescriptorCache {
@@ -31,39 +31,39 @@ public:
      * @param[in] key_exp_pos Position of the key expression within the descriptor
      * @param[in] xpub The CExtPubKey to cache
      */
-    void CacheParentExtPubKey(uint32_t key_exp_pos, const CExtPubKey& xpub);
+    void CacheParentExtPubKey(uint32_t key_exp_pos, const CExtBOBPubKey& xpub);
     /** Retrieve a cached parent xpub
      *
      * @param[in] key_exp_pos Position of the key expression within the descriptor
      * @param[in] xpub The CExtPubKey to get from cache
      */
-    bool GetCachedParentExtPubKey(uint32_t key_exp_pos, CExtPubKey& xpub) const;
+    bool GetCachedParentExtPubKey(uint32_t key_exp_pos, CExtBOBPubKey& xpub) const;
     /** Cache an xpub derived at an index
      *
      * @param[in] key_exp_pos Position of the key expression within the descriptor
      * @param[in] der_index Derivation index of the xpub
      * @param[in] xpub The CExtPubKey to cache
      */
-    void CacheDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, const CExtPubKey& xpub);
+    void CacheDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, const CExtBOBPubKey& xpub);
     /** Retrieve a cached xpub derived at an index
      *
      * @param[in] key_exp_pos Position of the key expression within the descriptor
      * @param[in] der_index Derivation index of the xpub
      * @param[in] xpub The CExtPubKey to get from cache
      */
-    bool GetCachedDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, CExtPubKey& xpub) const;
+    bool GetCachedDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, CExtBOBPubKey& xpub) const;
     /** Cache a last hardened xpub
      *
      * @param[in] key_exp_pos Position of the key expression within the descriptor
      * @param[in] xpub The CExtPubKey to cache
      */
-    void CacheLastHardenedExtPubKey(uint32_t key_exp_pos, const CExtPubKey& xpub);
+    void CacheLastHardenedExtPubKey(uint32_t key_exp_pos, const CExtBOBPubKey& xpub);
     /** Retrieve a cached last hardened xpub
      *
      * @param[in] key_exp_pos Position of the key expression within the descriptor
      * @param[in] xpub The CExtPubKey to get from cache
      */
-    bool GetCachedLastHardenedExtPubKey(uint32_t key_exp_pos, CExtPubKey& xpub) const;
+    bool GetCachedLastHardenedExtPubKey(uint32_t key_exp_pos, CExtBOBPubKey& xpub) const;
 
     /** Retrieve all cached parent xpubs */
     const ExtPubKeyMap GetCachedParentExtPubKeys() const;

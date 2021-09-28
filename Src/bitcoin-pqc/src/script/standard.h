@@ -81,6 +81,7 @@ struct PKHash : public BaseHash<uint160>
     PKHash() : BaseHash() {}
     explicit PKHash(const uint160& hash) : BaseHash(hash) {}
     explicit PKHash(const CPubKey& pubkey);
+    explicit PKHash(const CBOBPubKey& pubkey);
     explicit PKHash(const CKeyID& pubkey_id);
 };
 CKeyID ToKeyID(const PKHash& key_hash);
@@ -111,6 +112,7 @@ struct WitnessV0KeyHash : public BaseHash<uint160>
     WitnessV0KeyHash() : BaseHash() {}
     explicit WitnessV0KeyHash(const uint160& hash) : BaseHash(hash) {}
     explicit WitnessV0KeyHash(const CPubKey& pubkey);
+    explicit WitnessV0KeyHash(const CBOBPubKey& pubkey);
     explicit WitnessV0KeyHash(const PKHash& pubkey_hash);
 };
 CKeyID ToKeyID(const WitnessV0KeyHash& key_hash);
@@ -205,10 +207,10 @@ bool ExtractDestinations(const CScript& scriptPubKey, TxoutType& typeRet, std::v
 CScript GetScriptForDestination(const CTxDestination& dest);
 
 /** Generate a P2PK script for the given pubkey. */
-CScript GetScriptForRawPubKey(const CPubKey& pubkey);
+CScript GetScriptForRawPubKey(const CBOBPubKey& pubkey);
 
 /** Generate a multisig script. */
-CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
+CScript GetScriptForMultisig(int nRequired, const std::vector<CBOBPubKey>& keys);
 
 struct ShortestVectorFirstComparator
 {
@@ -337,5 +339,7 @@ public:
  * returned, corresponding to a depth-first traversal of the script tree.
  */
 std::optional<std::vector<std::tuple<int, CScript, int>>> InferTaprootTree(const TaprootSpendData& spenddata, const XOnlyPubKey& output);
+
+CScript GetScriptForWitness(const CScript& redeemscript);
 
 #endif // BITCOIN_SCRIPT_STANDARD_H

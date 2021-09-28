@@ -166,7 +166,7 @@ public:
      *  write_cache is the cache to write keys to (if not nullptr)
      *  Caches are not exclusive but this is not tested. Currently we use them exclusively
      */
-    virtual bool GetPubKey(int pos, const SigningProvider& arg, CPubKey& key, KeyOriginInfo& info, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const = 0;
+    virtual bool GetPubKey(int pos, const SigningProvider& arg, CBOBPubKey& key, KeyOriginInfo& info, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const = 0;
 
     /** Whether this represent multiple public keys at different positions. */
     virtual bool IsRange() const = 0;
@@ -184,7 +184,7 @@ public:
     virtual bool ToNormalizedString(const SigningProvider& arg, std::string& out, const DescriptorCache* cache = nullptr) const = 0;
 
     /** Derive a private key, if private data is available in arg. */
-    virtual bool GetPrivKey(int pos, const SigningProvider& arg, CKey& key) const = 0;
+    virtual bool GetPrivKey(int pos, const SigningProvider& arg, CBOBKey& key) const = 0;
 };
 
 class OriginPubkeyProvider final : public PubkeyProvider
@@ -199,7 +199,7 @@ class OriginPubkeyProvider final : public PubkeyProvider
 
 public:
     OriginPubkeyProvider(uint32_t exp_index, KeyOriginInfo info, std::unique_ptr<PubkeyProvider> provider) : PubkeyProvider(exp_index), m_origin(std::move(info)), m_provider(std::move(provider)) {}
-    bool GetPubKey(int pos, const SigningProvider& arg, CPubKey& key, KeyOriginInfo& info, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const override
+    bool GetPubKey(int pos, const SigningProvider& arg, CBOBPubKey& key, KeyOriginInfo& info, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const override
     {
         if (!m_provider->GetPubKey(pos, arg, key, info, read_cache, write_cache)) return false;
         std::copy(std::begin(m_origin.fingerprint), std::end(m_origin.fingerprint), info.fingerprint);
@@ -231,7 +231,7 @@ public:
         }
         return true;
     }
-    bool GetPrivKey(int pos, const SigningProvider& arg, CKey& key) const override
+    bool GetPrivKey(int pos, const SigningProvider& arg, CBOBKey& key) const override
     {
         return m_provider->GetPrivKey(pos, arg, key);
     }
@@ -240,12 +240,12 @@ public:
 /** An object representing a parsed constant public key in a descriptor. */
 class ConstPubkeyProvider final : public PubkeyProvider
 {
-    CPubKey m_pubkey;
+    CBOBPubKey m_pubkey;
     bool m_xonly;
 
 public:
-    ConstPubkeyProvider(uint32_t exp_index, const CPubKey& pubkey, bool xonly) : PubkeyProvider(exp_index), m_pubkey(pubkey), m_xonly(xonly) {}
-    bool GetPubKey(int pos, const SigningProvider& arg, CPubKey& key, KeyOriginInfo& info, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const override
+    ConstPubkeyProvider(uint32_t exp_index, const CBOBPubKey& pubkey, bool xonly) : PubkeyProvider(exp_index), m_pubkey(pubkey), m_xonly(xonly) {}
+    bool GetPubKey(int pos, const SigningProvider& arg, CBOBPubKey& key, KeyOriginInfo& info, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const override
     {
         key = m_pubkey;
         info.path.clear();
@@ -258,7 +258,7 @@ public:
     std::string ToString() const override { return m_xonly ? HexStr(m_pubkey).substr(2) : HexStr(m_pubkey); }
     bool ToPrivateString(const SigningProvider& arg, std::string& ret) const override
     {
-        CKey key;
+        CBOBKey key;
         if (!arg.GetKey(m_pubkey.GetID(), key)) return false;
         ret = EncodeSecret(key);
         return true;
@@ -268,7 +268,7 @@ public:
         ret = ToString();
         return true;
     }
-    bool GetPrivKey(int pos, const SigningProvider& arg, CKey& key) const override
+    bool GetPrivKey(int pos, const SigningProvider& arg, CBOBKey& key) const 
     {
         return arg.GetKey(m_pubkey.GetID(), key);
     }
@@ -284,13 +284,13 @@ enum class DeriveType {
 class BIP32PubkeyProvider final : public PubkeyProvider
 {
     // Root xpub, path, and final derivation step type being used, if any
-    CExtPubKey m_root_extkey;
+    CExtBOBPubKey m_root_extkey;
     KeyPath m_path;
     DeriveType m_derive;
 
-    bool GetExtKey(const SigningProvider& arg, CExtKey& ret) const
+    bool GetExtKey(const SigningProvider& arg, CExtBOBKey& ret) const
     {
-        CKey key;
+        CBOBKey key;
         if (!arg.GetKey(m_root_extkey.pubkey.GetID(), key)) return false;
         ret.nDepth = m_root_extkey.nDepth;
         std::copy(m_root_extkey.vchFingerprint, m_root_extkey.vchFingerprint + sizeof(ret.vchFingerprint), ret.vchFingerprint);
@@ -301,7 +301,7 @@ class BIP32PubkeyProvider final : public PubkeyProvider
     }
 
     // Derives the last xprv
-    bool GetDerivedExtKey(const SigningProvider& arg, CExtKey& xprv, CExtKey& last_hardened) const
+    bool GetDerivedExtKey(const SigningProvider& arg, CExtBOBKey& xprv, CExtBOBKey& last_hardened) const
     {
         if (!GetExtKey(arg, xprv)) return false;
         for (auto entry : m_path) {
@@ -323,10 +323,10 @@ class BIP32PubkeyProvider final : public PubkeyProvider
     }
 
 public:
-    BIP32PubkeyProvider(uint32_t exp_index, const CExtPubKey& extkey, KeyPath path, DeriveType derive) : PubkeyProvider(exp_index), m_root_extkey(extkey), m_path(std::move(path)), m_derive(derive) {}
+    BIP32PubkeyProvider(uint32_t exp_index, const CExtBOBPubKey& extkey, KeyPath path, DeriveType derive) : PubkeyProvider(exp_index), m_root_extkey(extkey), m_path(std::move(path)), m_derive(derive) {}
     bool IsRange() const override { return m_derive != DeriveType::NO; }
     size_t GetSize() const override { return 33; }
-    bool GetPubKey(int pos, const SigningProvider& arg, CPubKey& key_out, KeyOriginInfo& final_info_out, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const override
+    bool GetPubKey(int pos, const SigningProvider& arg, CBOBPubKey& key_out, KeyOriginInfo& final_info_out, const DescriptorCache* read_cache = nullptr, DescriptorCache* write_cache = nullptr) const override
     {
         // Info of parent of the to be derived pubkey
         KeyOriginInfo parent_info;
@@ -340,9 +340,9 @@ public:
         if (m_derive == DeriveType::HARDENED) final_info_out_tmp.path.push_back(((uint32_t)pos) | 0x80000000L);
 
         // Derive keys or fetch them from cache
-        CExtPubKey final_extkey = m_root_extkey;
-        CExtPubKey parent_extkey = m_root_extkey;
-        CExtPubKey last_hardened_extkey;
+        CExtBOBPubKey final_extkey = m_root_extkey;
+        CExtBOBPubKey parent_extkey = m_root_extkey;
+        CExtBOBPubKey last_hardened_extkey;
         bool der = true;
         if (read_cache) {
             if (!read_cache->GetCachedDerivedExtPubKey(m_expr_index, pos, final_extkey)) {
@@ -353,8 +353,8 @@ public:
                 if (m_derive == DeriveType::UNHARDENED) der = parent_extkey.Derive(final_extkey, pos);
             }
         } else if (IsHardened()) {
-            CExtKey xprv;
-            CExtKey lh_xprv;
+            CExtBOBKey xprv;
+            CExtBOBKey lh_xprv;
             if (!GetDerivedExtKey(arg, xprv, lh_xprv)) return false;
             parent_extkey = xprv.Neuter();
             if (m_derive == DeriveType::UNHARDENED) der = xprv.Derive(xprv, pos);
@@ -403,7 +403,7 @@ public:
     }
     bool ToPrivateString(const SigningProvider& arg, std::string& out) const override
     {
-        CExtKey key;
+        CExtBOBKey key;
         if (!GetExtKey(arg, key)) return false;
         out = EncodeExtKey(key) + FormatHDKeypath(m_path);
         if (IsRange()) {
@@ -447,15 +447,15 @@ public:
         CKeyID id = m_root_extkey.pubkey.GetID();
         std::copy(id.begin(), id.begin() + 4, origin.fingerprint);
 
-        CExtPubKey xpub;
-        CExtKey lh_xprv;
+        CExtBOBPubKey xpub;
+        CExtBOBKey lh_xprv;
         // If we have the cache, just get the parent xpub
         if (cache != nullptr) {
             cache->GetCachedLastHardenedExtPubKey(m_expr_index, xpub);
         }
         if (!xpub.pubkey.IsValid()) {
             // Cache miss, or nor cache, or need privkey
-            CExtKey xprv;
+            CExtBOBKey xprv;
             if (!GetDerivedExtKey(arg, xprv, lh_xprv)) return false;
             xpub = lh_xprv.Neuter();
         }
@@ -470,10 +470,10 @@ public:
         }
         return true;
     }
-    bool GetPrivKey(int pos, const SigningProvider& arg, CKey& key) const override
+    bool GetPrivKey(int pos, const SigningProvider& arg, CBOBKey& key) const override
     {
-        CExtKey extkey;
-        CExtKey dummy;
+        CExtBOBKey extkey;
+        CExtBOBKey dummy;
         if (!GetDerivedExtKey(arg, extkey, dummy)) return false;
         if (m_derive == DeriveType::UNHARDENED) extkey.Derive(extkey, pos);
         if (m_derive == DeriveType::HARDENED) extkey.Derive(extkey, pos | 0x80000000UL);
@@ -510,7 +510,7 @@ protected:
      *             The origin info of the provided pubkeys is automatically added.
      *  @return A vector with scriptPubKeys for this descriptor.
      */
-    virtual std::vector<CScript> MakeScripts(const std::vector<CPubKey>& pubkeys, Span<const CScript> scripts, FlatSigningProvider& out) const = 0;
+    virtual std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& pubkeys, Span<const CScript> scripts, FlatSigningProvider& out) const = 0;
 
 public:
     DescriptorImpl(std::vector<std::unique_ptr<PubkeyProvider>> pubkeys, const std::string& name) : m_pubkey_args(std::move(pubkeys)), m_name(name), m_subdescriptor_args() {}
@@ -606,7 +606,7 @@ public:
 
     bool ExpandHelper(int pos, const SigningProvider& arg, const DescriptorCache* read_cache, std::vector<CScript>& output_scripts, FlatSigningProvider& out, DescriptorCache* write_cache) const
     {
-        std::vector<std::pair<CPubKey, KeyOriginInfo>> entries;
+        std::vector<std::pair<CBOBPubKey, KeyOriginInfo>> entries;
         entries.reserve(m_pubkey_args.size());
 
         // Construct temporary data in `entries`, `subscripts`, and `subprovider` to avoid producing output in case of failure.
@@ -624,7 +624,7 @@ public:
         }
         out = Merge(std::move(out), std::move(subprovider));
 
-        std::vector<CPubKey> pubkeys;
+        std::vector<CBOBPubKey> pubkeys;
         pubkeys.reserve(entries.size());
         for (auto& entry : entries) {
             pubkeys.push_back(entry.first);
@@ -648,7 +648,7 @@ public:
     void ExpandPrivate(int pos, const SigningProvider& provider, FlatSigningProvider& out) const final
     {
         for (const auto& p : m_pubkey_args) {
-            CKey key;
+            CBOBKey key;
             if (!p->GetPrivKey(pos, provider, key)) continue;
             out.keys.emplace(key.GetPubKey().GetID(), key);
         }
@@ -666,7 +666,7 @@ class AddressDescriptor final : public DescriptorImpl
     const CTxDestination m_destination;
 protected:
     std::string ToStringExtra() const override { return EncodeDestination(m_destination); }
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, Span<const CScript>, FlatSigningProvider&) const override { return Vector(GetScriptForDestination(m_destination)); }
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>&, Span<const CScript>, FlatSigningProvider&) const override { return Vector(GetScriptForDestination(m_destination)); }
 public:
     AddressDescriptor(CTxDestination destination) : DescriptorImpl({}, "addr"), m_destination(std::move(destination)) {}
     bool IsSolvable() const final { return false; }
@@ -684,7 +684,7 @@ class RawDescriptor final : public DescriptorImpl
     const CScript m_script;
 protected:
     std::string ToStringExtra() const override { return HexStr(m_script); }
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, Span<const CScript>, FlatSigningProvider&) const override { return Vector(m_script); }
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>&, Span<const CScript>, FlatSigningProvider&) const override { return Vector(m_script); }
 public:
     RawDescriptor(CScript script) : DescriptorImpl({}, "raw"), m_script(std::move(script)) {}
     bool IsSolvable() const final { return false; }
@@ -704,7 +704,7 @@ class PKDescriptor final : public DescriptorImpl
 private:
     const bool m_xonly;
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override
     {
         if (m_xonly) {
             CScript script = CScript() << ToByteVector(XOnlyPubKey(keys[0])) << OP_CHECKSIG;
@@ -722,7 +722,7 @@ public:
 class PKHDescriptor final : public DescriptorImpl
 {
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
     {
         CKeyID id = keys[0].GetID();
         out.pubkeys.emplace(id, keys[0]);
@@ -738,7 +738,7 @@ public:
 class WPKHDescriptor final : public DescriptorImpl
 {
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
     {
         CKeyID id = keys[0].GetID();
         out.pubkeys.emplace(id, keys[0]);
@@ -754,7 +754,7 @@ public:
 class ComboDescriptor final : public DescriptorImpl
 {
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
     {
         std::vector<CScript> ret;
         CKeyID id = keys[0].GetID();
@@ -781,9 +781,9 @@ class MultisigDescriptor final : public DescriptorImpl
     const bool m_sorted;
 protected:
     std::string ToStringExtra() const override { return strprintf("%i", m_threshold); }
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override {
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override {
         if (m_sorted) {
-            std::vector<CPubKey> sorted_keys(keys);
+            std::vector<CBOBPubKey> sorted_keys(keys);
             std::sort(sorted_keys.begin(), sorted_keys.end());
             return Vector(GetScriptForMultisig(m_threshold, sorted_keys));
         }
@@ -798,7 +798,7 @@ public:
 class SHDescriptor final : public DescriptorImpl
 {
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, Span<const CScript> scripts, FlatSigningProvider& out) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>&, Span<const CScript> scripts, FlatSigningProvider& out) const override
     {
         auto ret = Vector(GetScriptForDestination(ScriptHash(scripts[0])));
         if (ret.size()) out.scripts.emplace(CScriptID(scripts[0]), scripts[0]);
@@ -820,7 +820,7 @@ public:
 class WSHDescriptor final : public DescriptorImpl
 {
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, Span<const CScript> scripts, FlatSigningProvider& out) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>&, Span<const CScript> scripts, FlatSigningProvider& out) const override
     {
         auto ret = Vector(GetScriptForDestination(WitnessV0ScriptHash(scripts[0])));
         if (ret.size()) out.scripts.emplace(CScriptID(scripts[0]), scripts[0]);
@@ -837,7 +837,7 @@ class TRDescriptor final : public DescriptorImpl
 {
     std::vector<int> m_depths;
 protected:
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript> scripts, FlatSigningProvider& out) const override
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript> scripts, FlatSigningProvider& out) const override
     {
         TaprootBuilder builder;
         assert(m_depths.size() == scripts.size());
@@ -934,7 +934,7 @@ std::unique_ptr<PubkeyProvider> ParsePubkeyInner(uint32_t key_exp_index, const S
     if (split.size() == 1) {
         if (IsHex(str)) {
             std::vector<unsigned char> data = ParseHex(str);
-            CPubKey pubkey(data);
+            CBOBPubKey pubkey(data);
             if (pubkey.IsFullyValid()) {
                 if (permit_uncompressed || pubkey.IsCompressed()) {
                     return std::make_unique<ConstPubkeyProvider>(key_exp_index, pubkey, false);
@@ -953,10 +953,10 @@ std::unique_ptr<PubkeyProvider> ParsePubkeyInner(uint32_t key_exp_index, const S
             error = strprintf("Pubkey '%s' is invalid", str);
             return nullptr;
         }
-        CKey key = DecodeSecret(str);
+        CBOBKey key = DecodeSecret(str);
         if (key.IsValid()) {
             if (permit_uncompressed || key.IsCompressed()) {
-                CPubKey pubkey = key.GetPubKey();
+                CBOBPubKey pubkey = key.GetPubKey();
                 out.keys.emplace(pubkey.GetID(), key);
                 return std::make_unique<ConstPubkeyProvider>(key_exp_index, pubkey, ctx == ParseScriptContext::P2TR);
             } else {
@@ -965,8 +965,8 @@ std::unique_ptr<PubkeyProvider> ParsePubkeyInner(uint32_t key_exp_index, const S
             }
         }
     }
-    CExtKey extkey = DecodeExtKey(str);
-    CExtPubKey extpubkey = DecodeExtPubKey(str);
+    CExtBOBKey extkey = DecodeExtKey(str);
+    CExtBOBPubKey extpubkey = DecodeExtPubKey(str);
     if (!extkey.key.IsValid() && !extpubkey.pubkey.IsValid()) {
         error = strprintf("key '%s' is not valid", str);
         return nullptr;
@@ -1225,7 +1225,7 @@ std::unique_ptr<DescriptorImpl> ParseScript(uint32_t& key_exp_index, Span<const 
     return nullptr;
 }
 
-std::unique_ptr<PubkeyProvider> InferPubkey(const CPubKey& pubkey, ParseScriptContext, const SigningProvider& provider)
+std::unique_ptr<PubkeyProvider> InferPubkey(const CBOBPubKey& pubkey, ParseScriptContext, const SigningProvider& provider)
 {
     std::unique_ptr<PubkeyProvider> key_provider = std::make_unique<ConstPubkeyProvider>(0, pubkey, false);
     KeyOriginInfo info;
@@ -1237,9 +1237,9 @@ std::unique_ptr<PubkeyProvider> InferPubkey(const CPubKey& pubkey, ParseScriptCo
 
 std::unique_ptr<PubkeyProvider> InferXOnlyPubkey(const XOnlyPubKey& xkey, ParseScriptContext ctx, const SigningProvider& provider)
 {
-    unsigned char full_key[CPubKey::COMPRESSED_SIZE] = {0x02};
+    unsigned char full_key[CBOBPubKey::COMPRESSED_SIZE] = {0x02};
     std::copy(xkey.begin(), xkey.end(), full_key + 1);
-    CPubKey pubkey(full_key);
+    CBOBPubKey pubkey(full_key);
     std::unique_ptr<PubkeyProvider> key_provider = std::make_unique<ConstPubkeyProvider>(0, pubkey, true);
     KeyOriginInfo info;
     if (provider.GetKeyOriginByXOnly(xkey, info)) {
@@ -1259,7 +1259,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
     TxoutType txntype = Solver(script, data);
 
     if (txntype == TxoutType::PUBKEY && (ctx == ParseScriptContext::TOP || ctx == ParseScriptContext::P2SH || ctx == ParseScriptContext::P2WSH)) {
-        CPubKey pubkey(data[0]);
+        CBOBPubKey pubkey(data[0]);
         if (pubkey.IsValid()) {
             return std::make_unique<PKDescriptor>(InferPubkey(pubkey, ctx, provider));
         }
@@ -1267,7 +1267,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
     if (txntype == TxoutType::PUBKEYHASH && (ctx == ParseScriptContext::TOP || ctx == ParseScriptContext::P2SH || ctx == ParseScriptContext::P2WSH)) {
         uint160 hash(data[0]);
         CKeyID keyid(hash);
-        CPubKey pubkey;
+        CBOBPubKey pubkey;
         if (provider.GetPubKey(keyid, pubkey)) {
             return std::make_unique<PKHDescriptor>(InferPubkey(pubkey, ctx, provider));
         }
@@ -1275,7 +1275,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
     if (txntype == TxoutType::WITNESS_V0_KEYHASH && (ctx == ParseScriptContext::TOP || ctx == ParseScriptContext::P2SH)) {
         uint160 hash(data[0]);
         CKeyID keyid(hash);
-        CPubKey pubkey;
+        CBOBPubKey pubkey;
         if (provider.GetPubKey(keyid, pubkey)) {
             return std::make_unique<WPKHDescriptor>(InferPubkey(pubkey, ctx, provider));
         }
@@ -1283,7 +1283,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
     if (txntype == TxoutType::MULTISIG && (ctx == ParseScriptContext::TOP || ctx == ParseScriptContext::P2SH || ctx == ParseScriptContext::P2WSH)) {
         std::vector<std::unique_ptr<PubkeyProvider>> providers;
         for (size_t i = 1; i + 1 < data.size(); ++i) {
-            CPubKey pubkey(data[i]);
+            CBOBPubKey pubkey(data[i]);
             providers.push_back(InferPubkey(pubkey, ctx, provider));
         }
         return std::make_unique<MultisigDescriptor>((int)data[0][0], std::move(providers));
@@ -1414,23 +1414,23 @@ std::unique_ptr<Descriptor> InferDescriptor(const CScript& script, const Signing
     return InferScript(script, ParseScriptContext::TOP, provider);
 }
 
-void DescriptorCache::CacheParentExtPubKey(uint32_t key_exp_pos, const CExtPubKey& xpub)
+void DescriptorCache::CacheParentExtPubKey(uint32_t key_exp_pos, const CExtBOBPubKey& xpub)
 {
     m_parent_xpubs[key_exp_pos] = xpub;
 }
 
-void DescriptorCache::CacheDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, const CExtPubKey& xpub)
+void DescriptorCache::CacheDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, const CExtBOBPubKey& xpub)
 {
     auto& xpubs = m_derived_xpubs[key_exp_pos];
     xpubs[der_index] = xpub;
 }
 
-void DescriptorCache::CacheLastHardenedExtPubKey(uint32_t key_exp_pos, const CExtPubKey& xpub)
+void DescriptorCache::CacheLastHardenedExtPubKey(uint32_t key_exp_pos, const CExtBOBPubKey& xpub)
 {
     m_last_hardened_xpubs[key_exp_pos] = xpub;
 }
 
-bool DescriptorCache::GetCachedParentExtPubKey(uint32_t key_exp_pos, CExtPubKey& xpub) const
+bool DescriptorCache::GetCachedParentExtPubKey(uint32_t key_exp_pos, CExtBOBPubKey& xpub) const
 {
     const auto& it = m_parent_xpubs.find(key_exp_pos);
     if (it == m_parent_xpubs.end()) return false;
@@ -1438,7 +1438,7 @@ bool DescriptorCache::GetCachedParentExtPubKey(uint32_t key_exp_pos, CExtPubKey&
     return true;
 }
 
-bool DescriptorCache::GetCachedDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, CExtPubKey& xpub) const
+bool DescriptorCache::GetCachedDerivedExtPubKey(uint32_t key_exp_pos, uint32_t der_index, CExtBOBPubKey& xpub) const
 {
     const auto& key_exp_it = m_derived_xpubs.find(key_exp_pos);
     if (key_exp_it == m_derived_xpubs.end()) return false;
@@ -1448,7 +1448,7 @@ bool DescriptorCache::GetCachedDerivedExtPubKey(uint32_t key_exp_pos, uint32_t d
     return true;
 }
 
-bool DescriptorCache::GetCachedLastHardenedExtPubKey(uint32_t key_exp_pos, CExtPubKey& xpub) const
+bool DescriptorCache::GetCachedLastHardenedExtPubKey(uint32_t key_exp_pos, CExtBOBPubKey& xpub) const
 {
     const auto& it = m_last_hardened_xpubs.find(key_exp_pos);
     if (it == m_last_hardened_xpubs.end()) return false;
@@ -1460,7 +1460,7 @@ DescriptorCache DescriptorCache::MergeAndDiff(const DescriptorCache& other)
 {
     DescriptorCache diff;
     for (const auto& parent_xpub_pair : other.GetCachedParentExtPubKeys()) {
-        CExtPubKey xpub;
+        CExtBOBPubKey xpub;
         if (GetCachedParentExtPubKey(parent_xpub_pair.first, xpub)) {
             if (xpub != parent_xpub_pair.second) {
                 throw std::runtime_error(std::string(__func__) + ": New cached parent xpub does not match already cached parent xpub");
@@ -1472,7 +1472,7 @@ DescriptorCache DescriptorCache::MergeAndDiff(const DescriptorCache& other)
     }
     for (const auto& derived_xpub_map_pair : other.GetCachedDerivedExtPubKeys()) {
         for (const auto& derived_xpub_pair : derived_xpub_map_pair.second) {
-            CExtPubKey xpub;
+            CExtBOBPubKey xpub;
             if (GetCachedDerivedExtPubKey(derived_xpub_map_pair.first, derived_xpub_pair.first, xpub)) {
                 if (xpub != derived_xpub_pair.second) {
                     throw std::runtime_error(std::string(__func__) + ": New cached derived xpub does not match already cached derived xpub");
@@ -1484,7 +1484,7 @@ DescriptorCache DescriptorCache::MergeAndDiff(const DescriptorCache& other)
         }
     }
     for (const auto& lh_xpub_pair : other.GetCachedLastHardenedExtPubKeys()) {
-        CExtPubKey xpub;
+        CExtBOBPubKey xpub;
         if (GetCachedLastHardenedExtPubKey(lh_xpub_pair.first, xpub)) {
             if (xpub != lh_xpub_pair.second) {
                 throw std::runtime_error(std::string(__func__) + ": New cached last hardened xpub does not match already cached last hardened xpub");

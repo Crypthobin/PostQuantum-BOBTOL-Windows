@@ -463,7 +463,7 @@ public:
     {
         return CKeyID(Hash160(MakeSpan(vch).first(size())));
     }
-    /*
+    
     //! Get the 256-bit hash of this public key.
     uint256 GetHash() const
     {
@@ -606,6 +606,15 @@ struct CExtBOBPubKey {
                a.pubkey == b.pubkey;
     }
 
+    friend bool operator!=(CExtBOBPubKey& a, const CExtBOBPubKey& b)
+    {
+        return a.nDepth == b.nDepth &&
+               memcmp(&a.vchFingerprint[0], &b.vchFingerprint[0], sizeof(vchFingerprint)) == 0 &&
+               a.nChild == b.nChild &&
+               a.chaincode == b.chaincode &&
+               a.pubkey == b.pubkey;
+    }
+
     void Encode(unsigned char code[BIP32_EXTPQKEY_SIZE]) const;
     void Decode(const unsigned char code[BIP32_EXTPQKEY_SIZE]);
     /*bool Derive(CExtPQPubKey& out, unsigned int nChild) const;*/
@@ -634,6 +643,9 @@ struct CExtBOBPubKey {
         s.read((char*)&code[0], len);
         Decode(code);
     }
+
+    bool Derive(CExtBOBPubKey& out, unsigned int nChild) const;
+
 };
 
 

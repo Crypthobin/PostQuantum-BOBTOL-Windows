@@ -136,7 +136,7 @@ public:
         bilingual_str error;
         return m_wallet->GetNewDestination(type, label, dest, error);
     }
-    bool getPubKey(const CScript& script, const CKeyID& address, CPubKey& pub_key) override
+    bool getPubKey(const CScript& script, const CKeyID& address, CBOBPubKey& pub_key)
     {
         std::unique_ptr<SigningProvider> provider = m_wallet->GetSolvingProvider(script);
         if (provider) {

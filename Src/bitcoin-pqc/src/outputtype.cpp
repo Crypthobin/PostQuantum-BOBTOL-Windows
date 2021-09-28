@@ -46,7 +46,7 @@ const std::string& FormatOutputType(OutputType type)
     assert(false);
 }
 
-CTxDestination GetDestinationForKey(const CPubKey& key, OutputType type)
+CTxDestination GetDestinationForKey(const CBOBPubKey& key, OutputType type)
 {
     switch (type) {
     case OutputType::LEGACY: return PKHash(key);
@@ -66,7 +66,7 @@ CTxDestination GetDestinationForKey(const CPubKey& key, OutputType type)
     assert(false);
 }
 
-std::vector<CTxDestination> GetAllDestinationsForKey(const CPubKey& key)
+std::vector<CTxDestination> GetAllDestinationsForKey(const CBOBPubKey& key)
 {
     PKHash keyid(key);
     CTxDestination p2pkh{keyid};

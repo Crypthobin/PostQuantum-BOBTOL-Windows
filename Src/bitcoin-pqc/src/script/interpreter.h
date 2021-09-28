@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdint.h>
 
-class CPubKey;
+class CBOBPubKey;
 class XOnlyPubKey;
 class CScript;
 class CTransaction;
@@ -234,6 +234,8 @@ extern const CHashWriter HASHER_TAPBRANCH;  //!< Hasher with tag "TapBranch" pre
 
 template <class T>
 uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache = nullptr);
+template <class T>
+uint512 PQSignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache = nullptr);
 
 class BaseSignatureChecker
 {
@@ -284,7 +286,7 @@ private:
     const PrecomputedTransactionData* txdata;
 
 protected:
-    virtual bool VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
+    virtual bool VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& vchPubKey, const uint256& sighash) const;
     virtual bool VerifySchnorrSignature(Span<const unsigned char> sig, const XOnlyPubKey& pubkey, const uint256& sighash) const;
 
 public:

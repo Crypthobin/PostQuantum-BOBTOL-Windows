@@ -258,7 +258,7 @@ CBlock TestChain100Setup::CreateAndProcessBlock(const std::vector<CMutableTransa
 CMutableTransaction TestChain100Setup::CreateValidMempoolTransaction(CTransactionRef input_transaction,
                                                                      int input_vout,
                                                                      int input_height,
-                                                                     CKey input_signing_key,
+                                                                     CBOBKey input_signing_key,
                                                                      CScript output_destination,
                                                                      CAmount output_amount,
                                                                      bool submit)

@@ -92,9 +92,9 @@ std::string HelpExampleCliNamed(const std::string& methodname, const RPCArgList&
 std::string HelpExampleRpc(const std::string& methodname, const std::string& args);
 std::string HelpExampleRpcNamed(const std::string& methodname, const RPCArgList& args);
 
-CPubKey HexToPubKey(const std::string& hex_in);
-CPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string& addr_in);
-CTxDestination AddAndGetMultisigDestination(const int required, const std::vector<CPubKey>& pubkeys, OutputType type, FillableSigningProvider& keystore, CScript& script_out);
+CBOBPubKey HexToPubKey(const std::string& hex_in);
+CBOBPubKey AddrToPubKey(const FillableSigningProvider& keystore, const std::string& addr_in);
+CTxDestination AddAndGetMultisigDestination(const int required, const std::vector<CBOBPubKey>& pubkeys, OutputType type, FillableSigningProvider& keystore, CScript& script_out);
 
 UniValue DescribeAddress(const CTxDestination& dest);
 

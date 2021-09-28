@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <key_io.h>
-
+#include <key.h>
 #include <base58.h>
 #include <bech32.h>
 #include <util/strencodings.h>
@@ -175,9 +175,9 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
 }
 } // namespace
 
-CKey DecodeSecret(const std::string& str)
+CBOBKey DecodeSecret(const std::string& str)
 {
-    CKey key;
+    CBOBKey key;
     std::vector<unsigned char> data;
     if (DecodeBase58Check(str, data, 34)) {
         const std::vector<unsigned char>& privkey_prefix = Params().Base58Prefix(CChainParams::SECRET_KEY);
@@ -193,7 +193,7 @@ CKey DecodeSecret(const std::string& str)
     return key;
 }
 
-std::string EncodeSecret(const CKey& key)
+std::string EncodeSecret(const CBOBKey& key)
 {
     assert(key.IsValid());
     std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::SECRET_KEY);
@@ -206,9 +206,9 @@ std::string EncodeSecret(const CKey& key)
     return ret;
 }
 
-CExtPubKey DecodeExtPubKey(const std::string& str)
+CExtBOBPubKey DecodeExtPubKey(const std::string& str)
 {
-    CExtPubKey key;
+    CExtBOBPubKey key;
     std::vector<unsigned char> data;
     if (DecodeBase58Check(str, data, 78)) {
         const std::vector<unsigned char>& prefix = Params().Base58Prefix(CChainParams::EXT_PUBLIC_KEY);
@@ -219,7 +219,7 @@ CExtPubKey DecodeExtPubKey(const std::string& str)
     return key;
 }
 
-std::string EncodeExtPubKey(const CExtPubKey& key)
+std::string EncodeExtPubKey(const CExtBOBPubKey& key)
 {
     std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::EXT_PUBLIC_KEY);
     size_t size = data.size();
@@ -229,9 +229,9 @@ std::string EncodeExtPubKey(const CExtPubKey& key)
     return ret;
 }
 
-CExtKey DecodeExtKey(const std::string& str)
+CExtBOBKey DecodeExtKey(const std::string& str)
 {
-    CExtKey key;
+    CExtBOBKey key;
     std::vector<unsigned char> data;
     if (DecodeBase58Check(str, data, 78)) {
         const std::vector<unsigned char>& prefix = Params().Base58Prefix(CChainParams::EXT_SECRET_KEY);
@@ -242,7 +242,7 @@ CExtKey DecodeExtKey(const std::string& str)
     return key;
 }
 
-std::string EncodeExtKey(const CExtKey& key)
+std::string EncodeExtKey(const CExtBOBKey& key)
 {
     std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::EXT_SECRET_KEY);
     size_t size = data.size();

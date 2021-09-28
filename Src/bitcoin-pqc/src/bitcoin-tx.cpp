@@ -16,6 +16,7 @@
 #include <primitives/transaction.h>
 #include <script/script.h>
 #include <script/sign.h>
+#include <script/standard.h>
 #include <script/signingprovider.h>
 #include <univalue.h>
 #include <util/moneystr.h>
@@ -24,6 +25,7 @@
 #include <util/string.h>
 #include <util/system.h>
 #include <util/translation.h>
+
 
 #include <functional>
 #include <memory>
@@ -306,7 +308,7 @@ static void MutateTxAddOutPubKey(CMutableTransaction& tx, const std::string& str
     CAmount value = ExtractAndValidateValue(vStrInputParts[0]);
 
     // Extract and validate PUBKEY
-    CPubKey pubkey(ParseHex(vStrInputParts[1]));
+    CBOBPubKey pubkey(ParseHex(vStrInputParts[1]));
     if (!pubkey.IsFullyValid())
         throw std::runtime_error("invalid TX output pubkey");
     CScript scriptPubKey = GetScriptForRawPubKey(pubkey);
@@ -325,7 +327,7 @@ static void MutateTxAddOutPubKey(CMutableTransaction& tx, const std::string& str
             throw std::runtime_error("Uncompressed pubkeys are not useable for SegWit outputs");
         }
         // Build a P2WPKH script
-        scriptPubKey = GetScriptForDestination(WitnessV0KeyHash(pubkey));
+        scriptPubKey = GetScriptForWitness(scriptPubKey);
     }
     if (bScriptHash) {
         // Get the ID for the script, and then construct a P2SH destination for it.
@@ -365,9 +367,9 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
                             + ToString(required) + " of " + ToString(numkeys) + "signatures.");
 
     // extract and validate PUBKEYs
-    std::vector<CPubKey> pubkeys;
+    std::vector<CBOBPubKey> pubkeys;
     for(int pos = 1; pos <= int(numkeys); pos++) {
-        CPubKey pubkey(ParseHex(vStrInputParts[pos + 2]));
+        CBOBPubKey pubkey(ParseHex(vStrInputParts[pos + 2]));
         if (!pubkey.IsFullyValid())
             throw std::runtime_error("invalid TX output pubkey");
         pubkeys.push_back(pubkey);
@@ -389,7 +391,7 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
     CScript scriptPubKey = GetScriptForMultisig(required, pubkeys);
 
     if (bSegWit) {
-        for (const CPubKey& pubkey : pubkeys) {
+        for (const CBOBPubKey& pubkey : pubkeys) {
             if (!pubkey.IsCompressed()) {
                 throw std::runtime_error("Uncompressed pubkeys are not useable for SegWit outputs");
             }
@@ -570,7 +572,7 @@ static void MutateTxSign(CMutableTransaction& tx, const std::string& flagStr)
     for (unsigned int kidx = 0; kidx < keysObj.size(); kidx++) {
         if (!keysObj[kidx].isStr())
             throw std::runtime_error("privatekey not a std::string");
-        CKey key = DecodeSecret(keysObj[kidx].getValStr());
+        CBOBKey key = DecodeSecret(keysObj[kidx].getValStr());
         if (!key.IsValid()) {
             throw std::runtime_error("privatekey not valid");
         }

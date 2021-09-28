@@ -95,12 +95,12 @@ bool WalletBatch::EraseTx(uint256 hash)
     return EraseIC(std::make_pair(DBKeys::TX, hash));
 }
 
-bool WalletBatch::WriteKeyMetadata(const CKeyMetadata& meta, const CPubKey& pubkey, const bool overwrite)
+bool WalletBatch::WriteKeyMetadata(const CKeyMetadata& meta, const CBOBPubKey& pubkey, const bool overwrite)
 {
     return WriteIC(std::make_pair(DBKeys::KEYMETA, pubkey), meta, overwrite);
 }
 
-bool WalletBatch::WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta)
+bool WalletBatch::WriteKey(const CBOBPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta)
 {
     if (!WriteKeyMetadata(keyMeta, vchPubKey, false)) {
         return false;
@@ -115,7 +115,7 @@ bool WalletBatch::WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey,
     return WriteIC(std::make_pair(DBKeys::KEY, vchPubKey), std::make_pair(vchPrivKey, Hash(vchKey)), false);
 }
 
-bool WalletBatch::WriteCryptedKey(const CPubKey& vchPubKey,
+bool WalletBatch::WriteCryptedKey(const CBOBPubKey& vchPubKey,
                                 const std::vector<unsigned char>& vchCryptedSecret,
                                 const CKeyMetadata &keyMeta)
 {
@@ -216,7 +216,7 @@ bool WalletBatch::EraseActiveScriptPubKeyMan(uint8_t type, bool internal)
     return EraseIC(make_pair(key, type));
 }
 
-bool WalletBatch::WriteDescriptorKey(const uint256& desc_id, const CPubKey& pubkey, const CPrivKey& privkey)
+bool WalletBatch::WriteDescriptorKey(const uint256& desc_id, const CBOBPubKey& pubkey, const CPrivKey& privkey)
 {
     // hash pubkey/privkey to accelerate wallet load
     std::vector<unsigned char> key;
@@ -227,7 +227,7 @@ bool WalletBatch::WriteDescriptorKey(const uint256& desc_id, const CPubKey& pubk
     return WriteIC(std::make_pair(DBKeys::WALLETDESCRIPTORKEY, std::make_pair(desc_id, pubkey)), std::make_pair(privkey, Hash(key)), false);
 }
 
-bool WalletBatch::WriteCryptedDescriptorKey(const uint256& desc_id, const CPubKey& pubkey, const std::vector<unsigned char>& secret)
+bool WalletBatch::WriteCryptedDescriptorKey(const uint256& desc_id, const CBOBPubKey& pubkey, const std::vector<unsigned char>& secret)
 {
     if (!WriteIC(std::make_pair(DBKeys::WALLETDESCRIPTORCKEY, std::make_pair(desc_id, pubkey)), secret, false)) {
         return false;
@@ -241,21 +241,21 @@ bool WalletBatch::WriteDescriptor(const uint256& desc_id, const WalletDescriptor
     return WriteIC(make_pair(DBKeys::WALLETDESCRIPTOR, desc_id), descriptor);
 }
 
-bool WalletBatch::WriteDescriptorDerivedCache(const CExtPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index, uint32_t der_index)
+bool WalletBatch::WriteDescriptorDerivedCache(const CExtBOBPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index, uint32_t der_index)
 {
     std::vector<unsigned char> ser_xpub(BIP32_EXTKEY_SIZE);
     xpub.Encode(ser_xpub.data());
     return WriteIC(std::make_pair(std::make_pair(DBKeys::WALLETDESCRIPTORCACHE, desc_id), std::make_pair(key_exp_index, der_index)), ser_xpub);
 }
 
-bool WalletBatch::WriteDescriptorParentCache(const CExtPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index)
+bool WalletBatch::WriteDescriptorParentCache(const CExtBOBPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index)
 {
     std::vector<unsigned char> ser_xpub(BIP32_EXTKEY_SIZE);
     xpub.Encode(ser_xpub.data());
     return WriteIC(std::make_pair(std::make_pair(DBKeys::WALLETDESCRIPTORCACHE, desc_id), key_exp_index), ser_xpub);
 }
 
-bool WalletBatch::WriteDescriptorLastHardenedCache(const CExtPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index)
+bool WalletBatch::WriteDescriptorLastHardenedCache(const CExtBOBPubKey& xpub, const uint256& desc_id, uint32_t key_exp_index)
 {
     std::vector<unsigned char> ser_xpub(BIP32_EXTKEY_SIZE);
     xpub.Encode(ser_xpub.data());
@@ -297,8 +297,8 @@ public:
     std::map<OutputType, uint256> m_active_external_spks;
     std::map<OutputType, uint256> m_active_internal_spks;
     std::map<uint256, DescriptorCache> m_descriptor_caches;
-    std::map<std::pair<uint256, CKeyID>, CKey> m_descriptor_keys;
-    std::map<std::pair<uint256, CKeyID>, std::pair<CPubKey, std::vector<unsigned char>>> m_descriptor_crypt_keys;
+    std::map<std::pair<uint256, CKeyID>, CBOBKey> m_descriptor_keys;
+    std::map<std::pair<uint256, CKeyID>, std::pair<CBOBPubKey, std::vector<unsigned char>>> m_descriptor_crypt_keys;
     std::map<uint160, CHDChain> m_hd_chains;
 
     CWalletScanState() {
@@ -378,14 +378,14 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 pwallet->GetOrCreateLegacyScriptPubKeyMan()->LoadWatchOnly(script);
             }
         } else if (strType == DBKeys::KEY) {
-            CPubKey vchPubKey;
+            CBOBPubKey vchPubKey;
             ssKey >> vchPubKey;
             if (!vchPubKey.IsValid())
             {
                 strErr = "Error reading wallet database: CPubKey corrupt";
                 return false;
             }
-            CKey key;
+            CBOBKey key;
             CPrivKey pkey;
             uint256 hash;
 
@@ -447,7 +447,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             if (pwallet->nMasterKeyMaxID < nID)
                 pwallet->nMasterKeyMaxID = nID;
         } else if (strType == DBKeys::CRYPTED_KEY) {
-            CPubKey vchPubKey;
+            CBOBPubKey vchPubKey;
             ssKey >> vchPubKey;
             if (!vchPubKey.IsValid())
             {
@@ -631,7 +631,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
 
             std::vector<unsigned char> ser_xpub(BIP32_EXTKEY_SIZE);
             ssValue >> ser_xpub;
-            CExtPubKey xpub;
+            CExtBOBPubKey xpub;
             xpub.Decode(ser_xpub.data());
             if (parent) {
                 wss.m_descriptor_caches[desc_id].CacheParentExtPubKey(key_exp_index, xpub);
@@ -646,12 +646,12 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
 
             std::vector<unsigned char> ser_xpub(BIP32_EXTKEY_SIZE);
             ssValue >> ser_xpub;
-            CExtPubKey xpub;
+            CExtBOBPubKey xpub;
             xpub.Decode(ser_xpub.data());
             wss.m_descriptor_caches[desc_id].CacheLastHardenedExtPubKey(key_exp_index, xpub);
         } else if (strType == DBKeys::WALLETDESCRIPTORKEY) {
             uint256 desc_id;
-            CPubKey pubkey;
+            CBOBPubKey pubkey;
             ssKey >> desc_id;
             ssKey >> pubkey;
             if (!pubkey.IsValid())
@@ -659,7 +659,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: CPubKey corrupt";
                 return false;
             }
-            CKey key;
+            CBOBKey key;
             CPrivKey pkey;
             uint256 hash;
 

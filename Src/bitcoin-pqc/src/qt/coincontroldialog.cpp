@@ -438,7 +438,7 @@ void CoinControlDialog::updateLabels(CCoinControl& m_coin_control, WalletModel *
         }
         else if(ExtractDestination(out.txout.scriptPubKey, address))
         {
-            CPubKey pubkey;
+            CBOBPubKey pubkey;
             PKHash* pkhash = std::get_if<PKHash>(&address);
             if (pkhash && model->wallet().getPubKey(out.txout.scriptPubKey, ToKeyID(*pkhash), pubkey))
             {

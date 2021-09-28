@@ -60,7 +60,7 @@ static std::string DecodeDumpString(const std::string &str) {
 static bool GetWalletAddressesForKey(LegacyScriptPubKeyMan* spk_man, const CWallet& wallet, const CKeyID& keyid, std::string& strAddr, std::string& strLabel) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet)
 {
     bool fLabelFound = false;
-    CKey key;
+    CBOBKey key;
     spk_man->GetKey(keyid, key);
     for (const auto& dest : GetAllDestinationsForKey(key.GetPubKey())) {
         const auto* address_book_entry = wallet.FindAddressBookEntry(dest);
@@ -155,10 +155,10 @@ RPCHelpMan importprivkey()
             throw JSONRPCError(RPC_WALLET_ERROR, "Wallet is currently rescanning. Abort existing rescan or wait.");
         }
 
-        CKey key = DecodeSecret(strSecret);
+        CBOBKey key = DecodeSecret(strSecret);
         if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
 
-        CPubKey pubkey = key.GetPubKey();
+        CBOBPubKey pubkey = key.GetPubKey();
         CHECK_NONFATAL(key.VerifyPubKey(pubkey));
         CKeyID vchAddress = pubkey.GetID();
         {
@@ -473,7 +473,7 @@ RPCHelpMan importpubkey()
     if (!IsHex(request.params[0].get_str()))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey must be a hex string");
     std::vector<unsigned char> data(ParseHex(request.params[0].get_str()));
-    CPubKey pubKey(data);
+    CBOBPubKey pubKey(data);
     if (!pubKey.IsFullyValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey is not a valid public key");
 
@@ -562,7 +562,7 @@ RPCHelpMan importwallet()
         // Use uiInterface.ShowProgress instead of pwallet.ShowProgress because pwallet.ShowProgress has a cancel button tied to AbortRescan which
         // we don't want for this progress bar showing the import progress. uiInterface.ShowProgress does not have a cancel button.
         pwallet->chain().showProgress(strprintf("%s " + _("Importing…").translated, pwallet->GetDisplayName()), 0, false); // show progress dialog in GUI
-        std::vector<std::tuple<CKey, int64_t, bool, std::string>> keys;
+        std::vector<std::tuple<CBOBKey, int64_t, bool, std::string>> keys;
         std::vector<std::pair<CScript, int64_t>> scripts;
         while (file.good()) {
             pwallet->chain().showProgress("", std::max(1, std::min(50, (int)(((double)file.tellg() / (double)nFilesize) * 100))), false);
@@ -575,7 +575,7 @@ RPCHelpMan importwallet()
             boost::split(vstr, line, boost::is_any_of(" "));
             if (vstr.size() < 2)
                 continue;
-            CKey key = DecodeSecret(vstr[0]);
+            CBOBKey key = DecodeSecret(vstr[0]);
             if (key.IsValid()) {
                 int64_t nTime = ParseISO8601DateTime(vstr[1]);
                 std::string strLabel;
@@ -610,12 +610,12 @@ RPCHelpMan importwallet()
         double progress = 0;
         for (const auto& key_tuple : keys) {
             pwallet->chain().showProgress("", std::max(50, std::min(75, (int)((progress / total) * 100) + 50)), false);
-            const CKey& key = std::get<0>(key_tuple);
+            const CBOBKey& key = std::get<0>(key_tuple);
             int64_t time = std::get<1>(key_tuple);
             bool has_label = std::get<2>(key_tuple);
             std::string label = std::get<3>(key_tuple);
 
-            CPubKey pubkey = key.GetPubKey();
+            CBOBPubKey pubkey = key.GetPubKey();
             CHECK_NONFATAL(key.VerifyPubKey(pubkey));
             CKeyID keyid = pubkey.GetID();
 
@@ -699,7 +699,7 @@ RPCHelpMan dumpprivkey()
     if (keyid.IsNull()) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
     }
-    CKey vchSecret;
+    CBOBKey vchSecret;
     if (!spk_man.GetKey(keyid, vchSecret)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + strAddress + " is not known");
     }
@@ -794,9 +794,9 @@ RPCHelpMan dumpwallet()
     CKeyID seed_id = spk_man.GetHDChain().seed_id;
     if (!seed_id.IsNull())
     {
-        CKey seed;
+        CBOBKey seed;
         if (spk_man.GetKey(seed_id, seed)) {
-            CExtKey masterKey;
+            CExtBOBKey masterKey;
             masterKey.SetSeed(seed.begin(), seed.size());
 
             file << "# extended private masterkey: " << EncodeExtKey(masterKey) << "\n\n";
@@ -807,7 +807,7 @@ RPCHelpMan dumpwallet()
         std::string strTime = FormatISO8601DateTime(it->first);
         std::string strAddr;
         std::string strLabel;
-        CKey key;
+        CBOBKey key;
         if (spk_man.GetKey(keyid, key)) {
             file << strprintf("%s %s ", EncodeSecret(key), strTime);
             if (GetWalletAddressesForKey(&spk_man, wallet, keyid, strAddr, strLabel)) {
@@ -860,7 +860,7 @@ struct ImportData
     // Output data
     std::set<CScript> import_scripts;
     std::map<CKeyID, bool> used_keys; //!< Import these private keys if available (the value indicates whether if the key is required for solvability)
-    std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>> key_origins;
+    std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>> key_origins;
 };
 
 enum class ScriptContext
@@ -880,7 +880,7 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
 
     switch (script_type) {
     case TxoutType::PUBKEY: {
-        CPubKey pubkey(solverdata[0]);
+        CBOBPubKey pubkey(solverdata[0]);
         import_data.used_keys.emplace(pubkey.GetID(), false);
         return "";
     }
@@ -902,7 +902,7 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
     }
     case TxoutType::MULTISIG: {
         for (size_t i = 1; i + 1< solverdata.size(); ++i) {
-            CPubKey pubkey(solverdata[i]);
+            CBOBPubKey pubkey(solverdata[i]);
             import_data.used_keys.emplace(pubkey.GetID(), false);
         }
         return "";
@@ -940,7 +940,7 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
     CHECK_NONFATAL(false);
 }
 
-static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CPubKey>& pubkey_map, std::map<CKeyID, CKey>& privkey_map, std::set<CScript>& script_pub_keys, bool& have_solving_data, const UniValue& data, std::vector<CKeyID>& ordered_pubkeys)
+static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CBOBPubKey>& pubkey_map, std::map<CKeyID, CBOBKey>& privkey_map, std::set<CScript>& script_pub_keys, bool& have_solving_data, const UniValue& data, std::vector<CKeyID>& ordered_pubkeys)
 {
     UniValue warnings(UniValue::VARR);
 
@@ -1009,7 +1009,7 @@ static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CP
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey \"" + str + "\" must be a hex string");
         }
         auto parsed_pubkey = ParseHex(str);
-        CPubKey pubkey(parsed_pubkey);
+        CBOBPubKey pubkey(parsed_pubkey);
         if (!pubkey.IsFullyValid()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pubkey \"" + str + "\" is not a valid public key");
         }
@@ -1018,11 +1018,11 @@ static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CP
     }
     for (size_t i = 0; i < keys.size(); ++i) {
         const auto& str = keys[i].get_str();
-        CKey key = DecodeSecret(str);
+        CBOBKey key = DecodeSecret(str);
         if (!key.IsValid()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
         }
-        CPubKey pubkey = key.GetPubKey();
+        CBOBPubKey pubkey = key.GetPubKey();
         CKeyID id = pubkey.GetID();
         if (pubkey_map.count(id)) {
             pubkey_map.erase(id);
@@ -1087,7 +1087,7 @@ static UniValue ProcessImportLegacy(ImportData& import_data, std::map<CKeyID, CP
     return warnings;
 }
 
-static UniValue ProcessImportDescriptor(ImportData& import_data, std::map<CKeyID, CPubKey>& pubkey_map, std::map<CKeyID, CKey>& privkey_map, std::set<CScript>& script_pub_keys, bool& have_solving_data, const UniValue& data, std::vector<CKeyID>& ordered_pubkeys)
+static UniValue ProcessImportDescriptor(ImportData& import_data, std::map<CKeyID, CBOBPubKey>& pubkey_map, std::map<CKeyID, CBOBKey>& privkey_map, std::set<CScript>& script_pub_keys, bool& have_solving_data, const UniValue& data, std::vector<CKeyID>& ordered_pubkeys)
 {
     UniValue warnings(UniValue::VARR);
 
@@ -1140,11 +1140,11 @@ static UniValue ProcessImportDescriptor(ImportData& import_data, std::map<CKeyID
 
     for (size_t i = 0; i < priv_keys.size(); ++i) {
         const auto& str = priv_keys[i].get_str();
-        CKey key = DecodeSecret(str);
+        CBOBKey key = DecodeSecret(str);
         if (!key.IsValid()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
         }
-        CPubKey pubkey = key.GetPubKey();
+        CBOBPubKey pubkey = key.GetPubKey();
         CKeyID id = pubkey.GetID();
 
         // Check if this private key corresponds to a public key from the descriptor
@@ -1160,10 +1160,10 @@ static UniValue ProcessImportDescriptor(ImportData& import_data, std::map<CKeyID
     // Thus, threshold multisigs without all keys will be considered not spendable here, even if they are,
     // perhaps triggering a false warning message. This is consistent with the current wallet IsMine check.
     bool spendable = std::all_of(pubkey_map.begin(), pubkey_map.end(),
-        [&](const std::pair<CKeyID, CPubKey>& used_key) {
+                                 [&](const std::pair<CKeyID, CBOBPubKey>& used_key) {
             return privkey_map.count(used_key.first) > 0;
         }) && std::all_of(import_data.key_origins.begin(), import_data.key_origins.end(),
-        [&](const std::pair<CKeyID, std::pair<CPubKey, KeyOriginInfo>>& entry) {
+                                 [&](const std::pair<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>>& entry) {
             return privkey_map.count(entry.first) > 0;
         });
     if (!watch_only && !spendable) {
@@ -1196,8 +1196,8 @@ static UniValue ProcessImport(CWallet& wallet, const UniValue& data, const int64
         }
 
         ImportData import_data;
-        std::map<CKeyID, CPubKey> pubkey_map;
-        std::map<CKeyID, CKey> privkey_map;
+        std::map<CKeyID, CBOBPubKey> pubkey_map;
+        std::map<CKeyID, CBOBKey> privkey_map;
         std::set<CScript> script_pub_keys;
         std::vector<CKeyID> ordered_pubkeys;
         bool have_solving_data;
@@ -1538,7 +1538,7 @@ static UniValue ProcessDescriptorImport(CWallet& wallet, const UniValue& data, c
         bool have_all_privkeys = !expand_keys.keys.empty();
         for (const auto& entry : expand_keys.origins) {
             const CKeyID& key_id = entry.first;
-            CKey key;
+            CBOBKey key;
             if (!expand_keys.GetKey(key_id, key)) {
                 have_all_privkeys = false;
                 break;

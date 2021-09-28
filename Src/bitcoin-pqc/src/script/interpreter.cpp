@@ -8,6 +8,7 @@
 #include <crypto/ripemd160.h>
 #include <crypto/sha1.h>
 #include <crypto/sha256.h>
+#include <crypto/sha512.h>
 #include <pubkey.h>
 #include <script/script.h>
 #include <uint256.h>
@@ -61,17 +62,17 @@ static inline void popstack(std::vector<valtype>& stack)
 }
 
 bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
-    if (vchPubKey.size() < CPubKey::COMPRESSED_SIZE) {
+    if (vchPubKey.size() < CBOBPubKey::COMPRESSED_SIZE) {
         //  Non-canonical public key: too short
         return false;
     }
     if (vchPubKey[0] == 0x04) {
-        if (vchPubKey.size() != CPubKey::SIZE) {
+        if (vchPubKey.size() != CBOBPubKey::SIZE) {
             //  Non-canonical public key: invalid length for uncompressed key
             return false;
         }
     } else if (vchPubKey[0] == 0x02 || vchPubKey[0] == 0x03) {
-        if (vchPubKey.size() != CPubKey::COMPRESSED_SIZE) {
+        if (vchPubKey.size() != CBOBPubKey::COMPRESSED_SIZE) {
             //  Non-canonical public key: invalid length for compressed key
             return false;
         }
@@ -83,7 +84,7 @@ bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
 }
 
 bool static IsCompressedPubKey(const valtype &vchPubKey) {
-    if (vchPubKey.size() != CPubKey::COMPRESSED_SIZE) {
+    if (vchPubKey.size() != CBOBPubKey::COMPRESSED_SIZE) {
         //  Non-canonical public key: invalid length for compressed key
         return false;
     }
@@ -180,7 +181,7 @@ bool static IsLowDERSignature(const valtype &vchSig, ScriptError* serror) {
     // If the S value is above the order of the curve divided by two, its
     // complement modulo the order could have been used instead, which is
     // one byte shorter when encoded correctly.
-    if (!CPubKey::CheckLowS(vchSigCopy)) {
+    if (!CBOBPubKey::CheckLowS(vchSigCopy)) {
         return set_error(serror, SCRIPT_ERR_SIG_HIGH_S);
     }
     return true;
@@ -1363,6 +1364,7 @@ public:
     }
 };
 
+// 1
 /** Compute the (single) SHA256 of the concatenation of all prevouts of a tx. */
 template <class T>
 uint256 GetPrevoutsSHA256(const T& txTo)
@@ -1373,7 +1375,19 @@ uint256 GetPrevoutsSHA256(const T& txTo)
     }
     return ss.GetSHA256();
 }
+// 추가
+/** Compute the (single) SHA512 of the concatenation of all prevouts of a tx. */
+template <class T>
+uint512 GetPrevoutsSHA512(const T& txTo)
+{
+    CPQHashWriter ss(SER_GETHASH, 0);
+    for (const auto& txin : txTo.vin) {
+        ss << txin.prevout;
+    }
+    return ss.GetSHA512();
+}
 
+// 2
 /** Compute the (single) SHA256 of the concatenation of all nSequences of a tx. */
 template <class T>
 uint256 GetSequencesSHA256(const T& txTo)
@@ -1384,7 +1398,19 @@ uint256 GetSequencesSHA256(const T& txTo)
     }
     return ss.GetSHA256();
 }
+// 추가
+/** Compute the (single) SHA512 of the concatenation of all nSequences of a tx. */
+template <class T>
+uint512 GetSequencesSHA512(const T& txTo)
+{
+    CPQHashWriter ss(SER_GETHASH, 0);
+    for (const auto& txin : txTo.vin) {
+        ss << txin.nSequence;
+    }
+    return ss.GetSHA512();
+}
 
+// 3
 /** Compute the (single) SHA256 of the concatenation of all txouts of a tx. */
 template <class T>
 uint256 GetOutputsSHA256(const T& txTo)
@@ -1395,7 +1421,20 @@ uint256 GetOutputsSHA256(const T& txTo)
     }
     return ss.GetSHA256();
 }
+// 추가
+/** Compute the (single) SHA512 of the concatenation of all txouts of a tx. */
+template <class T>
+uint512 GetOutputsSHA512(const T& txTo)
+{
+    CPQHashWriter ss(SER_GETHASH, 0);
+    for (const auto& txout : txTo.vout) {
+        ss << txout;
+    }
+    return ss.GetSHA512();
+}
 
+
+// 21버전에서 새로 추가된 함수 (1) 
 /** Compute the (single) SHA256 of the concatenation of all amounts spent by a tx. */
 uint256 GetSpentAmountsSHA256(const std::vector<CTxOut>& outputs_spent)
 {
@@ -1406,6 +1445,7 @@ uint256 GetSpentAmountsSHA256(const std::vector<CTxOut>& outputs_spent)
     return ss.GetSHA256();
 }
 
+// 21버전에서 새로 추가된 함수 (2)
 /** Compute the (single) SHA256 of the concatenation of all scriptPubKeys spent by a tx. */
 uint256 GetSpentScriptsSHA256(const std::vector<CTxOut>& outputs_spent)
 {
@@ -1654,8 +1694,79 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
     return ss.GetHash();
 }
 
+// 추가
 template <class T>
-bool GenericTransactionSignatureChecker<T>::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const
+uint512 PQSignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)
+{
+    assert(nIn < txTo.vin.size());
+
+    if (sigversion == SigVersion::WITNESS_V0) {
+        uint256 hashPrevouts;
+        uint256 hashSequence;
+        uint256 hashOutputs;
+        const bool cacheready = cache && cache->m_bip143_segwit_ready;
+
+        if (!(nHashType & SIGHASH_ANYONECANPAY)) {
+            hashPrevouts = cacheready ? cache->hashPrevouts : SHA256Uint256(GetPrevoutsSHA256(txTo));
+        }
+
+        if (!(nHashType & SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE) {
+            hashSequence = cacheready ? cache->hashSequence : SHA256Uint256(GetSequencesSHA256(txTo));
+        }
+
+
+        if ((nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE) {
+            hashOutputs = cacheready ? cache->hashOutputs : SHA256Uint256(GetOutputsSHA256(txTo));
+        } else if ((nHashType & 0x1f) == SIGHASH_SINGLE && nIn < txTo.vout.size()) {
+            CHashWriter ss(SER_GETHASH, 0);
+            ss << txTo.vout[nIn];
+            hashOutputs = ss.GetHash();
+        }
+
+        // 이부분 수정
+        CPQHashWriter ss(SER_GETHASH, 0);
+        // Version
+        ss << txTo.nVersion;
+        // Input prevouts/nSequence (none/all, depending on flags)
+        ss << hashPrevouts;
+        ss << hashSequence;
+        // The input being signed (replacing the scriptSig with scriptCode + amount)
+        // The prevout may already be contained in hashPrevout, and the nSequence
+        // may already be contain in hashSequence.
+        ss << txTo.vin[nIn].prevout;
+        ss << scriptCode;
+        ss << amount;
+        ss << txTo.vin[nIn].nSequence;
+        // Outputs (none/one/all, depending on flags)
+        ss << hashOutputs;
+        // Locktime
+        ss << txTo.nLockTime;
+        // Sighash type
+        ss << nHashType;
+
+        return ss.GetHash();
+    }
+
+    // Check for invalid use of SIGHASH_SINGLE
+    if ((nHashType & 0x1f) == SIGHASH_SINGLE) {
+        if (nIn >= txTo.vout.size()) {
+            //  nOut out of range
+            return uint256::ONE;
+        }
+    }
+
+    // Wrapper to serialize only the necessary parts of the transaction being signed
+    CTransactionSignatureSerializer<T> txTmp(txTo, scriptCode, nIn, nHashType);
+
+    // 이 부분 수정
+    // Serialize and hash
+    CPQHashWriter ss(SER_GETHASH, 0);
+    ss << txTmp << nHashType;
+    return ss.GetHash();
+}
+
+template <class T>
+bool GenericTransactionSignatureChecker<T>::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint256& sighash) const
 {
     return pubkey.Verify(sighash, vchSig);
 }
@@ -1669,7 +1780,7 @@ bool GenericTransactionSignatureChecker<T>::VerifySchnorrSignature(Span<const un
 template <class T>
 bool GenericTransactionSignatureChecker<T>::CheckECDSASignature(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
 {
-    CPubKey pubkey(vchPubKey);
+    CBOBPubKey pubkey(vchPubKey);
     if (!pubkey.IsValid())
         return false;
 

@@ -34,7 +34,7 @@ bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provid
 {
     assert(sigversion == SigVersion::BASE || sigversion == SigVersion::WITNESS_V0);
 
-    CKey key;
+    CBOBKey key;
     if (!provider.GetKey(address, key))
         return false;
 
@@ -59,7 +59,7 @@ bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider&
 {
     assert(sigversion == SigVersion::TAPROOT || sigversion == SigVersion::TAPSCRIPT);
 
-    CKey key;
+    CBOBKey key;
     if (!provider.GetKeyByXOnly(pubkey, key)) return false;
 
     // BIP341/BIP342 signing needs lots of precomputed transaction data. While some
@@ -80,7 +80,7 @@ bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider&
     uint256 hash;
     if (!SignatureHashSchnorr(hash, execdata, *txTo, nIn, nHashType, sigversion, *m_txdata, MissingDataBehavior::FAIL)) return false;
     sig.resize(64);
-    if (!key.SignSchnorr(hash, sig, merkle_root, nullptr)) return false;
+ //   if (!key.SignSchnorr(hash, sig, merkle_root, nullptr)) return false;
     if (nHashType) sig.push_back(nHashType);
     return true;
 }
@@ -101,7 +101,7 @@ static bool GetCScript(const SigningProvider& provider, const SignatureData& sig
     return false;
 }
 
-static bool GetPubKey(const SigningProvider& provider, const SignatureData& sigdata, const CKeyID& address, CPubKey& pubkey)
+static bool GetPubKey(const SigningProvider& provider, const SignatureData& sigdata, const CKeyID& address, CBOBPubKey& pubkey)
 {
     // Look for pubkey in all partial sigs
     const auto it = sigdata.signatures.find(address);
@@ -119,7 +119,7 @@ static bool GetPubKey(const SigningProvider& provider, const SignatureData& sigd
     return provider.GetPubKey(address, pubkey);
 }
 
-static bool CreateSig(const BaseSignatureCreator& creator, SignatureData& sigdata, const SigningProvider& provider, std::vector<unsigned char>& sig_out, const CPubKey& pubkey, const CScript& scriptcode, SigVersion sigversion)
+static bool CreateSig(const BaseSignatureCreator& creator, SignatureData& sigdata, const SigningProvider& provider, std::vector<unsigned char>& sig_out, const CBOBPubKey& pubkey, const CScript& scriptcode, SigVersion sigversion)
 {
     CKeyID keyid = pubkey.GetID();
     const auto it = sigdata.signatures.find(keyid);
@@ -244,12 +244,12 @@ static bool SignStep(const SigningProvider& provider, const BaseSignatureCreator
     case TxoutType::WITNESS_UNKNOWN:
         return false;
     case TxoutType::PUBKEY:
-        if (!CreateSig(creator, sigdata, provider, sig, CPubKey(vSolutions[0]), scriptPubKey, sigversion)) return false;
+        if (!CreateSig(creator, sigdata, provider, sig, CBOBPubKey(vSolutions[0]), scriptPubKey, sigversion)) return false;
         ret.push_back(std::move(sig));
         return true;
     case TxoutType::PUBKEYHASH: {
         CKeyID keyID = CKeyID(uint160(vSolutions[0]));
-        CPubKey pubkey;
+        CBOBPubKey pubkey;
         if (!GetPubKey(provider, sigdata, keyID, pubkey)) {
             // Pubkey could not be found, add to missing
             sigdata.missing_pubkeys.push_back(keyID);
@@ -274,7 +274,7 @@ static bool SignStep(const SigningProvider& provider, const BaseSignatureCreator
         size_t required = vSolutions.front()[0];
         ret.push_back(valtype()); // workaround CHECKMULTISIG bug
         for (size_t i = 1; i < vSolutions.size() - 1; ++i) {
-            CPubKey pubkey = CPubKey(vSolutions[i]);
+            CBOBPubKey pubkey = CBOBPubKey(vSolutions[i]);
             // We need to always call CreateSig in order to fill sigdata with all
             // possible signatures that we can create. This will allow further PSBT
             // processing to work as it needs all possible signature and pubkey pairs
@@ -401,7 +401,7 @@ public:
     bool CheckECDSASignature(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override
     {
         if (m_checker.CheckECDSASignature(scriptSig, vchPubKey, scriptCode, sigversion)) {
-            CPubKey pubkey(vchPubKey);
+            CBOBPubKey pubkey(vchPubKey);
             sigdata.signatures.emplace(pubkey.GetID(), SigPair(pubkey, scriptSig));
             return true;
         }
@@ -477,7 +477,7 @@ SignatureData DataFromTransaction(const CMutableTransaction& tx, unsigned int nI
             for (unsigned int i = last_success_key; i < num_pubkeys; ++i) {
                 const valtype& pubkey = solutions[i+1];
                 // We either have a signature for this pubkey, or we have found a signature and it is valid
-                if (data.signatures.count(CPubKey(pubkey).GetID()) || extractor_checker.CheckECDSASignature(sig, pubkey, next_script, sigversion)) {
+                if (data.signatures.count(CBOBPubKey(pubkey).GetID()) || extractor_checker.CheckECDSASignature(sig, pubkey, next_script, sigversion)) {
                     last_success_key = i + 1;
                     break;
                 }

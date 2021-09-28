@@ -15,7 +15,7 @@
 #include <span.h>
 #include <streams.h>
 
-class CKey;
+class CBOBKey;
 class CKeyID;
 class CScript;
 class CTransaction;
@@ -57,7 +57,7 @@ extern const BaseSignatureCreator& DUMMY_SIGNATURE_CREATOR;
 /** A signature creator that just produces 72-byte empty signatures. */
 extern const BaseSignatureCreator& DUMMY_MAXIMUM_SIGNATURE_CREATOR;
 
-typedef std::pair<CPubKey, std::vector<unsigned char>> SigPair;
+typedef std::pair<CBOBPubKey, std::vector<unsigned char>> SigPair;
 
 // This struct contains information from a transaction input and also contains signatures for that input.
 // The information contained here can be used to create a signature and is also filled by ProduceSignature
@@ -71,7 +71,7 @@ struct SignatureData {
     CScriptWitness scriptWitness; ///< The scriptWitness of an input. Contains complete signatures or the traditional partial signatures format. scriptWitness is part of a transaction input per BIP 144.
     TaprootSpendData tr_spenddata; ///< Taproot spending data.
     std::map<CKeyID, SigPair> signatures; ///< BIP 174 style partial signatures for the input. May contain all signatures necessary for producing a final scriptSig or scriptWitness.
-    std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>> misc_pubkeys;
+    std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>> misc_pubkeys;
     std::vector<unsigned char> taproot_key_path_sig; /// Schnorr signature for key path spending
     std::map<std::pair<XOnlyPubKey, uint256>, std::vector<unsigned char>> taproot_script_sigs; ///< (Partial) schnorr signatures, indexed by XOnlyPubKey and leaf_hash.
     std::vector<CKeyID> missing_pubkeys; ///< KeyIDs of pubkeys which could not be found

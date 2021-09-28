@@ -33,99 +33,10 @@
     <ClCompile Include="..\..\src\script\signingprovider.cpp" />
     <ClCompile Include="..\..\src\script\standard.cpp" />
     <ClCompile Include="..\..\src\warnings.cpp" />
-    <ClCompile Include="..\..\src\dilithium\aes256ctr.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\fips202.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\ntt.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\packing.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\poly.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\polyvec.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\PQCgenKAT_sign.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\randombytes.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\reduce.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\rng.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\rounding.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\sign.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\symmetric-aes.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\symmetric-shake.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dilithium">
       <UniqueIdentifier>{88654a64-3ee4-40a4-ba70-e47b64d0ec78}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\dilithium\aes256ctr.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\api.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\config.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\fips202.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\ntt.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\packing.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\params.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\poly.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\polyvec.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\randombytes.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\reduce.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\rng.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\rounding.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\sign.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\symmetric.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
