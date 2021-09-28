@@ -522,9 +522,9 @@ bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool
 
 bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 {
-    if (pubkey.IsCompressed() != fCompressed) {
+    /*if (pubkey.IsCompressed() != fCompressed) {
         return false;
-    }
+    }*/
     unsigned char rnd[8];
     std::string str = "Bitcoin key verification\n";
     GetRandBytes(rnd, sizeof(rnd));

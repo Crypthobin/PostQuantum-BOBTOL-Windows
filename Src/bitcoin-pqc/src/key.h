@@ -229,7 +229,7 @@ private:
     bool fValid;
 
     //! Whether the public key corresponding to this private key is (to be) compressed.
-    //bool fCompressed;
+    bool fCompressed;
 
     //! The actual byte data
     std::vector<unsigned char, secure_allocator<unsigned char>> keydata;
@@ -239,11 +239,10 @@ private:
 
     bool Negate();
 
-    bool fCompressed;
 
 public:
     //! Construct an invalid private key.
-    CBOBKey() : fValid(false) /*, fCompressed(false)*/
+    CBOBKey() : fValid(false), fCompressed(false)
     {
         // Important: vch must be 32 bytes in length to not break serialization
         keydata.resize(32);
@@ -251,7 +250,7 @@ public:
 
     friend bool operator==(const CBOBKey& a, const CBOBKey& b)
     {
-        return /*a.fCompressed == b.fCompressed &&*/
+        return a.fCompressed == b.fCompressed &&
             a.size() == b.size() &&
             memcmp(a.keydata.data(), b.keydata.data(), a.size()) == 0;
     }
@@ -265,7 +264,7 @@ public:
         } else if (Check(&pbegin[0])) {
             memcpy(keydata.data(), (unsigned char*)&pbegin[0], keydata.size());
             fValid = true;
-            /*fCompressed = fCompressedIn;*/
+            fCompressed = fCompressedIn;
         } else {
             fValid = false;
         }

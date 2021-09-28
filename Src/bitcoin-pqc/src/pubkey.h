@@ -356,15 +356,11 @@ private:
     //! Compute the length of a pubkey with a given first byte.
     unsigned int static GetLen(unsigned char chHeader)
     {
-        /*if (chHeader == 2 || chHeader == 3)
+        if (chHeader == 2 || chHeader == 3)
             return COMPRESSED_SIZE;
         if (chHeader == 4 || chHeader == 6 || chHeader == 7)
             return SIZE;
-        return 0;*/
-        if (chHeader == 4)
-            return SIZE;
         return 0;
-        //zzng coin에서 바꿔준건데 되는지는 모르겠습니다 .Crypthobin
     }
 
     //! Set this key data to be invalid
