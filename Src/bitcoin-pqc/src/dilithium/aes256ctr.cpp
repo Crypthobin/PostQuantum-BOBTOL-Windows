@@ -1,25 +1,25 @@
 /*
- * copyright (c) 2016 thomas pornin <pornin@bolet.org>
+ * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
  *
- * permission is hereby granted, free of charge, to any person obtaining
+ * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
- * "software"), to deal in the software without restriction, including
+ * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the software, and to
- * permit persons to whom the software is furnished to do so, subject to
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * the above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the software.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
  *
- * the software is provided "as is", without warranty of any kind,
- * express or implied, including but not limited to the warranties of
- * merchantability, fitness for a particular purpose and
- * noninfringement. in no event shall the authors or copyright holders
- * be liable for any claim, damages or other liability, whether in an
- * action of contract, tort or otherwise, arising from, out of or in
- * connection with the software or the use or other dealings in the
- * software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 #include <stdint.h>
@@ -44,8 +44,8 @@ static void br_range_dec32le(uint32_t *v, size_t num, const uint8_t *src)
 
 static inline uint32_t br_swap32(uint32_t x)
 {
-	x = ((x & (uint32_t)0x00ff00ff) << 8)
-		| ((x >> 8) & (uint32_t)0x00ff00ff);
+	x = ((x & (uint32_t)0x00FF00FF) << 8)
+		| ((x >> 8) & (uint32_t)0x00FF00FF);
 	return (x << 16) | (x >> 16);
 }
 
@@ -65,15 +65,15 @@ static void br_range_enc32le(uint8_t *dst, const uint32_t *v, size_t num)
 	}
 }
 
-static void br_aes_ct64_bitslice_sbox(uint64_t *q)
+static void br_aes_ct64_bitslice_Sbox(uint64_t *q)
 {
 	/*
-	 * this s-box implementation is a straightforward translation of
-	 * the circuit described by boyar and peralta in "a new
+	 * This S-box implementation is a straightforward translation of
+	 * the circuit described by Boyar and Peralta in "A new
 	 * combinational logic minimization technique with applications
 	 * to cryptology" (https://eprint.iacr.org/2009/191.pdf).
 	 *
-	 * note that variables x* (input) and s* (output) are numbered
+	 * Note that variables x* (input) and s* (output) are numbered
 	 * in "reverse" order (x0 is the high bit, x7 is the low bit).
 	 */
 
@@ -102,7 +102,7 @@ static void br_aes_ct64_bitslice_sbox(uint64_t *q)
 	x7 = q[0];
 
 	/*
-	 * top linear transformation.
+	 * Top linear transformation.
 	 */
 	y14 = x3 ^ x5;
 	y13 = x0 ^ x6;
@@ -129,7 +129,7 @@ static void br_aes_ct64_bitslice_sbox(uint64_t *q)
 	y18 = x0 ^ y16;
 
 	/*
-	 * non-linear section.
+	 * Non-linear section.
 	 */
 	t2 = y12 & y15;
 	t3 = y3 & y6;
@@ -197,7 +197,7 @@ static void br_aes_ct64_bitslice_sbox(uint64_t *q)
 	z17 = t41 & y8;
 
 	/*
-	 * bottom linear transformation.
+	 * Bottom linear transformation.
 	 */
 	t46 = z15 ^ z16;
 	t47 = z10 ^ z11;
@@ -242,7 +242,7 @@ static void br_aes_ct64_bitslice_sbox(uint64_t *q)
 
 static void br_aes_ct64_ortho(uint64_t *q)
 {
-#define swapn(cl, ch, s, x, y)   do { \
+#define SWAPN(cl, ch, s, x, y)   do { \
 		uint64_t a, b; \
 		a = (x); \
 		b = (y); \
@@ -250,24 +250,24 @@ static void br_aes_ct64_ortho(uint64_t *q)
 		(y) = ((a & (uint64_t)ch) >> (s)) | (b & (uint64_t)ch); \
 	} while (0)
 
-#define swap2(x, y)    swapn(0x5555555555555555, 0xaaaaaaaaaaaaaaaa,  1, x, y)
-#define swap4(x, y)    swapn(0x3333333333333333, 0xcccccccccccccccc,  2, x, y)
-#define swap8(x, y)    swapn(0x0f0f0f0f0f0f0f0f, 0xf0f0f0f0f0f0f0f0,  4, x, y)
+#define SWAP2(x, y)    SWAPN(0x5555555555555555, 0xAAAAAAAAAAAAAAAA,  1, x, y)
+#define SWAP4(x, y)    SWAPN(0x3333333333333333, 0xCCCCCCCCCCCCCCCC,  2, x, y)
+#define SWAP8(x, y)    SWAPN(0x0F0F0F0F0F0F0F0F, 0xF0F0F0F0F0F0F0F0,  4, x, y)
 
-	swap2(q[0], q[1]);
-	swap2(q[2], q[3]);
-	swap2(q[4], q[5]);
-	swap2(q[6], q[7]);
+	SWAP2(q[0], q[1]);
+	SWAP2(q[2], q[3]);
+	SWAP2(q[4], q[5]);
+	SWAP2(q[6], q[7]);
 
-	swap4(q[0], q[2]);
-	swap4(q[1], q[3]);
-	swap4(q[4], q[6]);
-	swap4(q[5], q[7]);
+	SWAP4(q[0], q[2]);
+	SWAP4(q[1], q[3]);
+	SWAP4(q[4], q[6]);
+	SWAP4(q[5], q[7]);
 
-	swap8(q[0], q[4]);
-	swap8(q[1], q[5]);
-	swap8(q[2], q[6]);
-	swap8(q[3], q[7]);
+	SWAP8(q[0], q[4]);
+	SWAP8(q[1], q[5]);
+	SWAP8(q[2], q[6]);
+	SWAP8(q[3], q[7]);
 }
 
 static void br_aes_ct64_interleave_in(uint64_t *q0, uint64_t *q1, const uint32_t *w)
@@ -282,18 +282,18 @@ static void br_aes_ct64_interleave_in(uint64_t *q0, uint64_t *q1, const uint32_t
 	x1 |= (x1 << 16);
 	x2 |= (x2 << 16);
 	x3 |= (x3 << 16);
-	x0 &= (uint64_t)0x0000ffff0000ffff;
-	x1 &= (uint64_t)0x0000ffff0000ffff;
-	x2 &= (uint64_t)0x0000ffff0000ffff;
-	x3 &= (uint64_t)0x0000ffff0000ffff;
+	x0 &= (uint64_t)0x0000FFFF0000FFFF;
+	x1 &= (uint64_t)0x0000FFFF0000FFFF;
+	x2 &= (uint64_t)0x0000FFFF0000FFFF;
+	x3 &= (uint64_t)0x0000FFFF0000FFFF;
 	x0 |= (x0 << 8);
 	x1 |= (x1 << 8);
 	x2 |= (x2 << 8);
 	x3 |= (x3 << 8);
-	x0 &= (uint64_t)0x00ff00ff00ff00ff;
-	x1 &= (uint64_t)0x00ff00ff00ff00ff;
-	x2 &= (uint64_t)0x00ff00ff00ff00ff;
-	x3 &= (uint64_t)0x00ff00ff00ff00ff;
+	x0 &= (uint64_t)0x00FF00FF00FF00FF;
+	x1 &= (uint64_t)0x00FF00FF00FF00FF;
+	x2 &= (uint64_t)0x00FF00FF00FF00FF;
+	x3 &= (uint64_t)0x00FF00FF00FF00FF;
 	*q0 = x0 | (x2 << 8);
 	*q1 = x1 | (x3 << 8);
 }
@@ -302,26 +302,26 @@ static void br_aes_ct64_interleave_out(uint32_t *w, uint64_t q0, uint64_t q1)
 {
 	uint64_t x0, x1, x2, x3;
 
-	x0 = q0 & (uint64_t)0x00ff00ff00ff00ff;
-	x1 = q1 & (uint64_t)0x00ff00ff00ff00ff;
-	x2 = (q0 >> 8) & (uint64_t)0x00ff00ff00ff00ff;
-	x3 = (q1 >> 8) & (uint64_t)0x00ff00ff00ff00ff;
+	x0 = q0 & (uint64_t)0x00FF00FF00FF00FF;
+	x1 = q1 & (uint64_t)0x00FF00FF00FF00FF;
+	x2 = (q0 >> 8) & (uint64_t)0x00FF00FF00FF00FF;
+	x3 = (q1 >> 8) & (uint64_t)0x00FF00FF00FF00FF;
 	x0 |= (x0 >> 8);
 	x1 |= (x1 >> 8);
 	x2 |= (x2 >> 8);
 	x3 |= (x3 >> 8);
-	x0 &= (uint64_t)0x0000ffff0000ffff;
-	x1 &= (uint64_t)0x0000ffff0000ffff;
-	x2 &= (uint64_t)0x0000ffff0000ffff;
-	x3 &= (uint64_t)0x0000ffff0000ffff;
+	x0 &= (uint64_t)0x0000FFFF0000FFFF;
+	x1 &= (uint64_t)0x0000FFFF0000FFFF;
+	x2 &= (uint64_t)0x0000FFFF0000FFFF;
+	x3 &= (uint64_t)0x0000FFFF0000FFFF;
 	w[0] = (uint32_t)x0 | (uint32_t)(x0 >> 16);
 	w[1] = (uint32_t)x1 | (uint32_t)(x1 >> 16);
 	w[2] = (uint32_t)x2 | (uint32_t)(x2 >> 16);
 	w[3] = (uint32_t)x3 | (uint32_t)(x3 >> 16);
 }
 
-static const uint8_t rcon[] = {
-	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
+static const uint8_t Rcon[] = {
+	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
 };
 
 static uint32_t sub_word(uint32_t x)
@@ -331,7 +331,7 @@ static uint32_t sub_word(uint32_t x)
 	memset(q, 0, sizeof q);
 	q[0] = x;
 	br_aes_ct64_ortho(q);
-	br_aes_ct64_bitslice_sbox(q);
+	br_aes_ct64_bitslice_Sbox(q);
 	br_aes_ct64_ortho(q);
 	return (uint32_t)q[0];
 }
@@ -351,7 +351,7 @@ static void br_aes_ct64_keysched(uint64_t *comp_skey, const uint8_t *key)
 	for (i = nk, j = 0, k = 0; i < nkf; i ++) {
 		if (j == 0) {
 			tmp = (tmp << 24) | (tmp >> 8);
-			tmp = sub_word(tmp) ^ rcon[k];
+			tmp = sub_word(tmp) ^ Rcon[k];
 		} else if (nk > 6 && j == 4) {
 			tmp = sub_word(tmp);
 		}
@@ -430,13 +430,13 @@ static inline void shift_rows(uint64_t *q)
 		uint64_t x;
 
 		x = q[i];
-		q[i] = (x & (uint64_t)0x000000000000ffff)
-			| ((x & (uint64_t)0x00000000fff00000) >> 4)
-			| ((x & (uint64_t)0x00000000000f0000) << 12)
-			| ((x & (uint64_t)0x0000ff0000000000) >> 8)
-			| ((x & (uint64_t)0x000000ff00000000) << 8)
-			| ((x & (uint64_t)0xf000000000000000) >> 12)
-			| ((x & (uint64_t)0x0fff000000000000) << 4);
+		q[i] = (x & (uint64_t)0x000000000000FFFF)
+			| ((x & (uint64_t)0x00000000FFF00000) >> 4)
+			| ((x & (uint64_t)0x00000000000F0000) << 12)
+			| ((x & (uint64_t)0x0000FF0000000000) >> 8)
+			| ((x & (uint64_t)0x000000FF00000000) << 8)
+			| ((x & (uint64_t)0xF000000000000000) >> 12)
+			| ((x & (uint64_t)0x0FFF000000000000) << 4);
 	}
 }
 
@@ -483,7 +483,7 @@ static void inc4_be(uint32_t *x)
   *x = br_swap32(*x);
 }
 
-static void aes_ctr4x(uint8_t out[64], uint32_t ivw[16], uint64_t sk_exp[120])
+static void aes_ctr4x(uint8_t out[64], uint32_t ivw[16], uint64_t sk_exp[64])
 {
   uint32_t w[16];
   uint64_t q[8];
@@ -497,12 +497,12 @@ static void aes_ctr4x(uint8_t out[64], uint32_t ivw[16], uint64_t sk_exp[120])
 
   add_round_key(q, sk_exp);
   for (i = 1; i < 14; i++) {
-    br_aes_ct64_bitslice_sbox(q);
+    br_aes_ct64_bitslice_Sbox(q);
     shift_rows(q);
     mix_columns(q);
     add_round_key(q, sk_exp + (i << 3));
   }
-  br_aes_ct64_bitslice_sbox(q);
+  br_aes_ct64_bitslice_Sbox(q);
   shift_rows(q);
   add_round_key(q, sk_exp + 112);
 
@@ -512,7 +512,7 @@ static void aes_ctr4x(uint8_t out[64], uint32_t ivw[16], uint64_t sk_exp[120])
   }
   br_range_enc32le(out, w, 16);
 
-  /* increase counter for next 4 blocks */
+  /* Increase counter for next 4 blocks */
   inc4_be(ivw+3);
   inc4_be(ivw+7);
   inc4_be(ivw+11);
@@ -527,7 +527,42 @@ static void br_aes_ct64_ctr_init(uint64_t sk_exp[120], const uint8_t *key)
 	br_aes_ct64_skey_expand(sk_exp, skey);
 }
 
-void aes256ctr_init(aes256ctr_ctx *s, const uint8_t key[32], const uint8_t nonce[12])
+static void br_aes_ct64_ctr_run(uint64_t sk_exp[120], const uint8_t *iv, uint32_t cc, uint8_t *data, size_t len)
+{
+	uint32_t ivw[16];
+	size_t i;
+
+	br_range_dec32le(ivw, 3, iv);
+	memcpy(ivw +  4, ivw, 3 * sizeof(uint32_t));
+	memcpy(ivw +  8, ivw, 3 * sizeof(uint32_t));
+	memcpy(ivw + 12, ivw, 3 * sizeof(uint32_t));
+	ivw[ 3] = br_swap32(cc);
+	ivw[ 7] = br_swap32(cc + 1);
+	ivw[11] = br_swap32(cc + 2);
+	ivw[15] = br_swap32(cc + 3);
+
+	while (len > 64) {
+		aes_ctr4x(data, ivw, sk_exp);
+		data += 64;
+		len -= 64;
+	}
+	if(len > 0) {
+		uint8_t tmp[64];
+		aes_ctr4x(tmp, ivw, sk_exp);
+		for(i=0;i<len;i++)
+			data[i] = tmp[i];
+	}
+}
+
+void aes256ctr_prf(uint8_t *out, size_t outlen, const uint8_t *key, const uint8_t *nonce)
+{
+  uint64_t sk_exp[120];
+
+  br_aes_ct64_ctr_init(sk_exp, key);
+  br_aes_ct64_ctr_run(sk_exp, nonce, 0, out, outlen);
+}
+
+void aes256ctr_init(aes256ctr_ctx *s, const uint8_t *key, const uint8_t *nonce)
 {
   br_aes_ct64_ctr_init(s->sk_exp, key);
 

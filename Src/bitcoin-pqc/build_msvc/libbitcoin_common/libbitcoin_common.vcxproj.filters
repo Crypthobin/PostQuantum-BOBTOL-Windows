@@ -54,6 +54,9 @@
     <ClCompile Include="..\..\src\dilithium\PQCgenKAT_sign.cpp">
       <Filter>dilithium</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\dilithium\pqsign.cpp">
+      <Filter>dilithium</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\dilithium\randombytes.cpp">
       <Filter>dilithium</Filter>
     </ClCompile>
@@ -66,9 +69,6 @@
     <ClCompile Include="..\..\src\dilithium\rounding.cpp">
       <Filter>dilithium</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dilithium\sign.cpp">
-      <Filter>dilithium</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\dilithium\symmetric-aes.cpp">
       <Filter>dilithium</Filter>
     </ClCompile>
@@ -78,7 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dilithium">
-      <UniqueIdentifier>{88654a64-3ee4-40a4-ba70-e47b64d0ec78}</UniqueIdentifier>
+      <UniqueIdentifier>{54e17a04-1467-48b2-abe8-52b1c77b2446}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -109,6 +109,9 @@
     <ClInclude Include="..\..\src\dilithium\polyvec.h">
       <Filter>dilithium</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\dilithium\pqsign.h">
+      <Filter>dilithium</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\dilithium\randombytes.h">
       <Filter>dilithium</Filter>
     </ClInclude>
@@ -121,16 +124,8 @@
     <ClInclude Include="..\..\src\dilithium\rounding.h">
       <Filter>dilithium</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dilithium\sign.h">
-      <Filter>dilithium</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\dilithium\symmetric.h">
       <Filter>dilithium</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\dilithium\precomp.gp">
-      <Filter>dilithium</Filter>
-    </None>
   </ItemGroup>
 </Project>

@@ -390,10 +390,10 @@ static bool EvalChecksigTapscript(const valtype& sig, const valtype& pubkey, Scr
     }
     if (pubkey.size() == 0) {
         return set_error(serror, SCRIPT_ERR_PUBKEYTYPE);
-    } else if (pubkey.size() == 32) {
-        if (success && !checker.CheckSchnorrSignature(sig, pubkey, sigversion, execdata, serror)) {
-            return false; // serror is set
-        }
+    //} else if (pubkey.size() == 32) {
+    //    if (success && !checker.CheckSchnorrSignature(sig, pubkey, sigversion, execdata, serror)) {
+    //        return false; // serror is set
+    //    }
     } else {
         /*
          *  New public key version softforks should be defined before this `else` block.
