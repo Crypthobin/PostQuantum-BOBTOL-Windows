@@ -16,6 +16,10 @@
 #include <algorithm>
 #include <cassert>
 
+#include <dilithium/randombytes.h>
+#include <dilithium/pqsign.h>
+#include "dilithium/fips202.h"
+
 namespace
 {
 /* Global secp256k1_context object used for verification. */
@@ -403,79 +407,94 @@ const secp256k1_context* GetVerifyContext() {
 
 
 
-
+// 추후 수정 < by. crypthobin >
 bool CBOBPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const
 {
     if (!IsValid())
         return false;
-    secp256k1_pubkey pubkey;
-    secp256k1_ecdsa_signature sig;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
-        return false;
-    }
-    if (!ecdsa_signature_parse_der_lax(secp256k1_context_verify, &sig, vchSig.data(), vchSig.size())) {
-        return false;
-    }
-    /* libsecp256k1's ECDSA verification requires lower-S signatures, which have
-     * not historically been enforced in Bitcoin, so normalize them first. */
-    secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
-    return secp256k1_ecdsa_verify(secp256k1_context_verify, &sig, hash.begin(), &pubkey);
+    unsigned char pk[SIZE + 1];
+    unsigned char sig[SIGNATURE_SIZE + 1];
+
+    memcpy(pk, &(*this)[0], size());
+    memcpy(sig, vchSig.data(), vchSig.size());
+
+    // int ret = crypto_sign_open((uint8_t*)hash.begin(), (size_t *)hash.size(), sig, vchSig.size(), pk);
+
+
+
+    //secp256k1_pubkey pubkey;
+    //secp256k1_ecdsa_signature sig;
+    //assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
+    //if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
+    //    return false;
+    //}
+    //if (!ecdsa_signature_parse_der_lax(secp256k1_context_verify, &sig, vchSig.data(), vchSig.size())) {
+    //    return false;
+    //}
+    ///* libsecp256k1's ECDSA verification requires lower-S signatures, which have
+    // * not historically been enforced in Bitcoin, so normalize them first. */
+    //secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
+    return true;
 }
 
+// 추후 수정 < by. crypthobin >
 bool CBOBPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig)
 {
     
     return true;
 }
 
+// 추후 수정 < by. crypthobin >
 bool CBOBPubKey::IsFullyValid() const
 {
     if (!IsValid())
         return false;
-    secp256k1_pubkey pubkey;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    return secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size());
+    /*secp256k1_pubkey pubkey;
+    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");*/
+    /*return secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size());*/
+    return true;
 }
 
+// 추후 수정 < by. crypthobin >
 bool CBOBPubKey::Decompress()
 {
-    if (!IsValid())
-        return false;
-    secp256k1_pubkey pubkey;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
-        return false;
-    }
-    unsigned char pub[SIZE];
-    size_t publen = SIZE;
-    secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_UNCOMPRESSED);
-    Set(pub, pub + publen);
+    //if (!IsValid())
+    //    return false;
+    //secp256k1_pubkey pubkey;
+    //assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
+    //if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
+    //    return false;
+    //}
+    //unsigned char pub[SIZE];
+    //size_t publen = SIZE;
+    //secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+    //Set(pub, pub + publen);
     return true;
 }
 
-bool CBOBPubKey::Derive(CBOBPubKey& pubkeyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const
-{
-    assert(IsValid());
-    assert((nChild >> 31) == 0);
-    assert(size() == COMPRESSED_SIZE);
-    unsigned char out[64];
-    BIP32Hash(cc, nChild, *begin(), begin() + 1, out);
-    memcpy(ccChild.begin(), out + 32, 32);
-    secp256k1_pubkey pubkey;
-    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
-        return false;
-    }
-    if (!secp256k1_ec_pubkey_tweak_add(secp256k1_context_verify, &pubkey, out)) {
-        return false;
-    }
-    unsigned char pub[COMPRESSED_SIZE];
-    size_t publen = COMPRESSED_SIZE;
-    secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_COMPRESSED);
-    pubkeyChild.Set(pub, pub + publen);
-    return true;
-}
+// 추후 수정 < by. crypthobin >
+//bool CBOBPubKey::Derive(CBOBPubKey& pubkeyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const
+//{
+//    assert(IsValid());
+//    assert((nChild >> 31) == 0);
+//    assert(size() == COMPRESSED_SIZE);
+//    unsigned char out[64];
+//    BIP32Hash(cc, nChild, *begin(), begin() + 1, out);
+//    memcpy(ccChild.begin(), out + 32, 32);
+//    secp256k1_pubkey pubkey;
+//    assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
+//    if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
+//        return false;
+//    }
+//    if (!secp256k1_ec_pubkey_tweak_add(secp256k1_context_verify, &pubkey, out)) {
+//        return false;
+//    }
+//    unsigned char pub[COMPRESSED_SIZE];
+//    size_t publen = COMPRESSED_SIZE;
+//    secp256k1_ec_pubkey_serialize(secp256k1_context_verify, pub, &publen, &pubkey, SECP256K1_EC_COMPRESSED);
+//    pubkeyChild.Set(pub, pub + publen);
+//    return true;
+//}
 
 /* static */ bool CBOBPubKey::CheckLowS(const std::vector<unsigned char>& vchSig)
 {

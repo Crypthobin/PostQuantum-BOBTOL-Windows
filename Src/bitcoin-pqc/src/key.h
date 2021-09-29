@@ -213,15 +213,16 @@ public:
 	* 실제 개인키 길이: 2604 byte
 	* 공개키 길이: 2065 byte
 	*/
-    static const unsigned int SIZE = 2528;
+    static const unsigned int SIZE = 32;
+    static const unsigned int SECRET_KEY_SIZE = 2528;
     static const unsigned int COMPRESSED_SIZE = 2528;
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
-    static_assert(
-        SIZE >= COMPRESSED_SIZE,
-        "COMPRESSED_SIZE is larger than SIZE");
+    //static_assert(
+    //    SIZE >= COMPRESSED_SIZE,
+    //    "COMPRESSED_SIZE is larger than SIZE");
 
 private:
     //! Whether this private key is valid. We check for correctness when modifying the key
