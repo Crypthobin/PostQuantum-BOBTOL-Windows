@@ -344,13 +344,13 @@ private:
 public:
     using ScriptPubKeyMan::ScriptPubKeyMan;
 
-   // bool GetNewDestination(const OutputType type, CTxDestination& dest, bilingual_str& error) override;
+    bool GetNewDestination(const OutputType type, CTxDestination& dest, bilingual_str& error) override;
     isminetype IsMine(const CScript& script) const override;
 
     bool CheckDecryptionKey(const CKeyingMaterial& master_key, bool accept_no_keys = false) override;
     bool Encrypt(const CKeyingMaterial& master_key, WalletBatch* batch) override;
 
-  //  bool GetReservedDestination(const OutputType type, bool internal, CTxDestination& address, int64_t& index, CKeyPool& keypool, bilingual_str& error) override;
+    bool GetReservedDestination(const OutputType type, bool internal, CTxDestination& address, int64_t& index, CKeyPool& keypool, bilingual_str& error) override;
     void KeepDestination(int64_t index, const OutputType& type) override;
     void ReturnDestination(int64_t index, bool internal, const CTxDestination&) override;
 

@@ -54,8 +54,8 @@ struct PSBTInput
     CScript witness_script;
     CScript final_script_sig;
     CScriptWitness final_script_witness;
-    std::map<CPubKey, KeyOriginInfo> hd_keypaths;
-    std::map<CBOBPubKey, KeyOriginInfo> hd_keypaths_pqc;
+    std::map<CBOBPubKey, KeyOriginInfo> hd_keypaths;
+ //   std::map<CBOBPubKey, KeyOriginInfo> hd_keypaths_pqc;
     std::map<CKeyID, SigPair> partial_sigs;
     std::map<std::vector<unsigned char>, std::vector<unsigned char>> unknown;
     int sighash_type = 0;
@@ -278,7 +278,7 @@ struct PSBTOutput
 {
     CScript redeem_script;
     CScript witness_script;
-    std::map<CPubKey, KeyOriginInfo> hd_keypaths;
+    std::map<CBOBPubKey, KeyOriginInfo> hd_keypaths;
     std::map<std::vector<unsigned char>, std::vector<unsigned char>> unknown;
 
     bool IsNull() const;

@@ -108,14 +108,14 @@ void UnserializeFromVector(Stream& s, X&... args)
 
 // Deserialize HD keypaths into a map
 template<typename Stream>
-void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std::map<CPubKey, KeyOriginInfo>& hd_keypaths)
+void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std::map<CBOBPubKey, KeyOriginInfo>& hd_keypaths)
 {
     // Make sure that the key is the size of pubkey + 1
-    if (key.size() != CPubKey::SIZE + 1 && key.size() != CPubKey::COMPRESSED_SIZE + 1) {
+    if (key.size() != CBOBPubKey::SIZE + 1 && key.size() != CBOBPubKey::COMPRESSED_SIZE + 1) {
         throw std::ios_base::failure("Size of key was not the expected size for the type BIP32 keypath");
     }
     // Read in the pubkey from key
-    CPubKey pubkey(key.begin() + 1, key.end());
+    CBOBPubKey pubkey(key.begin() + 1, key.end());
     if (!pubkey.IsFullyValid()) {
        throw std::ios_base::failure("Invalid pubkey");
     }
@@ -143,7 +143,7 @@ void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std
 
 // Serialize HD keypaths to a stream from a map
 template<typename Stream>
-void SerializeHDKeypaths(Stream& s, const std::map<CPubKey, KeyOriginInfo>& hd_keypaths, uint8_t type)
+void SerializeHDKeypaths(Stream& s, const std::map<CBOBPubKey, KeyOriginInfo>& hd_keypaths, uint8_t type)
 {
     for (auto keypath_pair : hd_keypaths) {
         if (!keypath_pair.first.IsValid()) {
