@@ -604,11 +604,11 @@ struct CExtBOBPubKey {
 
     friend bool operator!=(CExtBOBPubKey& a, const CExtBOBPubKey& b)
     {
-        return a.nDepth == b.nDepth &&
-               memcmp(&a.vchFingerprint[0], &b.vchFingerprint[0], sizeof(vchFingerprint)) == 0 &&
-               a.nChild == b.nChild &&
-               a.chaincode == b.chaincode &&
-               a.pubkey == b.pubkey;
+        return a.nDepth != b.nDepth ||
+               memcmp(&a.vchFingerprint[0], &b.vchFingerprint[0], sizeof(vchFingerprint)) != 0 ||
+               a.nChild != b.nChild ||
+               a.chaincode != b.chaincode ||
+               a.pubkey != b.pubkey;
     }
 
     void Encode(unsigned char code[BIP32_EXTPQKEY_SIZE]) const;

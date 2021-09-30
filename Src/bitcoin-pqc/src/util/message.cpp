@@ -41,7 +41,7 @@ MessageVerificationResult MessageVerify(
         return MessageVerificationResult::ERR_MALFORMED_SIGNATURE;
     }
 
-    CPubKey pubkey;
+    CBOBPubKey pubkey;
     if (!pubkey.RecoverCompact(MessageHash(message), signature_bytes)) {
         return MessageVerificationResult::ERR_PUBKEY_NOT_RECOVERED;
     }

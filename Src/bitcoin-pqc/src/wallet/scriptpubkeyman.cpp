@@ -20,27 +20,27 @@
 //! Value for the first BIP 32 hardened derivation. Can be used as a bit mask and as a value. See BIP 32 for more details.
 const uint32_t BIP32_HARDENED_KEY_LIMIT = 0x80000000;
 
-//bool LegacyScriptPubKeyMan::GetNewDestination(const OutputType type, CTxDestination& dest, bilingual_str& error)
-//{
-//    if (LEGACY_OUTPUT_TYPES.count(type) == 0) {
-//        error = _("Error: Legacy wallets only support the \"legacy\", \"p2sh-segwit\", and \"bech32\" address types");
-//        return false;
-//    }
-//    assert(type != OutputType::BECH32M);
-//
-//    LOCK(cs_KeyStore);
-//    error.clear();
-//
-//    // Generate a new key that is added to wallet
-//    CBOBPubKey new_key;
-//    if (!GetKeyFromPool(new_key, type)) {
-//        error = _("Error: Keypool ran out, please call keypoolrefill first");
-//        return false;
-//    }
-//    LearnRelatedScripts(new_key, type);
-//    dest = GetDestinationForKey(new_key, type);
-//    return true;
-//}
+bool LegacyScriptPubKeyMan::GetNewDestination(const OutputType type, CTxDestination& dest, bilingual_str& error)
+{
+    if (LEGACY_OUTPUT_TYPES.count(type) == 0) {
+        error = _("Error: Legacy wallets only support the \"legacy\", \"p2sh-segwit\", and \"bech32\" address types");
+        return false;
+    }
+    assert(type != OutputType::BECH32M);
+
+    LOCK(cs_KeyStore);
+    error.clear();
+
+    // Generate a new key that is added to wallet
+    CBOBPubKey new_key;
+    if (!GetKeyFromPool(new_key, type)) {
+        error = _("Error: Keypool ran out, please call keypoolrefill first");
+        return false;
+    }
+    LearnRelatedScripts(new_key, type);
+    dest = GetDestinationForKey(new_key, type);
+    return true;
+}
 
 typedef std::vector<unsigned char> valtype;
 
@@ -80,7 +80,7 @@ bool PermitsUncompressed(IsMineSigVersion sigversion)
 bool HaveKeys(const std::vector<valtype>& pubkeys, const LegacyScriptPubKeyMan& keystore)
 {
     for (const valtype& pubkey : pubkeys) {
-        CKeyID keyID = CPubKey(pubkey).GetID();
+        CKeyID keyID = CBOBPubKey(pubkey).GetID();
         if (!keystore.HaveKey(keyID)) return false;
     }
     return true;
@@ -109,7 +109,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
     case TxoutType::WITNESS_V1_TAPROOT:
         break;
     case TxoutType::PUBKEY:
-        keyID = CPubKey(vSolutions[0]).GetID();
+        keyID = CBOBPubKey(vSolutions[0]).GetID();
         if (!PermitsUncompressed(sigversion) && vSolutions[0].size() != 33) {
             return IsMineResult::INVALID;
         }
@@ -295,27 +295,27 @@ bool LegacyScriptPubKeyMan::Encrypt(const CKeyingMaterial& master_key, WalletBat
     return true;
 }
 
-//bool LegacyScriptPubKeyMan::GetReservedDestination(const OutputType type, bool internal, CTxDestination& address, int64_t& index, CKeyPool& keypool, bilingual_str& error)
-//{
-//    if (LEGACY_OUTPUT_TYPES.count(type) == 0) {
-//        error = _("Error: Legacy wallets only support the \"legacy\", \"p2sh-segwit\", and \"bech32\" address types");
-//        return false;
-//    }
-//    assert(type != OutputType::BECH32M);
-//
-//    LOCK(cs_KeyStore);
-//    if (!CanGetAddresses(internal)) {
-//        error = _("Error: Keypool ran out, please call keypoolrefill first");
-//        return false;
-//    }
-//
-//    if (!ReserveKeyFromKeyPool(index, keypool, internal)) {
-//        error = _("Error: Keypool ran out, please call keypoolrefill first");
-//        return false;
-//    }
-//    address = GetDestinationForKey(keypool.vchPubKey, type);
-//    return true;
-//}
+bool LegacyScriptPubKeyMan::GetReservedDestination(const OutputType type, bool internal, CTxDestination& address, int64_t& index, CKeyPool& keypool, bilingual_str& error)
+{
+    if (LEGACY_OUTPUT_TYPES.count(type) == 0) {
+        error = _("Error: Legacy wallets only support the \"legacy\", \"p2sh-segwit\", and \"bech32\" address types");
+        return false;
+    }
+    assert(type != OutputType::BECH32M);
+
+    LOCK(cs_KeyStore);
+    if (!CanGetAddresses(internal)) {
+        error = _("Error: Keypool ran out, please call keypoolrefill first");
+        return false;
+    }
+
+    if (!ReserveKeyFromKeyPool(index, keypool, internal)) {
+        error = _("Error: Keypool ran out, please call keypoolrefill first");
+        return false;
+    }
+    address = GetDestinationForKey(keypool.vchPubKey, type);
+    return true;
+}
 
 bool LegacyScriptPubKeyMan::TopUpInactiveHDChain(const CKeyID seed_id, int64_t index, bool internal)
 {
@@ -2116,7 +2116,7 @@ TransactionError DescriptorScriptPubKeyMan::FillPSBT(PartiallySignedTransaction&
         } else {
             // Maybe there are pubkeys listed that we can sign for
             script_keys = std::make_unique<FlatSigningProvider>();
-            for (const auto& pk_pair : input.hd_keypaths_pqc) {
+            for (const auto& pk_pair : input.hd_keypaths) {
                 const CBOBPubKey& pubkey = pk_pair.first;
                 std::unique_ptr<FlatSigningProvider> pk_keys = GetSigningProvider(pubkey);
                 if (pk_keys) {
