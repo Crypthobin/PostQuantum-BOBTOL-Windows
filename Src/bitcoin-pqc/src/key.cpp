@@ -498,6 +498,7 @@ CPrivKey CBOBKey::GetPrivKey() const
     return seed;
 }
 
+int count = 1;
 
 CBOBPubKey CBOBKey::GetPubKey() const
 {
@@ -591,14 +592,14 @@ bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool
     memcpy(vchSig.data(), sig, sig_len);
     vchSig.resize(sig_len);
 
-    printf("siglen : ");
+    /* printf("siglen : ");
     printf("%zu\n\n", sig_len);
 
     printf("sig : \n");
     for (int i = 0; i < CBOBPubKey::SIGNATURE_SIZE; i++) {
         printf("%02x", sig[i]);
     }
-    printf("\n\n");
+    printf("\n\n");*/
 
     return true;
 }
