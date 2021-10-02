@@ -14,10 +14,12 @@
 #include <secp256k1_extrakeys.h>
 #include <secp256k1_recovery.h>
 #include <secp256k1_schnorrsig.h>
+#include <windows.h>
 
-// 헤더파일 추가 <by. Crypthobin>
+// 헤더파일 추가 <by. crypthobin>
 #include <dilithium/randombytes.h>
-#include <dilithium/sign.h>
+#include <dilithium/pqsign.h>
+#include "dilithium/fips202.h"
 
 static secp256k1_context* secp256k1_context_sign = nullptr;
 
@@ -204,6 +206,9 @@ CPrivKey CKey::GetPrivKey() const
 // MLEN(임의의 메시지 길이 정의) 추가 <by. Crypthobin>
 #define MLEN 59
 
+int count = 0;
+int count2 = 0;
+uint8_t a[2];
 CPubKey CKey::GetPubKey() const
 {
     assert(fValid);
@@ -211,6 +216,25 @@ CPubKey CKey::GetPubKey() const
     size_t clen = CPubKey::SIZE;
     CPubKey result;
     int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
+    //printf("<< keydata.data >>\n");
+    //for (int i = 0; i < 32; i++)
+    //    printf("%02X ", keydata.data()[i]);
+    //printf("\n\n");
+    //printf("<< pubkey >>\n");
+    //for (int i = 0; i < 64; i++)
+    //    printf("%02X ", pubkey.data[i]);
+    //printf("\n\n");
+    //if (count <= 3) {
+    //    a[0] = pubkey.data[0];
+    //    a[1] = pubkey.data[1];
+    //    count++;
+    //}
+    
+    //if (a[0] == pubkey.data[0] && a[1] == pubkey.data[1])
+    //    count2++;
+    //printf("%d\n", count2);
+    //Sleep(1000);
+
     assert(ret);
     secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
     assert(result.size() == clen);
@@ -234,6 +258,7 @@ bool SigHasLowR(const secp256k1_ecdsa_signature* sig)
 
 bool CKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind, uint32_t test_case) const
 {
+    printf("\n\nSign Function!!\n\n");
     if (!fValid)
         return false;
     vchSig.resize(CPubKey::SIGNATURE_SIZE);
@@ -402,6 +427,7 @@ bool ECC_InitSanityCheck()
 {
     CKey key;
     key.MakeNewKey(true);
+    //key.MakeNewKey();
     CPubKey pubkey = key.GetPubKey();
     return key.VerifyPubKey(pubkey);
 }
@@ -444,10 +470,12 @@ void ECC_Stop()
 
 
 
-
+// Check 수정 < by. crypthobin >
+// 추후에 개인 키 검증할꺼면 추가하자
 bool CBOBKey::Check(const unsigned char* vch)
 {
-    return secp256k1_ec_seckey_verify(secp256k1_context_sign, vch);
+    // return secp256k1_ec_seckey_verify(secp256k1_context_sign, vch);
+    return true;
 }
 
 void CBOBKey::MakeNewKey()
@@ -456,21 +484,23 @@ void CBOBKey::MakeNewKey()
         GetStrongRandBytes(keydata.data(), keydata.size());
     } while (!Check(keydata.data()));
     fValid = true;
-    /*fCompressed = fCompressedIn;
-    * crypthobin
-    */
+
     fCompressed = false;
 }
 
+// Negate() 수정 < by. crypthobin >
+// 쓸까? 말까? 추후 생각
 bool CBOBKey::Negate()
 {
-    assert(fValid);
-    return secp256k1_ec_seckey_negate(secp256k1_context_sign, keydata.data());
+    /*assert(fValid);
+    return secp256k1_ec_seckey_negate(secp256k1_context_sign, keydata.data());*/
+    return true;
 }
 
+// GetPrivKey() 수정 < by. crypthobin >
 CPrivKey CBOBKey::GetPrivKey() const
 {
-    assert(fValid);
+    /*assert(fValid);
     CPrivKey seckey;
     int ret;
     size_t seckeylen;
@@ -479,60 +509,110 @@ CPrivKey CBOBKey::GetPrivKey() const
     ret = ec_seckey_export_der(secp256k1_context_sign, seckey.data(), &seckeylen, begin(), fCompressed);
     assert(ret);
     seckey.resize(seckeylen);
-    return seckey;
+    return seckey;*/
+    assert(fValid);
+    CPrivKey seed;
+    int ret = 1;
+    size_t seedlen;
+    unsigned char* seeddata;
+    seed.resize(SIZE);
+    seedlen = SIZE;
+    seeddata = seed.data();
+    memcpy(seeddata, begin(), 32);
+    /*ret = ec_privkey_export_der(secp256k1_context_sign, (unsigned char*)privkey.data(), &privkeylen, begin(), fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);*/
+    assert(ret);
+    seed.resize(seedlen);
+    return seed;
 }
 
-
+// 전체적인 GetPubKey 함수 수정 < by. crypthobin >
 CBOBPubKey CBOBKey::GetPubKey() const
 {
     assert(fValid);
-    secp256k1_pubkey pubkey;
-    size_t clen = CPubKey::SIZE;
+    //secp256k1_pubkey pubkey;
+    uint8_t pk[CRYPTO_PUBLICKEYBYTES] = {0};
+    uint8_t sk[CRYPTO_SECRETKEYBYTES] = {0};
+    uint8_t seedbuf[3 * SEEDBYTES] = {0};
+
+    size_t clen = CBOBPubKey::SIZE;
+
     CBOBPubKey result;
-    int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
-    assert(ret);
-    secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
+
+    shake256(seedbuf, 3 * SEEDBYTES, begin(), SEEDBYTES);
+
+    crypto_sign_keypair(seedbuf, pk, sk);
+    // int ret = secp256k1_ec_pubkey_create(secp256k1_context_sign, &pubkey, begin());
+    // assert(ret);
+
+    //secp256k1_ec_pubkey_serialize(secp256k1_context_sign, (unsigned char*)result.begin(), &clen, &pubkey, fCompressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
+    memcpy(result.t_vch, pk, clen);
+    //memcpy(result_2.begin, sk, clen);
     assert(result.size() == clen);
     assert(result.IsValid());
+
+    printf("pk = ");
+    for (int i = 0; i < 1312; i++)
+        printf("%02X", result.t_vch[i]);
+    printf("\npk = ");
+    for (int i = 0; i < 1312; i++)
+        printf("%02X", result.t_vch[i]);
+    printf("\n\n");
     return result;
 }
 
+// 전체적인 Sign 함수 수정 < by. crypthobin >
 bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind, uint32_t test_case) const
 {
     if (!fValid)
         return false;
     vchSig.resize(CBOBPubKey::SIGNATURE_SIZE);
-    size_t nSigLen = CBOBPubKey::SIGNATURE_SIZE;
-    unsigned char extra_entropy[32] = {0};
-    WriteLE32(extra_entropy, test_case);
-    secp256k1_ecdsa_signature sig;
-    uint32_t counter = 0;
-    int ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, (!grind && test_case) ? extra_entropy : nullptr);
+    // size_t nSigLen = CBOBPubKey::SIGNATURE_SIZE;
+    //unsigned char extra_entropy[32] = {0};
+    //WriteLE32(extra_entropy, test_case);
+    // secp256k1_ecdsa_signature sig;
 
-    // Grind for low R
-    while (ret && !SigHasLowR(&sig) && grind) {
-        WriteLE32(extra_entropy, ++counter);
-        ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, extra_entropy);
-    }
-    assert(ret);
-    secp256k1_ecdsa_signature_serialize_der(secp256k1_context_sign, vchSig.data(), &nSigLen, &sig);
-    vchSig.resize(nSigLen);
+    uint8_t pk[CRYPTO_PUBLICKEYBYTES] = {0};
+    uint8_t sk[CRYPTO_SECRETKEYBYTES] = {0};
+    uint8_t sig[CBOBPubKey::SIGNATURE_SIZE + 32] = {0}; // + 32?? < by. crypthobin >
+    size_t sig_len = 0;
+    uint8_t seedbuf[3 * SEEDBYTES] = {0};
+
+    shake256(seedbuf, 3 * SEEDBYTES, begin(), SEEDBYTES);
+
+    crypto_sign_keypair(seedbuf, pk, sk);
+    crypto_sign(sig, &sig_len, hash.begin(), hash.size(), sk);
+    //crypto_sign_signature(sig, &sig_len, hash.begin(), hash.size(), sk);
+
+    //uint32_t counter = 0;
+    //int ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, (!grind && test_case) ? extra_entropy : nullptr);
+
+    //// Grind for low R
+    //while (ret && !SigHasLowR(&sig) && grind) {
+    //    WriteLE32(extra_entropy, ++counter);
+    //    ret = secp256k1_ecdsa_sign(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, extra_entropy);
+    //}
+    // assert(ret);
+    // secp256k1_ecdsa_signature_serialize_der(secp256k1_context_sign, vchSig.data(), &nSigLen, &sig);
+    memcpy(vchSig.data(), sig, sig_len);
+    vchSig.resize(sig_len);
     return true;
 }
 
+// VerifyPubKey 수정 < by. crypthobin >
 bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 {
-    if (pubkey.IsCompressed() != fCompressed) {
+    /*if (pubkey.IsCompressed() != fCompressed) {
         return false;
-    }
+    }*/
     unsigned char rnd[8];
     std::string str = "Bitcoin key verification\n";
     GetRandBytes(rnd, sizeof(rnd));
+    // 나중에 512로 바꿔야 함 < by. crypthobin >
     uint256 hash;
     CHash256().Write(MakeUCharSpan(str)).Write(rnd).Finalize(hash);
     std::vector<unsigned char> vchSig;
     Sign(hash, vchSig);
-    return pubkey.Verify(hash, vchSig);
+    return pubkey.Verify(hash, vchSig); // 수정은 함 근데 되는지 모름.. < by. crypthobin >
 }
 
 
@@ -559,13 +639,15 @@ bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 //	return true;
 //} crypthobin
 
+// 전체적인 Load 함수 수정 < by. crypthobin >
 bool CBOBKey::Load(CPrivKey& seckey, CBOBPubKey& vchPubKey, bool fSkipCheck = false)
 {
-    if (!ec_seckey_import_der(secp256k1_context_sign, (unsigned char*)begin(), seckey.data(), seckey.size()))
-        return false;
-    fCompressed = vchPubKey.IsCompressed();
-    fValid = true;
+    /*if (!ec_seckey_import_der(secp256k1_context_sign, (unsigned char*)begin(), seckey.data(), seckey.size()))
+        return false;*/
+    // fCompressed = vchPubKey.IsCompressed();
+    memcpy((unsigned char*)begin(), seckey.data(), seckey.size());
 
+    fValid = true;
 
     if (fSkipCheck)
         return true;
@@ -573,14 +655,16 @@ bool CBOBKey::Load(CPrivKey& seckey, CBOBPubKey& vchPubKey, bool fSkipCheck = fa
     return VerifyPubKey(vchPubKey);
 }
 
+// 일단 ZZANG과 동일하게 맞춤 < by. crypthobin >
 bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const
 {
     assert(IsValid());
-    assert(IsCompressed());
+    // assert(IsCompressed());
     std::vector<unsigned char, secure_allocator<unsigned char>> vout(64);
     if ((nChild >> 31) == 0) {
         CBOBPubKey pubkey = GetPubKey();
-        assert(pubkey.size() == CBOBPubKey::COMPRESSED_SIZE);
+
+        // assert(pubkey.size() == CBOBPubKey::COMPRESSED_SIZE);
         BIP32Hash(cc, nChild, *pubkey.begin(), pubkey.begin() + 1, vout.data());
     } else {
         assert(size() == 32);
@@ -589,65 +673,8 @@ bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild,
     memcpy(ccChild.begin(), vout.data() + 32, 32);
     memcpy((unsigned char*)keyChild.begin(), begin(), 32);
     bool ret = secp256k1_ec_seckey_tweak_add(secp256k1_context_sign, (unsigned char*)keyChild.begin(), vout.data());
-    keyChild.fCompressed = true;
+    // keyChild.fCompressed = true;
     keyChild.fValid = ret;
     return ret;
 }
 
-// CExtBOBKey
-
-bool CExtBOBKey::Derive(CExtBOBKey& out, unsigned int _nChild) const
-{
-    out.nDepth = nDepth + 1;
-    CKeyID id = key.GetPubKey().GetID();
-    memcpy(out.vchFingerprint, &id, 4);
-    out.nChild = _nChild;
-    return key.Derive(out.key, out.chaincode, _nChild, chaincode);
-}
-
-void CExtBOBKey::SetSeed(const unsigned char* seed, unsigned int nSeedLen)
-{
-    static const unsigned char hashkey[] = {'B', 'i', 't', 'c', 'o', 'i', 'n', ' ', 's', 'e', 'e', 'd'};
-    std::vector<unsigned char, secure_allocator<unsigned char>> vout(64);
-    CHMAC_SHA512(hashkey, sizeof(hashkey)).Write(seed, nSeedLen).Finalize(vout.data());
-    key.Set(vout.data(), vout.data() + 32, true);
-    memcpy(chaincode.begin(), vout.data() + 32, 32);
-    nDepth = 0;
-    nChild = 0;
-    memset(vchFingerprint, 0, sizeof(vchFingerprint));
-}
-
-CExtBOBPubKey CExtBOBKey::Neuter() const
-{
-    CExtBOBPubKey ret;
-    ret.nDepth = nDepth;
-    memcpy(ret.vchFingerprint, vchFingerprint, 4);
-    ret.nChild = nChild;
-    ret.pubkey = key.GetPubKey();
-    ret.chaincode = chaincode;
-    return ret;
-}
-
-void CExtBOBKey::Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const
-{
-    code[0] = nDepth;
-    memcpy(code + 1, vchFingerprint, 4);
-    code[5] = (nChild >> 24) & 0xFF;
-    code[6] = (nChild >> 16) & 0xFF;
-    code[7] = (nChild >> 8) & 0xFF;
-    code[8] = (nChild >> 0) & 0xFF;
-    memcpy(code + 9, chaincode.begin(), 32);
-    code[41] = 0;
-    assert(key.size() == 32);
-    memcpy(code + 42, key.begin(), 32);
-}
-
-void CExtBOBKey::Decode(const unsigned char code[BIP32_EXTKEY_SIZE])
-{
-    nDepth = code[0];
-    memcpy(vchFingerprint, code + 1, 4);
-    nChild = (code[5] << 24) | (code[6] << 16) | (code[7] << 8) | code[8];
-    memcpy(chaincode.begin(), code + 9, 32);
-    key.Set(code + 42, code + BIP32_EXTKEY_SIZE, true);
-    if ((nDepth == 0 && (nChild != 0 || ReadLE32(vchFingerprint) != 0)) || code[41] != 0) key = CBOBKey();
-}

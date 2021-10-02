@@ -332,10 +332,10 @@ public:
     /**
      * secp256k1:
      */
-    static constexpr unsigned int SIZE = 65;
-    static constexpr unsigned int COMPRESSED_SIZE = 33;
-    static constexpr unsigned int SIGNATURE_SIZE = 72;
-    static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
+    static constexpr unsigned int SIZE = 1312;
+    static constexpr unsigned int COMPRESSED_SIZE = 1312;
+    static constexpr unsigned int SIGNATURE_SIZE = 2520;
+    // static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
 
     /**
      * see www.keylength.com
@@ -344,6 +344,7 @@ public:
    /* static_assert(
         SIZE >= COMPRESSED_SIZE,
         "COMPRESSED_SIZE is larger than SIZE");*/
+    unsigned char t_vch[SIZE];
 
 private:
     /**
@@ -361,9 +362,11 @@ private:
         if (chHeader == 4 || chHeader == 6 || chHeader == 7)
             return SIZE;
         return 0;*/
-        if (chHeader == 4)
-            return SIZE;
-        return 0;
+        //if (chHeader == 4)
+        //    return SIZE;
+        //else
+        //    printf("chHeader != 4\n");
+        return SIZE;
         //zzng coin에서 바꿔준건데 되는지는 모르겠습니다 .Crypthobin
     }
 
@@ -463,7 +466,7 @@ public:
     {
         return CKeyID(Hash160(MakeSpan(vch).first(size())));
     }
-    
+    /*
     //! Get the 256-bit hash of this public key.
     uint256 GetHash() const
     {
@@ -606,15 +609,6 @@ struct CExtBOBPubKey {
                a.pubkey == b.pubkey;
     }
 
-    friend bool operator!=(CExtBOBPubKey& a, const CExtBOBPubKey& b)
-    {
-        return a.nDepth == b.nDepth &&
-               memcmp(&a.vchFingerprint[0], &b.vchFingerprint[0], sizeof(vchFingerprint)) == 0 &&
-               a.nChild == b.nChild &&
-               a.chaincode == b.chaincode &&
-               a.pubkey == b.pubkey;
-    }
-
     void Encode(unsigned char code[BIP32_EXTPQKEY_SIZE]) const;
     void Decode(const unsigned char code[BIP32_EXTPQKEY_SIZE]);
     /*bool Derive(CExtPQPubKey& out, unsigned int nChild) const;*/
@@ -643,9 +637,6 @@ struct CExtBOBPubKey {
         s.read((char*)&code[0], len);
         Decode(code);
     }
-
-    bool Derive(CExtBOBPubKey& out, unsigned int nChild) const;
-
 };
 
 
