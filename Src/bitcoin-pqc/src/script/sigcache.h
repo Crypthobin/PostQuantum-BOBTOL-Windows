@@ -19,7 +19,7 @@ static const unsigned int DEFAULT_MAX_SIG_CACHE_SIZE = 32;
 // Maximum sig cache size allowed
 static const int64_t MAX_MAX_SIG_CACHE_SIZE = 16384;
 
-class CPubKey;
+class CBOBPubKey;
 
 class CachingTransactionSignatureChecker : public TransactionSignatureChecker
 {
@@ -29,7 +29,7 @@ private:
 public:
     CachingTransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, bool storeIn, PrecomputedTransactionData& txdataIn) : TransactionSignatureChecker(txToIn, nInIn, amountIn, txdataIn, MissingDataBehavior::ASSERT_FAIL), store(storeIn) {}
 
-    bool VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const override;
+    bool VerifySignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& vchPubKey, const uint256& sighash) const override;
     bool VerifySchnorrSignature(Span<const unsigned char> sig, const XOnlyPubKey& pubkey, const uint256& sighash) const override;
 };
 

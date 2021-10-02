@@ -99,6 +99,43 @@ void BlockAssembler::resetBlock()
     nFees = 0;
 }
 
+
+/***********************************/
+/*Crypthobin Modify*/
+/***********************************/
+CBlock MakeSigPubHash(CBlock *pblock)
+{
+    CBlock tpblock = *pblock;
+
+    int i = 0;
+    int j = 0;
+
+    for (i = 1; i < pblock->vtx.size(); i++) {
+        CTransaction tx = (CTransaction)*pblock->vtx[i];
+        for (j = 0; j < tx.vin.size(); j++) {
+            CHashWriter ss1(SER_GETHASH, 0);
+            CHashWriter ss2(SER_GETHASH, 0);
+            uint256 hashsig;
+            uint256 hashpuk;
+
+            if (tx.vin[j].scriptWitness.stack.size() == 2) {
+                ss1 << tx.vin[j].scriptWitness.stack[0];
+                hashsig = ss1.GetHash();
+                ss2 << tx.vin[j].scriptWitness.stack[1];
+                hashpuk = ss2.GetHash();
+                tx.vin[j].scriptWitness.stack.clear();
+                tx.vin[j].scriptWitness.stack.push_back(ParseHex(hashsig.ToString()));
+                tx.vin[j].scriptWitness.stack.push_back(ParseHex(hashpuk.ToString()));
+            }
+        }
+        tpblock.vtx[i] = MakeTransactionRef(tx);
+    }
+
+    return tpblock;
+}
+
+
+
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn)
 {
     int64_t nTimeStart = GetTimeMicros();
@@ -156,6 +193,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     m_last_block_num_txs = nBlockTx;
     m_last_block_weight = nBlockWeight;
+
+
+    {
+        *pblock = MakeSigPubHash(pblock);  //<by. Crypthobin>
+    }
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;

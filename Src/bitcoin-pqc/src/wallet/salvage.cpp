@@ -11,6 +11,8 @@
 #include <wallet/wallet.h>
 #include <wallet/walletdb.h>
 
+#include <util/strencodings.h>
+
 /* End of headers, beginning of key/value data */
 static const char *HEADER_END = "HEADER=END";
 /* End of key/value data */
