@@ -227,14 +227,14 @@ BOOST_FIXTURE_TEST_CASE(importmulti_rescan, TestChain100Setup)
 
         UniValue response = importmulti().HandleRequest(request);
         BOOST_CHECK_EQUAL(response.write(),
-            strprintf("[{\"success\":false,\"error\":{\"code\":-1,\"message\":\"Rescan failed for key with creation "
-                      "timestamp %d. There was an error reading a block from time %d, which is after or within %d "
-                      "seconds of key creation, and could contain transactions pertaining to the key. As a result, "
-                      "transactions and coins using this key may not appear in the wallet. This error could be caused "
-                      "by pruning or data corruption (see bitcoind log for details) and could be dealt with by "
-                      "downloading and rescanning the relevant blocks (see -reindex and -rescan "
-                      "options).\"}},{\"success\":true}]",
-                              0, oldTip->GetBlockTimeMax(), TIMESTAMP_WINDOW));
+                          strprintf("[{\"success\":false,\"error\":{\"code\":-1,\"message\":\"Rescan failed for key with creation "
+                                    "timestamp %d. There was an error reading a block from time %d, which is after or within %d "
+                                    "seconds of key creation, and could contain transactions pertaining to the key. As a result, "
+                                    "transactions and coins using this key may not appear in the wallet. This error could be caused "
+                                    "by pruning or data corruption (see bitcoind log for details) and could be dealt with by "
+                                    "downloading and rescanning the relevant blocks (see -reindex and -rescan "
+                                    "options).\"}},{\"success\":true}]",
+                                    0, oldTip->GetBlockTimeMax(), TIMESTAMP_WINDOW));
         RemoveWallet(context, wallet, /* load_on_start= */ std::nullopt);
     }
 }
@@ -337,7 +337,7 @@ BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain100Setup)
     // credit amount is calculated.
     wtx.MarkDirty();
     BOOST_CHECK(spk_man->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey()));
-    BOOST_CHECK_EQUAL(CachedTxGetImmatureCredit(wallet, wtx), 50*COIN);
+    BOOST_CHECK_EQUAL(CachedTxGetImmatureCredit(wallet, wtx), 50 * COIN);
 }
 
 static int64_t AddTx(ChainstateManager& chainman, CWallet& wallet, uint32_t lockTime, int64_t mockTime, int64_t blockTime)
@@ -361,9 +361,10 @@ static int64_t AddTx(ChainstateManager& chainman, CWallet& wallet, uint32_t lock
     // If transaction is already in map, to avoid inconsistencies, unconfirmation
     // is needed before confirm again with different block.
     return wallet.AddToWallet(MakeTransactionRef(tx), confirm, [&](CWalletTx& wtx, bool /* new_tx */) {
-        wtx.setUnconfirmed();
-        return true;
-    })->nTimeSmart;
+                     wtx.setUnconfirmed();
+                     return true;
+                 })
+        ->nTimeSmart;
 }
 
 // Simple test to verify assignment of CWalletTx::nSmartTime value. Could be
@@ -445,7 +446,7 @@ static void TestWatchOnlyPubKey(LegacyScriptPubKeyMan* spk_man, const CPubKey& a
 static void PollutePubKey(CPubKey& pubkey)
 {
     std::vector<unsigned char> pubkey_raw(pubkey.begin(), pubkey.end());
-    std::fill(pubkey_raw.begin()+1, pubkey_raw.end(), 0);
+    std::fill(pubkey_raw.begin() + 1, pubkey_raw.end(), 0);
     pubkey = CPubKey(pubkey_raw);
     assert(!pubkey.IsFullyValid());
     assert(pubkey.IsValid());
@@ -760,18 +761,18 @@ BOOST_FIXTURE_TEST_CASE(CreateWallet, TestChain100Setup)
     // as soon as possible.
     addtx_count = 0;
     auto handler = HandleLoadWallet(context, [&](std::unique_ptr<interfaces::Wallet> wallet) EXCLUSIVE_LOCKS_REQUIRED(wallet->wallet()->cs_wallet, context.wallets_mutex) {
-            BOOST_CHECK(rescan_completed);
-            m_coinbase_txns.push_back(CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey())).vtx[0]);
-            block_tx = TestSimpleSpend(*m_coinbase_txns[2], 0, coinbaseKey, GetScriptForRawPubKey(key.GetPubKey()));
-            m_coinbase_txns.push_back(CreateAndProcessBlock({block_tx}, GetScriptForRawPubKey(coinbaseKey.GetPubKey())).vtx[0]);
-            mempool_tx = TestSimpleSpend(*m_coinbase_txns[3], 0, coinbaseKey, GetScriptForRawPubKey(key.GetPubKey()));
-            BOOST_CHECK(m_node.chain->broadcastTransaction(MakeTransactionRef(mempool_tx), DEFAULT_TRANSACTION_MAXFEE, false, error));
-            LEAVE_CRITICAL_SECTION(context.wallets_mutex);
-            LEAVE_CRITICAL_SECTION(wallet->wallet()->cs_wallet);
-            SyncWithValidationInterfaceQueue();
-            ENTER_CRITICAL_SECTION(wallet->wallet()->cs_wallet);
-            ENTER_CRITICAL_SECTION(context.wallets_mutex);
-        });
+        BOOST_CHECK(rescan_completed);
+        m_coinbase_txns.push_back(CreateAndProcessBlock({}, GetScriptForRawPubKey(coinbaseKey.GetPubKey())).vtx[0]);
+        block_tx = TestSimpleSpend(*m_coinbase_txns[2], 0, coinbaseKey, GetScriptForRawPubKey(key.GetPubKey()));
+        m_coinbase_txns.push_back(CreateAndProcessBlock({block_tx}, GetScriptForRawPubKey(coinbaseKey.GetPubKey())).vtx[0]);
+        mempool_tx = TestSimpleSpend(*m_coinbase_txns[3], 0, coinbaseKey, GetScriptForRawPubKey(key.GetPubKey()));
+        BOOST_CHECK(m_node.chain->broadcastTransaction(MakeTransactionRef(mempool_tx), DEFAULT_TRANSACTION_MAXFEE, false, error));
+        LEAVE_CRITICAL_SECTION(context.wallets_mutex);
+        LEAVE_CRITICAL_SECTION(wallet->wallet()->cs_wallet);
+        SyncWithValidationInterfaceQueue();
+        ENTER_CRITICAL_SECTION(wallet->wallet()->cs_wallet);
+        ENTER_CRITICAL_SECTION(context.wallets_mutex);
+    });
     wallet = TestLoadWallet(context);
     BOOST_CHECK_EQUAL(addtx_count, 4);
     {
@@ -819,7 +820,7 @@ BOOST_FIXTURE_TEST_CASE(ZapSelectTx, TestChain100Setup)
         BOOST_CHECK(wallet->HasWalletSpend(prev_hash));
         BOOST_CHECK_EQUAL(wallet->mapWallet.count(block_hash), 1u);
 
-        std::vector<uint256> vHashIn{ block_hash }, vHashOut;
+        std::vector<uint256> vHashIn{block_hash}, vHashOut;
         BOOST_CHECK_EQUAL(wallet->ZapSelectTx(vHashIn, vHashOut), DBErrors::LOAD_OK);
 
         BOOST_CHECK(!wallet->HasWalletSpend(prev_hash));

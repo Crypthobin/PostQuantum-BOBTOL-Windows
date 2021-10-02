@@ -213,15 +213,15 @@ public:
 	* 실제 개인키 길이: 2604 byte
 	* 공개키 길이: 2065 byte
 	*/
-    static const unsigned int SIZE = 279;
-    static const unsigned int COMPRESSED_SIZE = 214;
+    static const unsigned int SIZE = 32;
+    static const unsigned int SECRET_KEY_SIZE = 2528;
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
-    static_assert(
+    /*static_assert(
         SIZE >= COMPRESSED_SIZE,
-        "COMPRESSED_SIZE is larger than SIZE");
+        "COMPRESSED_SIZE is larger than SIZE");*/
 
 private:
     //! Whether this private key is valid. We check for correctness when modifying the key
@@ -239,7 +239,7 @@ private:
 
     bool Negate();
 
-    bool fCompressed;
+    bool fCompressed = false;
 
 public:
     //! Construct an invalid private key.
@@ -322,4 +322,28 @@ public:
 
     //! Load private key and check that public key matches.
     bool Load(CPrivKey& privkey, CBOBPubKey& vchPubKey, bool fSkipCheck);
+};
+
+
+struct CExtBOBKey {
+    unsigned char nDepth;
+    unsigned char vchFingerprint[4];
+    unsigned int nChild;
+    ChainCode chaincode;
+    CBOBKey key;
+
+    friend bool operator==(const CExtBOBKey& a, const CExtBOBKey& b)
+    {
+        return a.nDepth == b.nDepth &&
+               memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
+               a.nChild == b.nChild &&
+               a.chaincode == b.chaincode &&
+               a.key == b.key;
+    }
+
+    void Encode(unsigned char code[BIP32_EXTPQKEY_SIZE]) const;
+    void Decode(const unsigned char code[BIP32_EXTPQKEY_SIZE]);
+    bool Derive(CExtBOBKey& out, unsigned int nChild) const;
+    CExtBOBPubKey Neuter() const;
+    void SetSeed(const unsigned char* seed, unsigned int nSeedLen);
 };

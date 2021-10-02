@@ -11,7 +11,7 @@
 
 const SigningProvider& DUMMY_SIGNING_PROVIDER = SigningProvider();
 
-template<typename M, typename K, typename V>
+template <typename M, typename K, typename V>
 bool LookupHelper(const M& map, const K& key, V& value)
 {
     auto it = map.find(key);
@@ -27,12 +27,12 @@ bool HidingSigningProvider::GetCScript(const CScriptID& scriptid, CScript& scrip
     return m_provider->GetCScript(scriptid, script);
 }
 
-bool HidingSigningProvider::GetPubKey(const CKeyID& keyid, CPubKey& pubkey) const
+bool HidingSigningProvider::GetPubKey(const CKeyID& keyid, CBOBPubKey& pubkey) const
 {
     return m_provider->GetPubKey(keyid, pubkey);
 }
 
-bool HidingSigningProvider::GetKey(const CKeyID& keyid, CKey& key) const
+bool HidingSigningProvider::GetKey(const CKeyID& keyid, CBOBKey& key) const
 {
     if (m_hide_secret) return false;
     return m_provider->GetKey(keyid, key);
@@ -50,15 +50,15 @@ bool HidingSigningProvider::GetTaprootSpendData(const XOnlyPubKey& output_key, T
 }
 
 bool FlatSigningProvider::GetCScript(const CScriptID& scriptid, CScript& script) const { return LookupHelper(scripts, scriptid, script); }
-bool FlatSigningProvider::GetPubKey(const CKeyID& keyid, CPubKey& pubkey) const { return LookupHelper(pubkeys, keyid, pubkey); }
+bool FlatSigningProvider::GetPubKey(const CKeyID& keyid, CBOBPubKey& pubkey) const { return LookupHelper(pubkeys, keyid, pubkey); }
 bool FlatSigningProvider::GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const
 {
-    std::pair<CPubKey, KeyOriginInfo> out;
+    std::pair<CBOBPubKey, KeyOriginInfo> out;
     bool ret = LookupHelper(origins, keyid, out);
     if (ret) info = std::move(out.second);
     return ret;
 }
-bool FlatSigningProvider::GetKey(const CKeyID& keyid, CKey& key) const { return LookupHelper(keys, keyid, key); }
+bool FlatSigningProvider::GetKey(const CKeyID& keyid, CBOBKey& key) const { return LookupHelper(keys, keyid, key); }
 bool FlatSigningProvider::GetTaprootSpendData(const XOnlyPubKey& output_key, TaprootSpendData& spenddata) const
 {
     return LookupHelper(tr_spenddata, output_key, spenddata);
@@ -82,7 +82,7 @@ FlatSigningProvider Merge(const FlatSigningProvider& a, const FlatSigningProvide
     return ret;
 }
 
-void FillableSigningProvider::ImplicitlyLearnRelatedKeyScripts(const CPubKey& pubkey)
+void FillableSigningProvider::ImplicitlyLearnRelatedKeyScripts(const CBOBPubKey& pubkey)
 {
     AssertLockHeld(cs_KeyStore);
     CKeyID key_id = pubkey.GetID();
@@ -105,9 +105,9 @@ void FillableSigningProvider::ImplicitlyLearnRelatedKeyScripts(const CPubKey& pu
     }
 }
 
-bool FillableSigningProvider::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
+bool FillableSigningProvider::GetPubKey(const CKeyID& address, CBOBPubKey& vchPubKeyOut) const
 {
-    CKey key;
+    CBOBKey key;
     if (!GetKey(address, key)) {
         return false;
     }
@@ -115,7 +115,7 @@ bool FillableSigningProvider::GetPubKey(const CKeyID &address, CPubKey &vchPubKe
     return true;
 }
 
-bool FillableSigningProvider::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
+bool FillableSigningProvider::AddKeyPubKey(const CBOBKey& key, const CBOBPubKey& pubkey)
 {
     LOCK(cs_KeyStore);
     mapKeys[pubkey.GetID()] = key;
@@ -123,7 +123,7 @@ bool FillableSigningProvider::AddKeyPubKey(const CKey& key, const CPubKey &pubke
     return true;
 }
 
-bool FillableSigningProvider::HaveKey(const CKeyID &address) const
+bool FillableSigningProvider::HaveKey(const CKeyID& address) const
 {
     LOCK(cs_KeyStore);
     return mapKeys.count(address) > 0;
@@ -139,7 +139,7 @@ std::set<CKeyID> FillableSigningProvider::GetKeys() const
     return set_address;
 }
 
-bool FillableSigningProvider::GetKey(const CKeyID &address, CKey &keyOut) const
+bool FillableSigningProvider::GetKey(const CKeyID& address, CBOBKey& keyOut) const
 {
     LOCK(cs_KeyStore);
     KeyMap::const_iterator mi = mapKeys.find(address);
@@ -176,12 +176,11 @@ std::set<CScriptID> FillableSigningProvider::GetCScripts() const
     return set_script;
 }
 
-bool FillableSigningProvider::GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const
+bool FillableSigningProvider::GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const
 {
     LOCK(cs_KeyStore);
     ScriptMap::const_iterator mi = mapScripts.find(hash);
-    if (mi != mapScripts.end())
-    {
+    if (mi != mapScripts.end()) {
         redeemScriptOut = (*mi).second;
         return true;
     }

@@ -5,9 +5,9 @@
 #ifndef BITCOIN_WALLET_CRYPTER_H
 #define BITCOIN_WALLET_CRYPTER_H
 
+#include <script/signingprovider.h>
 #include <serialize.h>
 #include <support/allocators/secure.h>
-#include <script/signingprovider.h>
 
 
 const unsigned int WALLET_CRYPTO_KEY_SIZE = 32;
@@ -58,27 +58,26 @@ public:
     }
 };
 
-typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
+typedef std::vector<unsigned char, secure_allocator<unsigned char>> CKeyingMaterial;
 
-namespace wallet_crypto_tests
-{
-    class TestCrypter;
+namespace wallet_crypto_tests {
+class TestCrypter;
 }
 
 /** Encryption/decryption context with key information */
 class CCrypter
 {
-friend class wallet_crypto_tests::TestCrypter; // for test access to chKey/chIV
+    friend class wallet_crypto_tests::TestCrypter; // for test access to chKey/chIV
 private:
     std::vector<unsigned char, secure_allocator<unsigned char>> vchKey;
     std::vector<unsigned char, secure_allocator<unsigned char>> vchIV;
     bool fKeySet;
 
-    int BytesToKeySHA512AES(const std::vector<unsigned char>& chSalt, const SecureString& strKeyData, int count, unsigned char *key,unsigned char *iv) const;
+    int BytesToKeySHA512AES(const std::vector<unsigned char>& chSalt, const SecureString& strKeyData, int count, unsigned char* key, unsigned char* iv) const;
 
 public:
-    bool SetKeyFromPassphrase(const SecureString &strKeyData, const std::vector<unsigned char>& chSalt, const unsigned int nRounds, const unsigned int nDerivationMethod);
-    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char> &vchCiphertext) const;
+    bool SetKeyFromPassphrase(const SecureString& strKeyData, const std::vector<unsigned char>& chSalt, const unsigned int nRounds, const unsigned int nDerivationMethod);
+    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char>& vchCiphertext) const;
     bool Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingMaterial& vchPlaintext) const;
     bool SetKey(const CKeyingMaterial& chNewKey, const std::vector<unsigned char>& chNewIV);
 
@@ -102,8 +101,8 @@ public:
     }
 };
 
-bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext);
+bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial& vchPlaintext, const uint256& nIV, std::vector<unsigned char>& vchCiphertext);
 bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCiphertext, const uint256& nIV, CKeyingMaterial& vchPlaintext);
-bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCryptedSecret, const CPubKey& vchPubKey, CKey& key);
+bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCryptedSecret, const CBOBPubKey& vchPubKey, CBOBKey& key);
 
 #endif // BITCOIN_WALLET_CRYPTER_H
