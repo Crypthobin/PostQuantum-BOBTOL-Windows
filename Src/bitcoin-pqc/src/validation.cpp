@@ -123,6 +123,10 @@ bool g_parallel_script_checks{false};
 bool fRequireStandard = true;
 bool fCheckBlockIndex = false;
 bool fCheckpointsEnabled = DEFAULT_CHECKPOINTS_ENABLED;
+
+
+
+
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 
 uint256 hashAssumeValid;
@@ -140,6 +144,10 @@ extern RecursiveMutex cs_LastBlockFile;
 extern std::vector<CBlockFileInfo> vinfoBlockFile;
 extern int nLastBlockFile;
 extern bool fCheckForPruning;
+
+static bool fCheckStartTx = false;//<by, crypthobin>
+static int64_t nStartTxTime = 0;//<by, crypthobin>
+
 extern std::set<CBlockIndex*> setDirtyBlockIndex;
 extern std::set<int> setDirtyFileInfo;
 void FlushBlockFile(bool fFinalize = false, bool finalize_undo = false);
@@ -941,6 +949,9 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
 
     GetMainSignals().TransactionAddedToMempool(ptx, m_pool.GetAndIncrementSequence());
 
+  
+
+
     return MempoolAcceptResult::Success(std::move(ws.m_replaced_transactions), ws.m_base_fees);
 }
 
@@ -1562,6 +1573,88 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
 
 
 
+
+//<by. Crypthobin>
+
+
+bool CheckSigPuk(const CTransaction& memtx, CTransaction& tx, BlockValidationState& state)
+{
+    int i = 0;
+
+    for (i = 0; i < memtx.vin.size(); i++) {
+        CHashWriter ss1(SER_GETHASH, 0);
+        CHashWriter ss2(SER_GETHASH, 0);
+        uint256 hashsig;
+        uint256 hashpuk;
+
+        if (memtx.vin[i].scriptWitness.stack.size() == 2) {
+            ss1 << memtx.vin[i].scriptWitness.stack[0];
+            hashsig = ss1.GetHash();
+            ss2 << memtx.vin[i].scriptWitness.stack[1];
+            hashpuk = ss2.GetHash();
+
+
+            /* tx의 sig hash, puk hash와 memtx의 sig hash, puk hash 비교 */
+            if (memcmp((ParseHex(hashsig.ToString()).data()), (tx.vin[i].scriptWitness.stack[0].data()), hashsig.size()) != 0)
+                //return state.Error("signature is not matched");
+                //return state.DoS(100, false, REJECT_INVALID, strprintf("signature-is-not-matched (%s)", ScriptErrorString(check.GetScriptError())));
+                return state.DoS(100, false, REJECT_INVALID, "signature-is-not-matched", true, "check signature and publickey");
+            if (memcmp((ParseHex(hashpuk.ToString()).data()), (tx.vin[i].scriptWitness.stack[1].data()), hashpuk.size()) != 0)
+                //return state.Error("publickey is not matched");
+                //return state.DoS(100, false, REJECT_INVALID, strprintf("publickey-is-not-matched (%s)", ScriptErrorString(check.GetScriptError())));
+                return state.DoS(100, false, REJECT_INVALID, "publickey-is-not-matched", true, "check signature and publickey");
+
+            /* tx에 sig hash와 puk hash 대신 sig와 puk 값 입력 */
+            tx.vin[i].scriptWitness.stack.clear();
+            tx.vin[i].scriptWitness.stack.push_back(memtx.vin[i].scriptWitness.stack[0]);
+            tx.vin[i].scriptWitness.stack.push_back(memtx.vin[i].scriptWitness.stack[1]);
+
+
+
+            // <by. Crypthobin> 더 고쳐야할 부분
+        }
+    }
+    return true;
+}
+
+bool MakeSigPubHash(CTransaction& tx)
+{
+    int i = 0;
+
+    for (i = 0; i < tx.vin.size(); i++) {
+        CHashWriter ss1(SER_GETHASH, 0);
+        CHashWriter ss2(SER_GETHASH, 0);
+        uint256 hashsig;
+        uint256 hashpuk;
+
+        if (tx.vin[i].scriptWitness.stack.size() == 2) {
+            ss1 << tx.vin[i].scriptWitness.stack[0];
+            hashsig = ss1.GetHash();
+            ss2 << tx.vin[i].scriptWitness.stack[1];
+            hashpuk = ss2.GetHash();
+
+            /* tx에 sig hash와 puk hash 대신 sig와 puk 값 입력 */
+            /*tx.vin[i].scriptWitness.stack.clear();*/
+
+            tx.vin[i].scriptWitness.stack.clear();
+            tx.vin[i].scriptWitness.stack.push_back(ParseHex(hashsig.ToString()));
+            tx.vin[i].scriptWitness.stack.push_back(ParseHex(hashpuk.ToString()));
+        }
+    }
+    return true;
+}
+
+
+
+
+
+//<by. Crypthobin>
+
+
+
+
+
+
 static int64_t nTimeCheck = 0;
 static int64_t nTimeForks = 0;
 static int64_t nTimeVerify = 0;
@@ -1821,13 +1914,66 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             std::vector<CScriptCheck> vChecks;
             bool fCacheResults = fJustCheck; /* Don't cache results if we're actually connecting blocks (still consult the cache, though) */
             TxValidationState tx_state;
-            if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
-                // Any transaction validation failure in ConnectBlock is a block consensus failure
-                state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
-                              tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-                return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
-                    tx.GetHash().ToString(), state.ToString());
+
+
+            //<by. Crypthobin>
+
+            	/* 블록체인을 시작한 시간보다 블록이 생성된 시간이 나중이면 거래내역을 확인함. */
+            if (fCheckStartTx && block.GetBlockTime() > nStartTxTime /* 거래가 시작된 시간 */) {
+                /**
+				* ZZang 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
+				* mempool의 거래 내용이 없으면 오류 처리
+				**/
+                const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
+                CTransaction& tmptx = (CTransaction&)*(block.vtx[i]);
+                //<by. Crypthobin> REJECT_INVALIID validation.h 에 정의
+                if (&memtx == NULL) {
+                    state.DoS(100, false, REJECT_INVALID, "tx-is-not-included-in-mempool");
+                    return error("ConnectBlock(): CheckInputs on %s failed with no tx in the mempool during mining",
+                                 tx.GetHash().ToString());
+                }
+                if (&memtx != NULL) {
+                    /**
+					* ZZang
+					* 1. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash를 비교
+					* 2. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash와 교체
+					**/
+                    if (!CheckSigPuk(memtx, tmptx, state)) {
+                        return error("ConnectBlock(): CheckInputs on %s failed with %s",
+                                     memtx.GetHash().ToString(), state.ToString());
+                        //<by. Crypthobin> FormatStateMessage -> state.ToString으로 변경
+                    }
+                    
+
+                     if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
+                        // Any transaction validation failure in ConnectBlock is a block consensus failure
+                        state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+                                      tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+                        return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
+                                     tx.GetHash().ToString(), state.ToString());
+                    }
+
+                    if (!MakeSigPubHash(tmptx)) {
+                        return error("ConnectBlock(): CheckInputs on %s failed with signature and publickey hashing",
+                                     tmptx.GetHash().ToString());
+                    }
+                }
             }
+
+
+            //<by. Crypthobin>
+
+
+
+
+
+            //if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
+            //    // Any transaction validation failure in ConnectBlock is a block consensus failure
+            //    state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+            //                  tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+            //    return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
+            //        tx.GetHash().ToString(), state.ToString());
+            //}
             control.Add(vChecks);
         }
 

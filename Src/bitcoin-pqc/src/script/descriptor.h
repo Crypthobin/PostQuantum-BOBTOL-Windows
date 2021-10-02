@@ -16,7 +16,8 @@
 using ExtPubKeyMap = std::unordered_map<uint32_t, CExtBOBPubKey>;
 
 /** Cache for single descriptor's derived extended pubkeys */
-class DescriptorCache {
+class DescriptorCache
+{
 private:
     /** Map key expression index -> map of (key derivation index -> xpub) */
     std::unordered_map<uint32_t, ExtPubKeyMap> m_derived_xpubs;

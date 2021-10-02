@@ -28,6 +28,20 @@
     <ClCompile Include="..\..\src\crypto\sha256.cpp" />
     <ClCompile Include="..\..\src\crypto\sha256_sse4.cpp" />
     <ClCompile Include="..\..\src\crypto\sha512.cpp" />
+    <ClCompile Include="..\..\src\dilithium\aes256ctr.cpp" />
+    <ClCompile Include="..\..\src\dilithium\fips202.cpp" />
+    <ClCompile Include="..\..\src\dilithium\ntt.cpp" />
+    <ClCompile Include="..\..\src\dilithium\packing.cpp" />
+    <ClCompile Include="..\..\src\dilithium\poly.cpp" />
+    <ClCompile Include="..\..\src\dilithium\polyvec.cpp" />
+    <ClCompile Include="..\..\src\dilithium\PQCgenKAT_sign.cpp" />
+    <ClCompile Include="..\..\src\dilithium\pqsign.cpp" />
+    <ClCompile Include="..\..\src\dilithium\randombytes.cpp" />
+    <ClCompile Include="..\..\src\dilithium\reduce.cpp" />
+    <ClCompile Include="..\..\src\dilithium\rng.cpp" />
+    <ClCompile Include="..\..\src\dilithium\rounding.cpp" />
+    <ClCompile Include="..\..\src\dilithium\symmetric-aes.cpp" />
+    <ClCompile Include="..\..\src\dilithium\symmetric-shake.cpp" />
     <ClCompile Include="..\..\src\hash.cpp" />
     <ClCompile Include="..\..\src\primitives\block.cpp" />
     <ClCompile Include="..\..\src\primitives\transaction.cpp" />
@@ -38,6 +52,23 @@
     <ClCompile Include="..\..\src\script\script_error.cpp" />
     <ClCompile Include="..\..\src\uint256.cpp" />
     <ClCompile Include="..\..\src\util\strencodings.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\dilithium\aes256ctr.h" />
+    <ClInclude Include="..\..\src\dilithium\api.h" />
+    <ClInclude Include="..\..\src\dilithium\config.h" />
+    <ClInclude Include="..\..\src\dilithium\fips202.h" />
+    <ClInclude Include="..\..\src\dilithium\ntt.h" />
+    <ClInclude Include="..\..\src\dilithium\packing.h" />
+    <ClInclude Include="..\..\src\dilithium\params.h" />
+    <ClInclude Include="..\..\src\dilithium\poly.h" />
+    <ClInclude Include="..\..\src\dilithium\polyvec.h" />
+    <ClInclude Include="..\..\src\dilithium\pqsign.h" />
+    <ClInclude Include="..\..\src\dilithium\randombytes.h" />
+    <ClInclude Include="..\..\src\dilithium\reduce.h" />
+    <ClInclude Include="..\..\src\dilithium\rng.h" />
+    <ClInclude Include="..\..\src\dilithium\rounding.h" />
+    <ClInclude Include="..\..\src\dilithium\symmetric.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

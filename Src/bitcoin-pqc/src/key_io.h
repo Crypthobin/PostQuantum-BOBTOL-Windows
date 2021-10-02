@@ -13,6 +13,14 @@
 
 #include <string>
 
+//CKey DecodeSecret(const std::string& str);
+//std::string EncodeSecret(const CKey& key);
+//
+//CExtKey DecodeExtKey(const std::string& str);
+//std::string EncodeExtKey(const CExtKey& extkey);
+//CExtPubKey DecodeExtPubKey(const std::string& str);
+//std::string EncodeExtPubKey(const CExtPubKey& extpubkey);
+
 CBOBKey DecodeSecret(const std::string& str);
 std::string EncodeSecret(const CBOBKey& key);
 

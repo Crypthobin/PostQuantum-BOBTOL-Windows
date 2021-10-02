@@ -7,10 +7,10 @@
 #define BITCOIN_WALLET_WALLETDB_H
 
 #include <amount.h>
+#include <key.h>
 #include <script/sign.h>
 #include <wallet/db.h>
 #include <wallet/walletutil.h>
-#include <key.h>
 
 #include <stdint.h>
 #include <string>
@@ -41,8 +41,7 @@ class uint160;
 class uint256;
 
 /** Error statuses for the wallet database */
-enum class DBErrors
-{
+enum class DBErrors {
     LOAD_OK,
     CORRUPT,
     NONCRITICAL_ERROR,
@@ -90,9 +89,9 @@ public:
     uint32_t nInternalChainCounter;
     CKeyID seed_id; //!< seed hash160
 
-    static const int VERSION_HD_BASE        = 1;
+    static const int VERSION_HD_BASE = 1;
     static const int VERSION_HD_CHAIN_SPLIT = 2;
-    static const int CURRENT_VERSION        = VERSION_HD_CHAIN_SPLIT;
+    static const int CURRENT_VERSION = VERSION_HD_CHAIN_SPLIT;
     int nVersion;
 
     CHDChain() { SetNull(); }
@@ -122,15 +121,15 @@ public:
 class CKeyMetadata
 {
 public:
-    static const int VERSION_BASIC=1;
-    static const int VERSION_WITH_HDDATA=10;
+    static const int VERSION_BASIC = 1;
+    static const int VERSION_WITH_HDDATA = 10;
     static const int VERSION_WITH_KEY_ORIGIN = 12;
-    static const int CURRENT_VERSION=VERSION_WITH_KEY_ORIGIN;
+    static const int CURRENT_VERSION = VERSION_WITH_KEY_ORIGIN;
     int nVersion;
-    int64_t nCreateTime; // 0 means unknown
-    std::string hdKeypath; //optional HD/bip32 keypath. Still used to determine whether a key is a seed. Also kept for backwards compatibility
-    CKeyID hd_seed_id; //id of the HD seed used to derive this key
-    KeyOriginInfo key_origin; // Key origin info with path and fingerprint
+    int64_t nCreateTime;         // 0 means unknown
+    std::string hdKeypath;       //optional HD/bip32 keypath. Still used to determine whether a key is a seed. Also kept for backwards compatibility
+    CKeyID hd_seed_id;           //id of the HD seed used to derive this key
+    KeyOriginInfo key_origin;    // Key origin info with path and fingerprint
     bool has_key_origin = false; //!< Whether the key_origin is useful
 
     CKeyMetadata()
@@ -149,8 +148,7 @@ public:
         if (obj.nVersion >= VERSION_WITH_HDDATA) {
             READWRITE(obj.hdKeypath, obj.hd_seed_id);
         }
-        if (obj.nVersion >= VERSION_WITH_KEY_ORIGIN)
-        {
+        if (obj.nVersion >= VERSION_WITH_KEY_ORIGIN) {
             READWRITE(obj.key_origin);
             READWRITE(obj.has_key_origin);
         }
@@ -204,9 +202,8 @@ private:
     }
 
 public:
-    explicit WalletBatch(WalletDatabase &database, bool _fFlushOnClose = true) :
-        m_batch(database.MakeBatch(_fFlushOnClose)),
-        m_database(database)
+    explicit WalletBatch(WalletDatabase& database, bool _fFlushOnClose = true) : m_batch(database.MakeBatch(_fFlushOnClose)),
+                                                                                 m_database(database)
     {
     }
     WalletBatch(const WalletBatch&) = delete;
@@ -228,8 +225,8 @@ public:
 
     bool WriteCScript(const uint160& hash, const CScript& redeemScript);
 
-    bool WriteWatchOnly(const CScript &script, const CKeyMetadata &keymeta);
-    bool EraseWatchOnly(const CScript &script);
+    bool WriteWatchOnly(const CScript& script, const CKeyMetadata& keymeta);
+    bool EraseWatchOnly(const CScript& script);
 
     bool WriteBestBlock(const CBlockLocator& locator);
     bool ReadBestBlock(CBlockLocator& locator);
@@ -251,9 +248,9 @@ public:
     bool WriteDescriptorCacheItems(const uint256& desc_id, const DescriptorCache& cache);
 
     /// Write destination data key,value tuple to database
-    bool WriteDestData(const std::string &address, const std::string &key, const std::string &value);
+    bool WriteDestData(const std::string& address, const std::string& key, const std::string& value);
     /// Erase destination data tuple from wallet database
-    bool EraseDestData(const std::string &address, const std::string &key);
+    bool EraseDestData(const std::string& address, const std::string& key);
 
     bool WriteActiveScriptPubKeyMan(uint8_t type, const uint256& id, bool internal);
     bool EraseActiveScriptPubKeyMan(uint8_t type, bool internal);
@@ -274,6 +271,7 @@ public:
     bool TxnCommit();
     //! Abort current transaction
     bool TxnAbort();
+
 private:
     std::unique_ptr<DatabaseBatch> m_batch;
     WalletDatabase& m_database;

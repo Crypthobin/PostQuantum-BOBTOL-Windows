@@ -12,8 +12,8 @@
 #include <span.h>
 #include <util/bip32.h>
 #include <util/spanparsing.h>
-#include <util/system.h>
 #include <util/strencodings.h>
+#include <util/system.h>
 #include <util/vector.h>
 
 #include <memory>
@@ -122,7 +122,7 @@ std::string DescriptorChecksum(const Span<const char>& span)
     for (auto ch : span) {
         auto pos = INPUT_CHARSET.find(ch);
         if (pos == std::string::npos) return "";
-        c = PolyMod(c, pos & 31); // Emit a symbol for the position inside the group, for every character.
+        c = PolyMod(c, pos & 31);   // Emit a symbol for the position inside the group, for every character.
         cls = cls * 3 + (pos >> 5); // Accumulate the group numbers
         if (++clscount == 3) {
             // Emit an extra symbol representing the group numbers, for every 3 characters.
@@ -132,11 +132,13 @@ std::string DescriptorChecksum(const Span<const char>& span)
         }
     }
     if (clscount > 0) c = PolyMod(c, cls);
-    for (int j = 0; j < 8; ++j) c = PolyMod(c, 0); // Shift further to determine the checksum.
-    c ^= 1; // Prevent appending zeroes from not affecting the checksum.
+    for (int j = 0; j < 8; ++j)
+        c = PolyMod(c, 0); // Shift further to determine the checksum.
+    c ^= 1;                // Prevent appending zeroes from not affecting the checksum.
 
     std::string ret(8, ' ');
-    for (int j = 0; j < 8; ++j) ret[j] = CHECKSUM_CHARSET[(c >> (5 * (7 - j))) & 31];
+    for (int j = 0; j < 8; ++j)
+        ret[j] = CHECKSUM_CHARSET[(c >> (5 * (7 - j))) & 31];
     return ret;
 }
 
@@ -149,8 +151,7 @@ std::string AddChecksum(const std::string& str) { return str + "#" + DescriptorC
 typedef std::vector<uint32_t> KeyPath;
 
 /** Interface for public key objects in descriptors. */
-struct PubkeyProvider
-{
+struct PubkeyProvider {
 protected:
     //! Index of this key expression in the descriptor
     //! E.g. If this PubkeyProvider is key1 in multi(2, key1, key2, key3), then m_expr_index = 0
@@ -268,7 +269,7 @@ public:
         ret = ToString();
         return true;
     }
-    bool GetPrivKey(int pos, const SigningProvider& arg, CBOBKey& key) const 
+    bool GetPrivKey(int pos, const SigningProvider& arg, CBOBKey& key) const
     {
         return arg.GetKey(m_pubkey.GetID(), key);
     }
@@ -517,8 +518,7 @@ public:
     DescriptorImpl(std::vector<std::unique_ptr<PubkeyProvider>> pubkeys, std::unique_ptr<DescriptorImpl> script, const std::string& name) : m_pubkey_args(std::move(pubkeys)), m_name(name), m_subdescriptor_args(Vector(std::move(script))) {}
     DescriptorImpl(std::vector<std::unique_ptr<PubkeyProvider>> pubkeys, std::vector<std::unique_ptr<DescriptorImpl>> scripts, const std::string& name) : m_pubkey_args(std::move(pubkeys)), m_name(name), m_subdescriptor_args(std::move(scripts)) {}
 
-    enum class StringType
-    {
+    enum class StringType {
         PUBLIC,
         PRIVATE,
         NORMALIZED,
@@ -564,15 +564,15 @@ public:
             if (pos++) ret += ",";
             std::string tmp;
             switch (type) {
-                case StringType::NORMALIZED:
-                    if (!pubkey->ToNormalizedString(*arg, tmp, cache)) return false;
-                    break;
-                case StringType::PRIVATE:
-                    if (!pubkey->ToPrivateString(*arg, tmp)) return false;
-                    break;
-                case StringType::PUBLIC:
-                    tmp = pubkey->ToString();
-                    break;
+            case StringType::NORMALIZED:
+                if (!pubkey->ToNormalizedString(*arg, tmp, cache)) return false;
+                break;
+            case StringType::PRIVATE:
+                if (!pubkey->ToPrivateString(*arg, tmp)) return false;
+                break;
+            case StringType::PUBLIC:
+                tmp = pubkey->ToString();
+                break;
             }
             ret += std::move(tmp);
         }
@@ -664,9 +664,11 @@ public:
 class AddressDescriptor final : public DescriptorImpl
 {
     const CTxDestination m_destination;
+
 protected:
     std::string ToStringExtra() const override { return EncodeDestination(m_destination); }
     std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>&, Span<const CScript>, FlatSigningProvider&) const override { return Vector(GetScriptForDestination(m_destination)); }
+
 public:
     AddressDescriptor(CTxDestination destination) : DescriptorImpl({}, "addr"), m_destination(std::move(destination)) {}
     bool IsSolvable() const final { return false; }
@@ -682,9 +684,11 @@ public:
 class RawDescriptor final : public DescriptorImpl
 {
     const CScript m_script;
+
 protected:
     std::string ToStringExtra() const override { return HexStr(m_script); }
     std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>&, Span<const CScript>, FlatSigningProvider&) const override { return Vector(m_script); }
+
 public:
     RawDescriptor(CScript script) : DescriptorImpl({}, "raw"), m_script(std::move(script)) {}
     bool IsSolvable() const final { return false; }
@@ -703,6 +707,7 @@ class PKDescriptor final : public DescriptorImpl
 {
 private:
     const bool m_xonly;
+
 protected:
     std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override
     {
@@ -713,6 +718,7 @@ protected:
             return Vector(GetScriptForRawPubKey(keys[0]));
         }
     }
+
 public:
     PKDescriptor(std::unique_ptr<PubkeyProvider> prov, bool xonly = false) : DescriptorImpl(Vector(std::move(prov)), "pk"), m_xonly(xonly) {}
     bool IsSingleType() const final { return true; }
@@ -728,6 +734,7 @@ protected:
         out.pubkeys.emplace(id, keys[0]);
         return Vector(GetScriptForDestination(PKHash(id)));
     }
+
 public:
     PKHDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Vector(std::move(prov)), "pkh") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::LEGACY; }
@@ -744,6 +751,7 @@ protected:
         out.pubkeys.emplace(id, keys[0]);
         return Vector(GetScriptForDestination(WitnessV0KeyHash(id)));
     }
+
 public:
     WPKHDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Vector(std::move(prov)), "wpkh") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::BECH32; }
@@ -759,7 +767,7 @@ protected:
         std::vector<CScript> ret;
         CKeyID id = keys[0].GetID();
         out.pubkeys.emplace(id, keys[0]);
-        ret.emplace_back(GetScriptForRawPubKey(keys[0])); // P2PK
+        ret.emplace_back(GetScriptForRawPubKey(keys[0]));      // P2PK
         ret.emplace_back(GetScriptForDestination(PKHash(id))); // P2PKH
         if (keys[0].IsCompressed()) {
             CScript p2wpkh = GetScriptForDestination(WitnessV0KeyHash(id));
@@ -769,6 +777,7 @@ protected:
         }
         return ret;
     }
+
 public:
     ComboDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Vector(std::move(prov)), "combo") {}
     bool IsSingleType() const final { return false; }
@@ -779,9 +788,11 @@ class MultisigDescriptor final : public DescriptorImpl
 {
     const int m_threshold;
     const bool m_sorted;
+
 protected:
     std::string ToStringExtra() const override { return strprintf("%i", m_threshold); }
-    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override {
+    std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript>, FlatSigningProvider&) const override
+    {
         if (m_sorted) {
             std::vector<CBOBPubKey> sorted_keys(keys);
             std::sort(sorted_keys.begin(), sorted_keys.end());
@@ -789,6 +800,7 @@ protected:
         }
         return Vector(GetScriptForMultisig(m_threshold, keys));
     }
+
 public:
     MultisigDescriptor(int threshold, std::vector<std::unique_ptr<PubkeyProvider>> providers, bool sorted = false) : DescriptorImpl(std::move(providers), sorted ? "sortedmulti" : "multi"), m_threshold(threshold), m_sorted(sorted) {}
     bool IsSingleType() const final { return true; }
@@ -804,6 +816,7 @@ protected:
         if (ret.size()) out.scripts.emplace(CScriptID(scripts[0]), scripts[0]);
         return ret;
     }
+
 public:
     SHDescriptor(std::unique_ptr<DescriptorImpl> desc) : DescriptorImpl({}, std::move(desc), "sh") {}
 
@@ -826,6 +839,7 @@ protected:
         if (ret.size()) out.scripts.emplace(CScriptID(scripts[0]), scripts[0]);
         return ret;
     }
+
 public:
     WSHDescriptor(std::unique_ptr<DescriptorImpl> desc) : DescriptorImpl({}, std::move(desc), "wsh") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::BECH32; }
@@ -836,6 +850,7 @@ public:
 class TRDescriptor final : public DescriptorImpl
 {
     std::vector<int> m_depths;
+
 protected:
     std::vector<CScript> MakeScripts(const std::vector<CBOBPubKey>& keys, Span<const CScript> scripts, FlatSigningProvider& out) const override
     {
@@ -874,9 +889,9 @@ protected:
         }
         return true;
     }
+
 public:
-    TRDescriptor(std::unique_ptr<PubkeyProvider> internal_key, std::vector<std::unique_ptr<DescriptorImpl>> descs, std::vector<int> depths) :
-        DescriptorImpl(Vector(std::move(internal_key)), std::move(descs), "tr"), m_depths(std::move(depths))
+    TRDescriptor(std::unique_ptr<PubkeyProvider> internal_key, std::vector<std::unique_ptr<DescriptorImpl>> descs, std::vector<int> depths) : DescriptorImpl(Vector(std::move(internal_key)), std::move(descs), "tr"), m_depths(std::move(depths))
     {
         assert(m_subdescriptor_args.size() == m_depths.size());
     }
@@ -889,11 +904,11 @@ public:
 ////////////////////////////////////////////////////////////////////////////
 
 enum class ParseScriptContext {
-    TOP,     //!< Top-level context (script goes directly in scriptPubKey)
-    P2SH,    //!< Inside sh() (script becomes P2SH redeemScript)
-    P2WPKH,  //!< Inside wpkh() (no script, pubkey only)
-    P2WSH,   //!< Inside wsh() (script becomes v0 witness script)
-    P2TR,    //!< Inside tr() (either internal key, or BIP342 script leaf)
+    TOP,    //!< Top-level context (script goes directly in scriptPubKey)
+    P2SH,   //!< Inside sh() (script becomes P2SH redeemScript)
+    P2WPKH, //!< Inside wpkh() (no script, pubkey only)
+    P2WSH,  //!< Inside wsh() (script becomes v0 witness script)
+    P2TR,   //!< Inside tr() (either internal key, or BIP342 script leaf)
 };
 
 /** Parse a key path, being passed a split list of elements (the first element is ignored). */
@@ -1147,7 +1162,7 @@ std::unique_ptr<DescriptorImpl> ParseScript(uint32_t& key_exp_index, Span<const 
         if (!internal_key) return nullptr;
         ++key_exp_index;
         std::vector<std::unique_ptr<DescriptorImpl>> subscripts; //!< list of script subexpressions
-        std::vector<int> depths; //!< depth in the tree of each subexpression (same length subscripts)
+        std::vector<int> depths;                                 //!< depth in the tree of each subexpression (same length subscripts)
         if (expr.size()) {
             if (!Const(",", expr)) {
                 error = strprintf("tr: expected ',', got '%c'", expr[0]);
@@ -1319,7 +1334,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
                 // If that works, try to infer subdescriptors for all leaves.
                 bool ok = true;
                 std::vector<std::unique_ptr<DescriptorImpl>> subscripts; //!< list of script subexpressions
-                std::vector<int> depths; //!< depth in the tree of each subexpression (same length subscripts)
+                std::vector<int> depths;                                 //!< depth in the tree of each subexpression (same length subscripts)
                 for (const auto& [depth, script, leaf_ver] : *tree) {
                     std::unique_ptr<DescriptorImpl> subdesc;
                     if (leaf_ver == TAPROOT_LEAF_TAPSCRIPT) {
@@ -1364,7 +1379,7 @@ bool CheckChecksum(Span<const char>& sp, bool require_checksum, std::string& err
         error = "Multiple '#' symbols";
         return false;
     }
-    if (check_split.size() == 1 && require_checksum){
+    if (check_split.size() == 1 && require_checksum) {
         error = "Missing checksum";
         return false;
     }

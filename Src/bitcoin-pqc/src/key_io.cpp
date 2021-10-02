@@ -2,10 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <key_io.h>
-#include <key.h>
 #include <base58.h>
 #include <bech32.h>
+#include <key.h>
+#include <key_io.h>
 #include <util/strencodings.h>
 
 #include <algorithm>
@@ -223,7 +223,7 @@ std::string EncodeExtPubKey(const CExtBOBPubKey& key)
 {
     std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::EXT_PUBLIC_KEY);
     size_t size = data.size();
-    data.resize(size + BIP32_EXTKEY_SIZE);
+    data.resize(size + BIP32_EXTPQKEY_SIZE);
     key.Encode(data.data() + size);
     std::string ret = EncodeBase58Check(data);
     return ret;
@@ -235,7 +235,7 @@ CExtBOBKey DecodeExtKey(const std::string& str)
     std::vector<unsigned char> data;
     if (DecodeBase58Check(str, data, 78)) {
         const std::vector<unsigned char>& prefix = Params().Base58Prefix(CChainParams::EXT_SECRET_KEY);
-        if (data.size() == BIP32_EXTKEY_SIZE + prefix.size() && std::equal(prefix.begin(), prefix.end(), data.begin())) {
+        if (data.size() == BIP32_EXTPQKEY_SIZE + prefix.size() && std::equal(prefix.begin(), prefix.end(), data.begin())) {
             key.Decode(data.data() + prefix.size());
         }
     }
@@ -246,7 +246,7 @@ std::string EncodeExtKey(const CExtBOBKey& key)
 {
     std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::EXT_SECRET_KEY);
     size_t size = data.size();
-    data.resize(size + BIP32_EXTKEY_SIZE);
+    data.resize(size + BIP32_EXTPQKEY_SIZE);
     key.Encode(data.data() + size);
     std::string ret = EncodeBase58Check(data);
     memory_cleanse(data.data(), data.size());

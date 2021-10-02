@@ -357,7 +357,7 @@ public:
      *
      * Invalidates this object.
      */
-     uint512 GetSHA512()
+    uint512 GetSHA512()
     {
         uint512 result;
         ctx.Finalize(result.begin());

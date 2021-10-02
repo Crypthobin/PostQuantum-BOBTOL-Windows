@@ -19,11 +19,11 @@ class SigningProvider
 {
 public:
     virtual ~SigningProvider() {}
-    virtual bool GetCScript(const CScriptID &scriptid, CScript& script) const { return false; }
-    virtual bool HaveCScript(const CScriptID &scriptid) const { return false; }
-    virtual bool GetPubKey(const CKeyID &address, CBOBPubKey& pubkey) const { return false; }
-    virtual bool GetKey(const CKeyID &address, CBOBKey& key) const { return false; }
-    virtual bool HaveKey(const CKeyID &address) const { return false; }
+    virtual bool GetCScript(const CScriptID& scriptid, CScript& script) const { return false; }
+    virtual bool HaveCScript(const CScriptID& scriptid) const { return false; }
+    virtual bool GetPubKey(const CKeyID& address, CBOBPubKey& pubkey) const { return false; }
+    virtual bool GetKey(const CKeyID& address, CBOBKey& key) const { return false; }
+    virtual bool HaveKey(const CKeyID& address) const { return false; }
     virtual bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const { return false; }
     virtual bool GetTaprootSpendData(const XOnlyPubKey& output_key, TaprootSpendData& spenddata) const { return false; }
 
@@ -70,8 +70,7 @@ public:
     bool GetTaprootSpendData(const XOnlyPubKey& output_key, TaprootSpendData& spenddata) const override;
 };
 
-struct FlatSigningProvider final : public SigningProvider
-{
+struct FlatSigningProvider final : public SigningProvider {
     std::map<CScriptID, CScript> scripts;
     std::map<CKeyID, CBOBPubKey> pubkeys;
     std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>> origins;
@@ -148,16 +147,16 @@ protected:
 public:
     mutable RecursiveMutex cs_KeyStore;
 
-    virtual bool AddKeyPubKey(const CBOBKey& key, const CBOBPubKey &pubkey);
-    virtual bool AddKey(const CBOBKey &key) { return AddKeyPubKey(key, key.GetPubKey()); }
-    virtual bool GetPubKey(const CKeyID &address, CBOBPubKey& vchPubKeyOut) const override;
-    virtual bool HaveKey(const CKeyID &address) const override;
+    virtual bool AddKeyPubKey(const CBOBKey& key, const CBOBPubKey& pubkey);
+    virtual bool AddKey(const CBOBKey& key) { return AddKeyPubKey(key, key.GetPubKey()); }
+    virtual bool GetPubKey(const CKeyID& address, CBOBPubKey& vchPubKeyOut) const override;
+    virtual bool HaveKey(const CKeyID& address) const override;
     virtual std::set<CKeyID> GetKeys() const;
-    virtual bool GetKey(const CKeyID &address, CBOBKey &keyOut) const override;
+    virtual bool GetKey(const CKeyID& address, CBOBKey& keyOut) const override;
     virtual bool AddCScript(const CScript& redeemScript);
-    virtual bool HaveCScript(const CScriptID &hash) const override;
+    virtual bool HaveCScript(const CScriptID& hash) const override;
     virtual std::set<CScriptID> GetCScripts() const;
-    virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const override;
+    virtual bool GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const override;
 };
 
 /** Return the CKeyID of the key involved in a script (if there is a unique one). */

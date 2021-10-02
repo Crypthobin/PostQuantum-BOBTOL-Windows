@@ -81,7 +81,7 @@ static bool MatchPayToPubkey(const CScript& script, valtype& pubkey)
 static bool MatchPayToPubkeyHash(const CScript& script, valtype& pubkeyhash)
 {
     if (script.size() == 25 && script[0] == OP_DUP && script[1] == OP_HASH160 && script[2] == 20 && script[23] == OP_EQUALVERIFY && script[24] == OP_CHECKSIG) {
-        pubkeyhash = valtype(script.begin () + 3, script.begin() + 23);
+        pubkeyhash = valtype(script.begin() + 3, script.begin() + 23);
         return true;
     }
     return false;
@@ -133,7 +133,7 @@ static bool MatchMultisig(const CScript& script, int& required_sigs, std::vector
     if (script.size() < 1 || script.back() != OP_CHECKMULTISIG) return false;
 
     if (!script.GetOp(it, opcode, data) || !GetMultisigKeyCount(opcode, data, required_sigs)) return false;
-    while (script.GetOp(it, opcode, data) && CPubKey::ValidSize(data)) {
+    while (script.GetOp(it, opcode, data) && CBOBPubKey::ValidSize(data)) {
         pubkeys.emplace_back(std::move(data));
     }
     if (!GetMultisigKeyCount(opcode, data, num_keys)) return false;
@@ -149,9 +149,8 @@ TxoutType Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned c
 
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
     // it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
-    if (scriptPubKey.IsPayToScriptHash())
-    {
-        std::vector<unsigned char> hashBytes(scriptPubKey.begin()+2, scriptPubKey.begin()+22);
+    if (scriptPubKey.IsPayToScriptHash()) {
+        std::vector<unsigned char> hashBytes(scriptPubKey.begin() + 2, scriptPubKey.begin() + 22);
         vSolutionsRet.push_back(hashBytes);
         return TxoutType::SCRIPTHASH;
     }
@@ -184,7 +183,7 @@ TxoutType Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned c
     // So long as script passes the IsUnspendable() test and all but the first
     // byte passes the IsPushOnly() test we don't care what exactly is in the
     // script.
-    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
+    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin() + 1)) {
         return TxoutType::NULL_DATA;
     }
 
@@ -281,11 +280,9 @@ bool ExtractDestinations(const CScript& scriptPubKey, TxoutType& typeRet, std::v
         return false;
     }
 
-    if (typeRet == TxoutType::MULTISIG)
-    {
+    if (typeRet == TxoutType::MULTISIG) {
         nRequiredRet = vSolutions.front()[0];
-        for (unsigned int i = 1; i < vSolutions.size()-1; i++)
-        {
+        for (unsigned int i = 1; i < vSolutions.size() - 1; i++) {
             CPubKey pubKey(vSolutions[i]);
             if (!pubKey.IsValid())
                 continue;
@@ -296,13 +293,11 @@ bool ExtractDestinations(const CScript& scriptPubKey, TxoutType& typeRet, std::v
 
         if (addressRet.empty())
             return false;
-    }
-    else
-    {
+    } else {
         nRequiredRet = 1;
         CTxDestination address;
         if (!ExtractDestination(scriptPubKey, address))
-           return false;
+            return false;
         addressRet.push_back(address);
     }
 
@@ -379,18 +374,19 @@ CScript GetScriptForWitness(const CScript& redeemscript)
     std::vector<std::vector<unsigned char>> vSolutions;
 
     TxoutType typ = Solver(redeemscript, vSolutions);
-    if (typ == TxoutType::PUBKEY ) {
+    if (typ == TxoutType::PUBKEY) {
         return GetScriptForDestination(WitnessV0KeyHash(Hash160(vSolutions[0].begin(), vSolutions[0].end())));
     } else if (typ == TxoutType::PUBKEYHASH) {
         return GetScriptForDestination(WitnessV0KeyHash(Hash160(vSolutions[0])));
     }
-    
+
     uint256 hash;
     CSHA256().Write(&redeemscript[0], redeemscript.size()).Finalize(hash.begin());
     return GetScriptForDestination(WitnessV0ScriptHash(hash));
 }
 
-bool IsValidDestination(const CTxDestination& dest) {
+bool IsValidDestination(const CTxDestination& dest)
+{
     return dest.index() != 0;
 }
 
@@ -431,7 +427,7 @@ void TaprootSpendData::Merge(TaprootSpendData other)
         // this loop body can be replaced with:
         // scripts[key].merge(std::move(control_blocks));
         auto& target = scripts[key];
-        for (auto& control_block: control_blocks) {
+        for (auto& control_block : control_blocks) {
             target.insert(std::move(control_block));
         }
     }
@@ -608,9 +604,9 @@ std::optional<std::vector<std::tuple<int, CScript, int>>> InferTaprootTree(const
                     // Descend into the existing left or right branch.
                     bool desc = false;
                     for (int i = 0; i < 2; ++i) {
-                        if (node->sub[i]->hash == hash || (node->sub[i]->hash.IsNull() && node->sub[1-i]->hash != hash)) {
+                        if (node->sub[i]->hash == hash || (node->sub[i]->hash.IsNull() && node->sub[1 - i]->hash != hash)) {
                             node->sub[i]->hash = hash;
-                            node = &*node->sub[1-i];
+                            node = &*node->sub[1 - i];
                             desc = true;
                             break;
                         }
