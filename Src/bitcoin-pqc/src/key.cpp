@@ -573,14 +573,17 @@ bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool
 
     uint8_t pk[CRYPTO_PUBLICKEYBYTES] = {0};
     uint8_t sk[CRYPTO_SECRETKEYBYTES] = {0};
-    uint8_t sig[CBOBPubKey::SIGNATURE_SIZE + 32] = {0}; // + 32?? < by. crypthobin >
-    size_t sig_len = 0;
-    uint8_t seedbuf[3 * SEEDBYTES] = {0};
+    uint8_t sig[CBOBPubKey::SIGNATURE_SIZE] = {0}; // + 32?? < by. crypthobin >
+    size_t sig_len = CBOBPubKey::SIGNATURE_SIZE;
+    uint8_t seedbuf[2 * SEEDBYTES + CRHBYTES] = {0};
 
-    shake256(seedbuf, 3 * SEEDBYTES, begin(), SEEDBYTES);
+    shake256(seedbuf, 2 * SEEDBYTES + CRHBYTES, begin(), SEEDBYTES);
 
     crypto_sign_keypair(seedbuf, pk, sk);
-    crypto_sign(sig, &sig_len, hash.begin(), hash.size(), sk);
+    //crypto_sign(sig, &sig_len, hash.begin(), hash.size(), sk);
+
+    crypto_sign_signature(sig, &sig_len, hash.begin(), hash.size(), sk);
+
     //crypto_sign_signature(sig, &sig_len, hash.begin(), hash.size(), sk);
 
     //uint32_t counter = 0;
@@ -594,7 +597,7 @@ bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool
     // assert(ret);
     // secp256k1_ecdsa_signature_serialize_der(secp256k1_context_sign, vchSig.data(), &nSigLen, &sig);
     memcpy(vchSig.data(), sig, sig_len);
-    vchSig.resize(sig_len);
+    //vchSig.resize(sig_len);
     return true;
 }
 

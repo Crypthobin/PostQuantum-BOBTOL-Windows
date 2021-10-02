@@ -334,7 +334,7 @@ public:
      */
     static constexpr unsigned int SIZE = 1312;
     static constexpr unsigned int COMPRESSED_SIZE = 1312;
-    static constexpr unsigned int SIGNATURE_SIZE = 2520;
+    static constexpr unsigned int SIGNATURE_SIZE = 2420;
     // static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
 
     /**

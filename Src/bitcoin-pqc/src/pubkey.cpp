@@ -412,15 +412,13 @@ bool CBOBPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& v
 {
     if (!IsValid())
         return false;
-    unsigned char pk[SIZE + 1];
-    unsigned char sig[SIGNATURE_SIZE + 1];
+    unsigned char pk[SIZE];
+    unsigned char sig[SIGNATURE_SIZE];
 
     memcpy(pk, &(*this)[0], size());
     memcpy(sig, vchSig.data(), vchSig.size());
 
     // int ret = crypto_sign_open((uint8_t*)hash.begin(), (size_t *)hash.size(), sig, vchSig.size(), pk);
-
-
 
     //secp256k1_pubkey pubkey;
     //secp256k1_ecdsa_signature sig;
@@ -434,7 +432,15 @@ bool CBOBPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& v
     ///* libsecp256k1's ECDSA verification requires lower-S signatures, which have
     // * not historically been enforced in Bitcoin, so normalize them first. */
     //secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
-    return true;
+    //return true;
+    int ret = crypto_sign_verify(sig, vchSig.size(), hash.begin(), hash.size(), pk);
+    if (ret == 0) {
+        printf("true!!\n");
+        return true;
+    } else {
+        printf("false :(\n");
+        return false;
+    }
 }
 
 // 추후 수정 < by. crypthobin >
