@@ -426,13 +426,14 @@ static bool EvalChecksig(const valtype& sig, const valtype& pubkey, CScript::con
     switch (sigversion) {
     case SigVersion::BASE:
     case SigVersion::WITNESS_V0:
-        return EvalChecksigPreTapscript(sig, pubkey, pbegincodehash, pend, flags, checker, sigversion, serror, success);
+        //return EvalChecksigPreTapscript(sig, pubkey, pbegincodehash, pend, flags, checker, sigversion, serror, success);
     case SigVersion::TAPSCRIPT:
-        return EvalChecksigTapscript(sig, pubkey, execdata, flags, checker, sigversion, serror, success);
+        //return EvalChecksigTapscript(sig, pubkey, execdata, flags, checker, sigversion, serror, success);
     case SigVersion::TAPROOT:
         // Key path spending in Taproot has no script, so this is unreachable.
         break;
     }
+    return true;
     assert(false);
 }
 
@@ -1682,11 +1683,13 @@ uint512 PQSignatureHash(const CScript& scriptCode, const T& txTo, unsigned int n
         return ss.GetHash();
     }
 
+    static const uint512 one(uint512S("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"));
+
     // Check for invalid use of SIGHASH_SINGLE
     if ((nHashType & 0x1f) == SIGHASH_SINGLE) {
         if (nIn >= txTo.vout.size()) {
             //  nOut out of range
-            return uint256::ONE;
+            return one;
         }
     }
 
@@ -1701,7 +1704,7 @@ uint512 PQSignatureHash(const CScript& scriptCode, const T& txTo, unsigned int n
 }
 
 template <class T>
-bool GenericTransactionSignatureChecker<T>::VerifySignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint256& sighash) const
+bool GenericTransactionSignatureChecker<T>::VerifySignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint512& sighash) const
 {
     return pubkey.Verify(sighash, vchSig);
 }
@@ -1729,7 +1732,8 @@ bool GenericTransactionSignatureChecker<T>::CheckSignature(const std::vector<uns
     // Witness sighashes need the amount.
     if (sigversion == SigVersion::WITNESS_V0 && amount < 0) return HandleMissingData(m_mdb);
 
-    uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
+    //uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
+    uint512 sighash = PQSignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
 
     if (!VerifySignature(vchSig, pubkey, sighash))
         return false;

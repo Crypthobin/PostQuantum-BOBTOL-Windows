@@ -311,7 +311,7 @@ struct CExtPubKey {
 };
 
 
-const unsigned int BIP32_EXTPQKEY_SIZE = 1353; /*41+ 1312 + 1*/
+const unsigned int BIP32_EXTPQKEY_SIZE = 1353; /*41+ 1312*/
 
 /** An encapsulated public key. */
 
@@ -491,12 +491,12 @@ public:
         /*return size() == COMPRESSED_SIZE;*/
         return 1;
     }
-    bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);
+    bool RecoverCompact(const uint512& hash, const std::vector<unsigned char>& vchSig);
     /**
      * Verify a DER signature (~72 bytes).
      * If this public key is not fully valid, the return value will be false.
      */
-    bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const;
+    bool Verify(const uint512& hash, const std::vector<unsigned char>& vchSig) const;
 
     /**
      * Check whether a signature is normalized (lower-S).
