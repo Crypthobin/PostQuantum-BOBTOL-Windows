@@ -105,10 +105,18 @@ void InitSignatureCache()
 bool CachingTransactionSignatureChecker::VerifySignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint256& sighash) const
 {
     uint256 entry;
+
+    uint512 pqsighash;
+
     signatureCache.ComputeEntry(entry, sighash, vchSig, pubkey);
     if (signatureCache.Get(entry, !store))
         return true;
-    if (!TransactionSignatureChecker::VerifySignature(vchSig, pubkey, sighash))
+
+    pqsighash.SetHex(sighash.GetHex().data());
+
+    /*if (!TransactionSignatureChecker::VerifySignature(vchSig, pubkey, sighash))
+        return false;*/
+    if (!TransactionSignatureChecker::VerifySignature(vchSig, pubkey, pqsighash))
         return false;
     if (store)
         signatureCache.Set(entry);

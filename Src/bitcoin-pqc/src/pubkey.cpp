@@ -417,7 +417,7 @@ const secp256k1_context* GetVerifyContext()
 
 
 // 추후 수정 < by. crypthobin >
-bool CBOBPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const
+bool CBOBPubKey::Verify(const uint512& hash, const std::vector<unsigned char>& vchSig) const
 {
     if (!IsValid())
         return false;
@@ -456,7 +456,7 @@ bool CBOBPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& v
 }
 
 // 추후 수정 < by. crypthobin >
-bool CBOBPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig)
+bool CBOBPubKey::RecoverCompact(const uint512& hash, const std::vector<unsigned char>& vchSig)
 {
     return true;
 }

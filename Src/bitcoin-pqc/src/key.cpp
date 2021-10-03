@@ -555,7 +555,7 @@ CBOBPubKey CBOBKey::GetPubKey() const
     return result;
 }
 
-bool CBOBKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind, uint32_t test_case) const
+bool CBOBKey::Sign(const uint512& hash, std::vector<unsigned char>& vchSig, bool grind, uint32_t test_case) const
 {
     if (!fValid)
         return false;
@@ -614,9 +614,9 @@ bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
     unsigned char rnd[8];
     std::string str = "Bitcoin key verification\n";
     GetRandBytes(rnd, sizeof(rnd));
-    // 나중에 512로 바꿔야 함 < by. crypthobin >
-    uint256 hash;
-    CHash256().Write(MakeUCharSpan(str)).Write(rnd).Finalize(hash);
+    // < by. crypthobin >
+    uint512 hash;
+    CHash512().Write(MakeUCharSpan(str)).Write(rnd).Finalize(hash);
     std::vector<unsigned char> vchSig;
     Sign(hash, vchSig);
     return pubkey.Verify(hash, vchSig); // 수정은 함 근데 되는지 모름.. < by. crypthobin >
