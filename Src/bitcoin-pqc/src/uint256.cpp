@@ -89,3 +89,4 @@ template std::string base_blob<512>::GetHex() const;
 template std::string base_blob<512>::ToString() const;
 template void base_blob<512>::SetHex(const char*);
 template void base_blob<512>::SetHex(const std::string&);
+
