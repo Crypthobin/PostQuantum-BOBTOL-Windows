@@ -633,9 +633,9 @@ bool CBOBKey::VerifyPubKey(const CBOBPubKey& pubkey) const
 //	unsigned char sig[CPQPubKey::SIGNATURE_SIZE + 32];
 //	unsigned int sigLen = 0;
 //	/*int ret = secp256k1_ecdsa_sign_recoverable(secp256k1_context_sign, &sig, hash.begin(), begin(), secp256k1_nonce_function_rfc6979, nullptr);*/
-//	int ret = pqNTRU_sign_keypair_gen(begin(), PRIVATE_KEY_SIZE, pk, sk);
+//	int ret = crypto_keypair_gen(begin(), PRIVATE_KEY_SIZE, pk, sk);
 //	assert(ret);
-//	ret = pqNTRU_sign(sig, (unsigned long long *)&sigLen, hash.begin(), hash.size(), sk);
+//	ret = crypto_sign(sig, (unsigned long long *)&sigLen, hash.begin(), hash.size(), sk);
 //	assert(ret);
 //	/*secp256k1_ecdsa_recoverable_signature_serialize_compact(secp256k1_context_sign, (unsigned char*)&vchSig[1], &rec, &sig);*/
 //	/*assert(rec != -1);*/
@@ -662,7 +662,8 @@ bool CBOBKey::Load(CPrivKey& seckey, CBOBPubKey& vchPubKey, bool fSkipCheck = fa
     return VerifyPubKey(vchPubKey);
 }
 
-// 일단 ZZANG과 동일하게 맞춤 < by. crypthobin >
+// < by. crypthobin >
+// derive 부분은 건드릴수 없다.....
 bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const
 {
     assert(IsValid());
