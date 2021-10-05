@@ -70,9 +70,9 @@ bool MessageSign(
     return true;
 }
 
-uint256 MessageHash(const std::string& message)
+uint512 MessageHash(const std::string& message)
 {
-    CHashWriter hasher(SER_GETHASH, 0);
+    CPQHashWriter hasher(SER_GETHASH, 0);
     hasher << MESSAGE_MAGIC << message;
 
     return hasher.GetHash();

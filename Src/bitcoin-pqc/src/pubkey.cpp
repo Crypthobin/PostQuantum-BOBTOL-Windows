@@ -424,11 +424,14 @@ bool CBOBPubKey::Verify(const uint512& hash, const std::vector<unsigned char>& v
     unsigned char pk[SIZE];
     unsigned char sig[SIGNATURE_SIZE];
 
-    printf("\n\n size : %u\n\n", size());
-    printf("\n\nvchSig size : %zu\n\n", vchSig.size());
+    /*printf("\n\n size : %u\n\n", size());
+    printf("\n\nvchSig size : %zu\n\n", vchSig.size());*/
 
     memcpy(pk, &(*this)[0], size());
     memcpy(sig, vchSig.data(), vchSig.size());
+
+    // crypthobin - sig verifying fail test
+    // pk[0] = 0; //=> fail success
 
     // int ret = crypto_sign_open((uint8_t*)hash.begin(), (size_t *)hash.size(), sig, vchSig.size(), pk);
 
@@ -447,10 +450,10 @@ bool CBOBPubKey::Verify(const uint512& hash, const std::vector<unsigned char>& v
     //return true;
     int ret = crypto_sign_verify(sig, vchSig.size(), hash.begin(), hash.size(), pk);
     if (ret == 0) {
-        printf("true!!\n");
+        printf("sig verifying success :)\n");
         return true;
     } else {
-        printf("false :(\n");
+        printf("sig verifying fail :(\n");
         return false;
     }
 }

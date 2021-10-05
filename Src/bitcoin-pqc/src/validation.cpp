@@ -1921,7 +1921,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             	/* 블록체인을 시작한 시간보다 블록이 생성된 시간이 나중이면 거래내역을 확인함. */
             if (fCheckStartTx && block.GetBlockTime() > nStartTxTime /* 거래가 시작된 시간 */) {
                 /**
-				* ZZang 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
+				* 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
 				* mempool의 거래 내용이 없으면 오류 처리
 				**/
                 const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
@@ -1934,7 +1934,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
                 }
                 if (&memtx != NULL) {
                     /**
-					* ZZang
+					*
 					* 1. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash를 비교
 					* 2. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash와 교체
 					**/
