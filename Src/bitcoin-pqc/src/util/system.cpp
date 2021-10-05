@@ -735,6 +735,32 @@ std::string ArgsManager::GetHelpMessage() const
     return usage;
 }
 
+
+// crypthobion test - log file
+bool TestLogPrint(const char* pFileName, uint64_t time)
+{
+    FILE* outFp = NULL;
+    char pathFile[1024] = {
+        0x00,
+    };
+    int writeLen = 0;
+    int ret = 0;
+
+    char time_str[10];
+    sprintf(time_str, "%llu", time);
+
+    sprintf(pathFile, "%s%s", PQC_LOG_PATH, pFileName);
+
+    outFp = fopen(pathFile, "at");
+
+    if (outFp != NULL) {
+        fprintf(outFp, "%s\n", time_str);
+        fclose(outFp);
+        return true;
+    }
+}
+
+
 bool HelpRequested(const ArgsManager& args)
 {
     return args.IsArgSet("-?") || args.IsArgSet("-h") || args.IsArgSet("-help") || args.IsArgSet("-help-debug");

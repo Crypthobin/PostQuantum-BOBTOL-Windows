@@ -25,6 +25,10 @@
 #include <algorithm>
 #include <utility>
 
+#include <util/system.h>
+#include <chrono>
+
+
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
     int64_t nOldTime = pblock->nTime;
@@ -140,6 +144,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 {
     int64_t nTimeStart = GetTimeMicros();
 
+    // 시간 측정 시작
+    std::chrono::system_clock::time_point start;
+    std::chrono::microseconds micro;
+    START_WATCH;
+
     resetBlock();
 #ifdef _DEBUG
     printf("PQC mining11!!\n\n");
@@ -224,6 +233,13 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, state.ToString()));
     }
     int64_t nTime2 = GetTimeMicros();
+
+    // 시간 측정 끝
+    STOP_WATCH;
+    // cmd에 로그 프린트
+    PRINT_TIME("create block: "); // (예) 블록 생성 시간
+    // .csv에 파일로 저장
+    TestLogPrint("CreateBlock.csv", micro.count());
 
     LogPrint(BCLog::BENCH, "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
 

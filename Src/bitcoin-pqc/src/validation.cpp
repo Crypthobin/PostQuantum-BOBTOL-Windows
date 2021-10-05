@@ -59,6 +59,9 @@
 
 #include <boost/algorithm/string/replace.hpp>
 
+#include <util/system.h>
+#include <chrono>
+
 #define MICRO 0.000001
 #define MILLI 0.001
 
@@ -1675,6 +1678,11 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
 
+    // 시간 측정 시작
+    std::chrono::system_clock::time_point start;
+    std::chrono::microseconds micro;
+    START_WATCH;
+
     // Check it again in case a previous version let a bad block in
     // NOTE: We don't currently (re-)invoke ContextualCheckBlock() or
     // ContextualCheckBlockHeader() here. This means that if we add a new
@@ -2030,6 +2038,13 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         GetTimeMicros() - nTimeStart, // in microseconds (µs)
         block.GetHash().data()
     );
+
+    // 시간 측정 끝
+    STOP_WATCH;
+    // cmd에 로그 프린트
+    PRINT_TIME("confirm(connect) block: "); 
+    // .csv에 파일로 저장
+    TestLogPrint("ConfirmBlock.csv", micro.count());
 
     return true;
 }

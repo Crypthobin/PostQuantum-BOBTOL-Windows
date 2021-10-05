@@ -17,6 +17,9 @@
 #include <wallet/transaction.h>
 #include <wallet/wallet.h>
 
+#include <util/system.h>
+#include <chrono>
+
 using interfaces::FoundBlock;
 
 static constexpr size_t OUTPUT_GROUP_MAX_ENTRIES{100};
@@ -916,6 +919,10 @@ bool CreateTransaction(
         FeeCalculation& fee_calc_out,
         bool sign)
 {
+    std::chrono::system_clock::time_point start;
+    std::chrono::microseconds micro;
+    START_WATCH;
+
     if (vecSend.empty()) {
         error = _("Transaction must have at least one recipient");
         return false;
@@ -950,6 +957,14 @@ bool CreateTransaction(
             }
         }
     }
+
+    // 시간 측정 끝
+    STOP_WATCH;
+    // cmd에 로그 프린트
+    PRINT_TIME("create tx: "); // (예) 블록 생성 시간
+    // .csv에 파일로 저장
+    TestLogPrint("CreateTx.csv", micro.count());
+
     return res;
 }
 
