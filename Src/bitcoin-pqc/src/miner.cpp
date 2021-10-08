@@ -202,9 +202,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     m_last_block_weight = nBlockWeight;
 
 
-    {
-        *pblock = MakeSigPubHash(pblock); //<by. Crypthobin>
-    }
+    //{
+    //    *pblock = MakeSigPubHash(pblock); //<by. Crypthobin>
+    //}
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
