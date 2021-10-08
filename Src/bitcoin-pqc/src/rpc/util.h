@@ -53,7 +53,7 @@ struct UniValueType {
  * the right number of arguments are passed, just that any passed are the correct type.
  */
 void RPCTypeCheck(const UniValue& params,
-                  const std::list<UniValueType>& typesExpected, bool fAllowNull=false);
+                  const std::list<UniValueType>& typesExpected, bool fAllowNull = false);
 
 /**
  * Type-check one argument; throws JSONRPCError if wrong type given.
@@ -64,9 +64,9 @@ void RPCTypeCheckArgument(const UniValue& value, const UniValueType& typeExpecte
   Check for expected keys/value types in an Object.
 */
 void RPCTypeCheckObj(const UniValue& o,
-    const std::map<std::string, UniValueType>& typesExpected,
-    bool fAllowNull = false,
-    bool fStrict = false);
+                     const std::map<std::string, UniValueType>& typesExpected,
+                     bool fAllowNull = false,
+                     bool fStrict = false);
 
 /**
  * Utilities: convert hex-encoded Values
@@ -161,7 +161,7 @@ struct RPCArg {
     const std::vector<RPCArg> m_inner; //!< Only used for arrays or dicts
     const Fallback m_fallback;
     const std::string m_description;
-    const std::string m_oneline_description; //!< Should be empty unless it is supposed to override the auto-generated summary line
+    const std::string m_oneline_description;   //!< Should be empty unless it is supposed to override the auto-generated summary line
     const std::vector<std::string> m_type_str; //!< Should be empty unless it is supposed to override the auto-generated type strings. Vector length is either 0 or 2, m_type_str.at(0) will override the type of the value in a key-value pair, m_type_str.at(1) will override the type in the argument description.
 
     RPCArg(

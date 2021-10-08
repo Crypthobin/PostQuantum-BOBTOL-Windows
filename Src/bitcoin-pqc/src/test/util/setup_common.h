@@ -8,7 +8,6 @@
 #include <chainparamsbase.h>
 #include <fs.h>
 #include <key.h>
-#include <util/system.h>
 #include <node/context.h>
 #include <pubkey.h>
 #include <random.h>
@@ -16,6 +15,7 @@
 #include <txmempool.h>
 #include <util/check.h>
 #include <util/string.h>
+#include <util/system.h>
 #include <util/vector.h>
 
 #include <type_traits>
@@ -89,7 +89,6 @@ struct BasicTestingSetup {
  * initialization behaviour.
  */
 struct ChainTestingSetup : public BasicTestingSetup {
-
     explicit ChainTestingSetup(const std::string& chainName = CBaseChainParams::MAIN, const std::vector<const char*>& extra_args = {});
     ~ChainTestingSetup();
 };
@@ -148,7 +147,7 @@ struct TestChain100Setup : public RegTestingSetup {
     ~TestChain100Setup();
 
     std::vector<CTransactionRef> m_coinbase_txns; // For convenience, coinbase transactions
-    CKey coinbaseKey; // private/public key needed to spend coinbase transactions
+    CKey coinbaseKey;                             // private/public key needed to spend coinbase transactions
 };
 
 /**
@@ -170,8 +169,7 @@ std::unique_ptr<T> MakeNoLogFileContext(const std::string& chain_name = CBaseCha
 
 class CTxMemPoolEntry;
 
-struct TestMemPoolEntryHelper
-{
+struct TestMemPoolEntryHelper {
     // Default values
     CAmount nFee;
     int64_t nTime;
@@ -180,19 +178,38 @@ struct TestMemPoolEntryHelper
     unsigned int sigOpCost;
     LockPoints lp;
 
-    TestMemPoolEntryHelper() :
-        nFee(0), nTime(0), nHeight(1),
-        spendsCoinbase(false), sigOpCost(4) { }
+    TestMemPoolEntryHelper() : nFee(0), nTime(0), nHeight(1),
+                               spendsCoinbase(false), sigOpCost(4) {}
 
     CTxMemPoolEntry FromTx(const CMutableTransaction& tx) const;
     CTxMemPoolEntry FromTx(const CTransactionRef& tx) const;
 
     // Change the default value
-    TestMemPoolEntryHelper &Fee(CAmount _fee) { nFee = _fee; return *this; }
-    TestMemPoolEntryHelper &Time(int64_t _time) { nTime = _time; return *this; }
-    TestMemPoolEntryHelper &Height(unsigned int _height) { nHeight = _height; return *this; }
-    TestMemPoolEntryHelper &SpendsCoinbase(bool _flag) { spendsCoinbase = _flag; return *this; }
-    TestMemPoolEntryHelper &SigOpsCost(unsigned int _sigopsCost) { sigOpCost = _sigopsCost; return *this; }
+    TestMemPoolEntryHelper& Fee(CAmount _fee)
+    {
+        nFee = _fee;
+        return *this;
+    }
+    TestMemPoolEntryHelper& Time(int64_t _time)
+    {
+        nTime = _time;
+        return *this;
+    }
+    TestMemPoolEntryHelper& Height(unsigned int _height)
+    {
+        nHeight = _height;
+        return *this;
+    }
+    TestMemPoolEntryHelper& SpendsCoinbase(bool _flag)
+    {
+        spendsCoinbase = _flag;
+        return *this;
+    }
+    TestMemPoolEntryHelper& SigOpsCost(unsigned int _sigopsCost)
+    {
+        sigOpCost = _sigopsCost;
+        return *this;
+    }
 };
 
 CBlock getBlock13b8a();

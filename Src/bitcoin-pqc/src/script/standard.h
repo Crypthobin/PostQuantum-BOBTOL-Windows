@@ -70,14 +70,14 @@ enum class TxoutType {
     WITNESS_UNKNOWN, //!< Only for Witness versions not already defined above
 };
 
-class CNoDestination {
+class CNoDestination
+{
 public:
-    friend bool operator==(const CNoDestination &a, const CNoDestination &b) { return true; }
-    friend bool operator<(const CNoDestination &a, const CNoDestination &b) { return true; }
+    friend bool operator==(const CNoDestination& a, const CNoDestination& b) { return true; }
+    friend bool operator<(const CNoDestination& a, const CNoDestination& b) { return true; }
 };
 
-struct PKHash : public BaseHash<uint160>
-{
+struct PKHash : public BaseHash<uint160> {
     PKHash() : BaseHash() {}
     explicit PKHash(const uint160& hash) : BaseHash(hash) {}
     explicit PKHash(const CPubKey& pubkey);
@@ -87,8 +87,7 @@ struct PKHash : public BaseHash<uint160>
 CKeyID ToKeyID(const PKHash& key_hash);
 
 struct WitnessV0KeyHash;
-struct ScriptHash : public BaseHash<uint160>
-{
+struct ScriptHash : public BaseHash<uint160> {
     ScriptHash() : BaseHash() {}
     // These don't do what you'd expect.
     // Use ScriptHash(GetScriptForDestination(...)) instead.
@@ -100,15 +99,13 @@ struct ScriptHash : public BaseHash<uint160>
     explicit ScriptHash(const CScriptID& script);
 };
 
-struct WitnessV0ScriptHash : public BaseHash<uint256>
-{
+struct WitnessV0ScriptHash : public BaseHash<uint256> {
     WitnessV0ScriptHash() : BaseHash() {}
     explicit WitnessV0ScriptHash(const uint256& hash) : BaseHash(hash) {}
     explicit WitnessV0ScriptHash(const CScript& script);
 };
 
-struct WitnessV0KeyHash : public BaseHash<uint160>
-{
+struct WitnessV0KeyHash : public BaseHash<uint160> {
     WitnessV0KeyHash() : BaseHash() {}
     explicit WitnessV0KeyHash(const uint160& hash) : BaseHash(hash) {}
     explicit WitnessV0KeyHash(const CPubKey& pubkey);
@@ -117,26 +114,26 @@ struct WitnessV0KeyHash : public BaseHash<uint160>
 };
 CKeyID ToKeyID(const WitnessV0KeyHash& key_hash);
 
-struct WitnessV1Taproot : public XOnlyPubKey
-{
+struct WitnessV1Taproot : public XOnlyPubKey {
     WitnessV1Taproot() : XOnlyPubKey() {}
     explicit WitnessV1Taproot(const XOnlyPubKey& xpk) : XOnlyPubKey(xpk) {}
 };
 
 //! CTxDestination subtype to encode any future Witness version
-struct WitnessUnknown
-{
+struct WitnessUnknown {
     unsigned int version;
     unsigned int length;
     unsigned char program[40];
 
-    friend bool operator==(const WitnessUnknown& w1, const WitnessUnknown& w2) {
+    friend bool operator==(const WitnessUnknown& w1, const WitnessUnknown& w2)
+    {
         if (w1.version != w2.version) return false;
         if (w1.length != w2.length) return false;
         return std::equal(w1.program, w1.program + w1.length, w2.program);
     }
 
-    friend bool operator<(const WitnessUnknown& w1, const WitnessUnknown& w2) {
+    friend bool operator<(const WitnessUnknown& w1, const WitnessUnknown& w2)
+    {
         if (w1.version < w2.version) return true;
         if (w1.version > w2.version) return false;
         if (w1.length < w2.length) return true;
@@ -212,8 +209,7 @@ CScript GetScriptForRawPubKey(const CBOBPubKey& pubkey);
 /** Generate a multisig script. */
 CScript GetScriptForMultisig(int nRequired, const std::vector<CBOBPubKey>& keys);
 
-struct ShortestVectorFirstComparator
-{
+struct ShortestVectorFirstComparator {
     bool operator()(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b) const
     {
         if (a.size() < b.size()) return true;
@@ -222,8 +218,7 @@ struct ShortestVectorFirstComparator
     }
 };
 
-struct TaprootSpendData
-{
+struct TaprootSpendData {
     /** The BIP341 internal key. */
     XOnlyPubKey internal_key;
     /** The Merkle root of the script tree (0 if no scripts). */
@@ -244,16 +239,14 @@ class TaprootBuilder
 {
 private:
     /** Information about a tracked leaf in the Merkle tree. */
-    struct LeafInfo
-    {
-        CScript script;                      //!< The script.
-        int leaf_version;                    //!< The leaf version for that script.
-        std::vector<uint256> merkle_branch;  //!< The hashing partners above this leaf.
+    struct LeafInfo {
+        CScript script;                     //!< The script.
+        int leaf_version;                   //!< The leaf version for that script.
+        std::vector<uint256> merkle_branch; //!< The hashing partners above this leaf.
     };
 
     /** Information associated with a node in the Merkle tree. */
-    struct NodeInfo
-    {
+    struct NodeInfo {
         /** Merkle hash of this node. */
         uint256 hash;
         /** Tracked leaves underneath this node (either from the node itself, or its children).
@@ -300,9 +293,9 @@ private:
      */
     std::vector<std::optional<NodeInfo>> m_branch;
 
-    XOnlyPubKey m_internal_key;  //!< The internal key, set when finalizing.
-    XOnlyPubKey m_output_key;    //!< The output key, computed when finalizing.
-    bool m_parity;               //!< The tweak parity, computed when finalizing.
+    XOnlyPubKey m_internal_key; //!< The internal key, set when finalizing.
+    XOnlyPubKey m_output_key;   //!< The output key, computed when finalizing.
+    bool m_parity;              //!< The tweak parity, computed when finalizing.
 
     /** Combine information about a parent Merkle tree node from its child nodes. */
     static NodeInfo Combine(NodeInfo&& a, NodeInfo&& b);

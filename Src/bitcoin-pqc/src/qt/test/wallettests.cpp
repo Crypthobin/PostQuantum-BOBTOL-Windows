@@ -2,29 +2,29 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <qt/test/wallettests.h>
 #include <qt/test/util.h>
+#include <qt/test/wallettests.h>
 
 #include <interfaces/chain.h>
 #include <interfaces/node.h>
+#include <key_io.h>
 #include <qt/bitcoinamountfield.h>
 #include <qt/clientmodel.h>
 #include <qt/optionsmodel.h>
+#include <qt/overviewpage.h>
 #include <qt/platformstyle.h>
 #include <qt/qvalidatedlineedit.h>
+#include <qt/receivecoinsdialog.h>
+#include <qt/receiverequestdialog.h>
+#include <qt/recentrequeststablemodel.h>
 #include <qt/sendcoinsdialog.h>
 #include <qt/sendcoinsentry.h>
 #include <qt/transactiontablemodel.h>
 #include <qt/transactionview.h>
 #include <qt/walletmodel.h>
-#include <key_io.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
 #include <wallet/wallet.h>
-#include <qt/overviewpage.h>
-#include <qt/receivecoinsdialog.h>
-#include <qt/recentrequeststablemodel.h>
-#include <qt/receiverequestdialog.h>
 
 #include <memory>
 
@@ -32,15 +32,14 @@
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QDialogButtonBox>
+#include <QListView>
 #include <QPushButton>
+#include <QTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
-#include <QTextEdit>
-#include <QListView>
-#include <QDialogButtonBox>
 
-namespace
-{
+namespace {
 //! Press "Yes" or "Cancel" buttons in modal send confirmation dialog.
 void ConfirmSend(QString* text = nullptr, bool cancel = false)
 {
@@ -263,7 +262,7 @@ void TestGUI(interfaces::Node& node)
 
     // Check addition to history
     int currentRowCount = requestTableModel->rowCount({});
-    QCOMPARE(currentRowCount, initialRowCount+1);
+    QCOMPARE(currentRowCount, initialRowCount + 1);
 
     // Check addition to wallet
     std::vector<std::string> requests = walletModel.wallet().getAddressReceiveRequests();
@@ -282,10 +281,10 @@ void TestGUI(interfaces::Node& node)
 
     // Check Remove button
     QTableView* table = receiveCoinsDialog.findChild<QTableView*>("recentRequestsView");
-    table->selectRow(currentRowCount-1);
+    table->selectRow(currentRowCount - 1);
     QPushButton* removeRequestButton = receiveCoinsDialog.findChild<QPushButton*>("removeRequestButton");
     removeRequestButton->click();
-    QCOMPARE(requestTableModel->rowCount({}), currentRowCount-1);
+    QCOMPARE(requestTableModel->rowCount({}), currentRowCount - 1);
 
     // Check removal from wallet
     QCOMPARE(walletModel.wallet().getAddressReceiveRequests().size(), size_t{0});

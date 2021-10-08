@@ -35,9 +35,9 @@ public:
     /**
      * secp256k1:
      */
-    static constexpr unsigned int SIZE                   = 65;
-    static constexpr unsigned int COMPRESSED_SIZE        = 33;
-    static constexpr unsigned int SIGNATURE_SIZE         = 72;
+    static constexpr unsigned int SIZE = 65;
+    static constexpr unsigned int COMPRESSED_SIZE = 33;
+    static constexpr unsigned int SIGNATURE_SIZE = 72;
     static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
     /**
      * see www.keylength.com
@@ -48,7 +48,6 @@ public:
         "COMPRESSED_SIZE is larger than SIZE");
 
 private:
-
     /**
      * Just store the serialized data.
      * Its length can very cheaply be computed from the first byte.
@@ -72,9 +71,9 @@ private:
     }
 
 public:
-
-    bool static ValidSize(const std::vector<unsigned char> &vch) {
-      return vch.size() > 0 && GetLen(vch[0]) == vch.size();
+    bool static ValidSize(const std::vector<unsigned char>& vch)
+    {
+        return vch.size() > 0 && GetLen(vch[0]) == vch.size();
     }
 
     //! Construct an invalid public key.
@@ -161,7 +160,7 @@ public:
     {
         return CKeyID(Hash160(MakeSpan(vch).first(size())));
     }
-    
+
     //! Get the 256-bit hash of this public key.
 
     uint256 GetHash() const
@@ -215,7 +214,7 @@ public:
     bool Decompress();
 
     //! Derive BIP32 child pubkey.
-    bool Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const;
+    bool Derive(CPubKey& pubkeyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const;
 };
 
 class XOnlyPubKey
@@ -292,16 +291,16 @@ struct CExtPubKey {
     ChainCode chaincode;
     CPubKey pubkey;
 
-    friend bool operator==(const CExtPubKey &a, const CExtPubKey &b)
+    friend bool operator==(const CExtPubKey& a, const CExtPubKey& b)
     {
         return a.nDepth == b.nDepth &&
-            memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
-            a.nChild == b.nChild &&
-            a.chaincode == b.chaincode &&
-            a.pubkey == b.pubkey;
+               memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
+               a.nChild == b.nChild &&
+               a.chaincode == b.chaincode &&
+               a.pubkey == b.pubkey;
     }
 
-    friend bool operator!=(const CExtPubKey &a, const CExtPubKey &b)
+    friend bool operator!=(const CExtPubKey& a, const CExtPubKey& b)
     {
         return !(a == b);
     }
@@ -312,18 +311,9 @@ struct CExtPubKey {
 };
 
 
-
-
-
-
-
-const unsigned int BIP32_EXTPQKEY_SIZE = 2106; /*41+ 2065*/
+const unsigned int BIP32_EXTPQKEY_SIZE = 1353; /*41+ 1312*/
 
 /** An encapsulated public key. */
-
-
-
-
 
 
 class CBOBPubKey
@@ -332,18 +322,19 @@ public:
     /**
      * secp256k1:
      */
-    static constexpr unsigned int SIZE = 65;
-    static constexpr unsigned int COMPRESSED_SIZE = 33;
-    static constexpr unsigned int SIGNATURE_SIZE = 72;
-    static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
+    static constexpr unsigned int SIZE = 1312;
+    static constexpr unsigned int COMPRESSED_SIZE = 1312;
+    static constexpr unsigned int SIGNATURE_SIZE = 2420;
+    // static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
 
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
-   /* static_assert(
+    /* static_assert(
         SIZE >= COMPRESSED_SIZE,
         "COMPRESSED_SIZE is larger than SIZE");*/
+    unsigned char t_vch[SIZE];
 
 private:
     /**
@@ -351,16 +342,22 @@ private:
      * Its length can very cheaply be computed from the first byte.
      */
     unsigned char vch[SIZE];
-   /* unsigned char vch[SIZE];*/
+    /* unsigned char vch[SIZE];*/
 
     //! Compute the length of a pubkey with a given first byte.
     unsigned int static GetLen(unsigned char chHeader)
     {
-        if (chHeader == 2 || chHeader == 3)
+        /*if (chHeader == 2 || chHeader == 3)
             return COMPRESSED_SIZE;
         if (chHeader == 4 || chHeader == 6 || chHeader == 7)
             return SIZE;
-        return 0;
+        return 0;*/
+        //if (chHeader == 4)
+        //    return SIZE;
+        //else
+        //    printf("chHeader != 4\n");
+        return SIZE;
+        //return 0;
     }
 
     //! Set this key data to be invalid
@@ -494,12 +491,12 @@ public:
         /*return size() == COMPRESSED_SIZE;*/
         return 1;
     }
-    bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);
+    bool RecoverCompact(const uint512& hash, const std::vector<unsigned char>& vchSig);
     /**
      * Verify a DER signature (~72 bytes).
      * If this public key is not fully valid, the return value will be false.
      */
-    bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const;
+    bool Verify(const uint512& hash, const std::vector<unsigned char>& vchSig) const;
 
     /**
      * Check whether a signature is normalized (lower-S).
@@ -507,7 +504,7 @@ public:
     static bool CheckLowS(const std::vector<unsigned char>& vchSig);
 
     //! Recover a public key from a compact signature.
-   /* bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);*/
+    /* bool RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig);*/
 
     //! Turn this public key into an uncompressed public key.
     bool Decompress();
@@ -585,7 +582,6 @@ public:
 //
 
 
-
 struct CExtBOBPubKey {
     unsigned char nDepth;
     unsigned char vchFingerprint[4];
@@ -641,11 +637,7 @@ struct CExtBOBPubKey {
     }
 
     bool Derive(CExtBOBPubKey& out, unsigned int nChild) const;
-
 };
-
-
-
 
 
 /** Users of this module must hold an ECCVerifyHandle. The constructor and

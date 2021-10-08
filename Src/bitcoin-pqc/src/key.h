@@ -213,15 +213,15 @@ public:
 	* 실제 개인키 길이: 2604 byte
 	* 공개키 길이: 2065 byte
 	*/
-    static const unsigned int SIZE = 279;
-    static const unsigned int COMPRESSED_SIZE = 214;
+    static const unsigned int SIZE = 32;
+    static const unsigned int SECRET_KEY_SIZE = 2528;
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
-    static_assert(
+    /*static_assert(
         SIZE >= COMPRESSED_SIZE,
-        "COMPRESSED_SIZE is larger than SIZE");
+        "COMPRESSED_SIZE is larger than SIZE");*/
 
 private:
     //! Whether this private key is valid. We check for correctness when modifying the key
@@ -229,7 +229,7 @@ private:
     bool fValid;
 
     //! Whether the public key corresponding to this private key is (to be) compressed.
-    bool fCompressed;
+    //bool fCompressed;
 
     //! The actual byte data
     std::vector<unsigned char, secure_allocator<unsigned char>> keydata;
@@ -239,10 +239,11 @@ private:
 
     bool Negate();
 
+    bool fCompressed = false;
 
 public:
     //! Construct an invalid private key.
-    CBOBKey() : fValid(false), fCompressed(false)
+    CBOBKey() : fValid(false) /*, fCompressed(false)*/
     {
         // Important: vch must be 32 bytes in length to not break serialization
         keydata.resize(32);
@@ -250,7 +251,7 @@ public:
 
     friend bool operator==(const CBOBKey& a, const CBOBKey& b)
     {
-        return a.fCompressed == b.fCompressed &&
+        return /*a.fCompressed == b.fCompressed &&*/
             a.size() == b.size() &&
             memcmp(a.keydata.data(), b.keydata.data(), a.size()) == 0;
     }
@@ -264,7 +265,7 @@ public:
         } else if (Check(&pbegin[0])) {
             memcpy(keydata.data(), (unsigned char*)&pbegin[0], keydata.size());
             fValid = true;
-            fCompressed = fCompressedIn;
+            /*fCompressed = fCompressedIn;*/
         } else {
             fValid = false;
         }
@@ -300,7 +301,7 @@ public:
 	* Create a DER-serialized signature.
 	* The test_case parameter tweaks the deterministic nonce.
 	*/
-    bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
+    bool Sign(const uint512& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
     /**
 	* Create a compact signature (65 bytes), which allows reconstructing the used public key.
 	* The format is one header byte, followed by two times 32 bytes for the serialized r and s values.
@@ -324,7 +325,6 @@ public:
 };
 
 
-
 struct CExtBOBKey {
     unsigned char nDepth;
     unsigned char vchFingerprint[4];
@@ -341,8 +341,8 @@ struct CExtBOBKey {
                a.key == b.key;
     }
 
-    void Encode(unsigned char code[BIP32_EXTKEY_SIZE]) const;
-    void Decode(const unsigned char code[BIP32_EXTKEY_SIZE]);
+    void Encode(unsigned char code[BIP32_EXTPQKEY_SIZE]) const;
+    void Decode(const unsigned char code[BIP32_EXTPQKEY_SIZE]);
     bool Derive(CExtBOBKey& out, unsigned int nChild) const;
     CExtBOBPubKey Neuter() const;
     void SetSeed(const unsigned char* seed, unsigned int nSeedLen);

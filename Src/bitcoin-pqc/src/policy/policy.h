@@ -45,7 +45,7 @@ static const unsigned int MAX_STANDARD_TAPSCRIPT_STACK_ITEM_SIZE = 80;
 /** The maximum size in bytes of a standard witnessScript */
 static const unsigned int MAX_STANDARD_P2WSH_SCRIPT_SIZE = 3600;
 /** The maximum size of a standard ScriptSig */
-static const unsigned int MAX_STANDARD_SCRIPTSIG_SIZE = 1650;
+static const unsigned int MAX_STANDARD_SCRIPTSIG_SIZE = 80000; /*1650; crypthobin */
 /** Min feerate for defining dust. Historically this has been based on the
  * minRelayTxFee, however changing the dust limit changes which transactions are
  * standard and should be done with care and ideally rarely. It makes sense to

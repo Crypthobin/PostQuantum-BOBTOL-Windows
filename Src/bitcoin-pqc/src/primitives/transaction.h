@@ -267,7 +267,7 @@ public:
     // actually immutable; deserialization and assignment are implemented,
     // and bypass the constness. This is safe, as they update the entire
     // structure, including the hash.
-    const std::vector<CTxIn> vin;
+    /* const */std::vector<CTxIn> vin;//<by. Crypthobin> : const 주석처리 해줬습니다
     const std::vector<CTxOut> vout;
     const int32_t nVersion;
     const uint32_t nLockTime;

@@ -21,7 +21,7 @@
 #ifdef _WIN32
 void randombytes(uint8_t *out, size_t outlen) {
   HCRYPTPROV ctx;
-  size_t len;
+  DWORD len;
 
   if(!CryptAcquireContext(&ctx, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
     abort();

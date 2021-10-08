@@ -70,9 +70,9 @@ bool MessageSign(
     return true;
 }
 
-uint256 MessageHash(const std::string& message)
+uint512 MessageHash(const std::string& message)
 {
-    CHashWriter hasher(SER_GETHASH, 0);
+    CPQHashWriter hasher(SER_GETHASH, 0);
     hasher << MESSAGE_MAGIC << message;
 
     return hasher.GetHash();
@@ -81,12 +81,12 @@ uint256 MessageHash(const std::string& message)
 std::string SigningResultString(const SigningResult res)
 {
     switch (res) {
-        case SigningResult::OK:
-            return "No error";
-        case SigningResult::PRIVATE_KEY_NOT_AVAILABLE:
-            return "Private key not available";
-        case SigningResult::SIGNING_FAILED:
-            return "Sign failed";
+    case SigningResult::OK:
+        return "No error";
+    case SigningResult::PRIVATE_KEY_NOT_AVAILABLE:
+        return "Private key not available";
+    case SigningResult::SIGNING_FAILED:
+        return "Sign failed";
         // no default case, so the compiler can warn about missing cases
     }
     assert(false);
