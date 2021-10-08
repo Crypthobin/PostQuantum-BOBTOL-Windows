@@ -124,6 +124,24 @@ CBlock MakeSigPubHash(CBlock* pblock)
                 hashsig = ss1.GetHash();
                 ss2 << tx.vin[j].scriptWitness.stack[1];
                 hashpuk = ss2.GetHash();
+
+                printf("ss2 : \n");
+                for (auto c : tx.vin[j].scriptWitness.stack[1]) {
+                    printf("%02x", c);
+                }
+                printf("\n\n");
+
+                printf("hashpuk gethex\n");
+                printf("%s\n", hashpuk.GetHex().c_str());
+
+                printf("hashpuk tostring\n");
+                printf("%s\n", hashpuk.ToString().c_str());
+
+                uint256 sha2 = ss2.GetSHA256();
+                printf("sha2 tostring\n");
+                printf("%s\n", sha2.ToString().c_str());
+                
+
                 tx.vin[j].scriptWitness.stack.clear();
                 tx.vin[j].scriptWitness.stack.push_back(ParseHex(hashsig.ToString()));
                 tx.vin[j].scriptWitness.stack.push_back(ParseHex(hashpuk.ToString()));

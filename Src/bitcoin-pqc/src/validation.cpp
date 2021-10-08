@@ -949,8 +949,10 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
 
     GetMainSignals().TransactionAddedToMempool(ptx, m_pool.GetAndIncrementSequence());
 
-  
-
+    if (!fCheckStartTx) {
+        nStartTxTime = GetTime();
+        fCheckStartTx = true;
+    }
 
     return MempoolAcceptResult::Success(std::move(ws.m_replaced_transactions), ws.m_base_fees);
 }
@@ -1487,6 +1489,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     return fClean ? DISCONNECT_OK : DISCONNECT_UNCLEAN;
 }
 
+// 이건가??????? : 아니다.... 128로 해도 트랜잭션 안 바꿔도 잘 된다.... 
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void StartScriptCheckWorkerThreads(int threads_num)
@@ -1909,6 +1912,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-blk-sigops");
         }
 
+
         if (!tx.IsCoinBase())
         {
             std::vector<CScriptCheck> vChecks;
@@ -1919,13 +1923,13 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             //<by. Crypthobin>
 
             	/* 블록체인을 시작한 시간보다 블록이 생성된 시간이 나중이면 거래내역을 확인함. */
-            if (fCheckStartTx && block.GetBlockTime() > nStartTxTime /* 거래가 시작된 시간 */) {
+            if (fCheckStartTx && (block.GetBlockTime() > nStartTxTime) /* 거래가 시작된 시간 */) {
                 /**
 				* 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
 				* mempool의 거래 내용이 없으면 오류 처리
 				**/
                 const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
-                CTransaction& tmptx = (CTransaction&)*(block.vtx[i]);
+                CTransaction tmptx = (CTransaction)*(block.vtx[i]);
                 //<by. Crypthobin> REJECT_INVALIID validation.h 에 정의
                 if (&memtx == NULL) {
                     state.DoS(100, false, REJECT_INVALID, "tx-is-not-included-in-mempool");
@@ -1938,6 +1942,30 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
 					* 1. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash를 비교
 					* 2. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash와 교체
 					**/
+
+                   
+                    uint256 tmphash1(0);
+                    uint256 tmphash2(0);
+                    CHashWriter tmpss1(SER_GETHASH, 0);
+                    CHashWriter tmpss2(SER_GETHASH, 0);
+                    for (int i = 0; i < tmptx.vin.size(); i++) {
+                        if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size()) {
+                            tmpss1 << tmptx.vin[i].scriptWitness.stack[0];
+                            tmphash1 = tmpss1.GetHash();
+                        }
+                        if (tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
+                            tmpss2 << tmptx.vin[i].scriptWitness.stack[1];
+                            tmphash2 = tmpss2.GetHash();
+                        }
+
+                        if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size() || tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
+                            tmptx.vin[i].scriptWitness.stack.clear();
+                            tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash1.ToString()));
+                            tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash2.ToString()));
+                        }
+                    }
+                   
+
                     if (!CheckSigPuk(memtx, tmptx, state)) {
                         return error("ConnectBlock(): CheckInputs on %s failed with %s",
                                      memtx.GetHash().ToString(), state.ToString());

@@ -206,6 +206,7 @@ public:
         ::Serialize(*this, obj);
         return (*this);
     }
+
 };
 
 /** Reads data from an underlying stream, while hashing the read data. */
