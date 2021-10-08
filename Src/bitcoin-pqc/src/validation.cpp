@@ -59,9 +59,6 @@
 
 #include <boost/algorithm/string/replace.hpp>
 
-#include <util/system.h>
-#include <chrono>
-
 #define MICRO 0.000001
 #define MILLI 0.001
 
@@ -952,13 +949,10 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
 
     GetMainSignals().TransactionAddedToMempool(ptx, m_pool.GetAndIncrementSequence());
 
-
-   /* if (!fCheckStartTx) {
+    if (!fCheckStartTx) {
         nStartTxTime = GetTime();
         fCheckStartTx = true;
-    }*/
-
-   
+    }
 
     return MempoolAcceptResult::Success(std::move(ws.m_replaced_transactions), ws.m_base_fees);
 }
@@ -1495,6 +1489,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     return fClean ? DISCONNECT_OK : DISCONNECT_UNCLEAN;
 }
 
+// 이건가??????? : 아니다.... 128로 해도 트랜잭션 안 바꿔도 잘 된다.... 
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void StartScriptCheckWorkerThreads(int threads_num)
@@ -1682,11 +1677,6 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     assert(pindex);
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
-
-    // 시간 측정 시작
-    std::chrono::system_clock::time_point start;
-    std::chrono::microseconds micro;
-    START_WATCH;
 
     // Check it again in case a previous version let a bad block in
     // NOTE: We don't currently (re-)invoke ContextualCheckBlock() or
@@ -1922,6 +1912,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-blk-sigops");
         }
 
+
         if (!tx.IsCoinBase())
         {
             std::vector<CScriptCheck> vChecks;
@@ -1932,30 +1923,54 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             //<by. Crypthobin>
 
             	/* 블록체인을 시작한 시간보다 블록이 생성된 시간이 나중이면 거래내역을 확인함. */
-        //    if (fCheckStartTx && block.GetBlockTime() > nStartTxTime /* 거래가 시작된 시간 */) {
+            if (fCheckStartTx && (block.GetBlockTime() > nStartTxTime) /* 거래가 시작된 시간 */) {
                 /**
 				* 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
 				* mempool의 거래 내용이 없으면 오류 처리
 				**/
-             //   const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
-             //   CTransaction& tmptx = (CTransaction&)*(block.vtx[i]);
+                const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
+                CTransaction tmptx = (CTransaction)*(block.vtx[i]);
                 //<by. Crypthobin> REJECT_INVALIID validation.h 에 정의
-             //   if (&memtx == NULL) {
-            //        state.DoS(100, false, REJECT_INVALID, "tx-is-not-included-in-mempool");
-            //        return error("ConnectBlock(): CheckInputs on %s failed with no tx in the mempool during mining",
-           //                      tx.GetHash().ToString());
-           //     }
-             //   if (&memtx != NULL) {
+                if (&memtx == NULL) {
+                    state.DoS(100, false, REJECT_INVALID, "tx-is-not-included-in-mempool");
+                    return error("ConnectBlock(): CheckInputs on %s failed with no tx in the mempool during mining",
+                                 tx.GetHash().ToString());
+                }
+                if (&memtx != NULL) {
                     /**
 					*
 					* 1. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash를 비교
 					* 2. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash와 교체
 					**/
-                    //if (!CheckSigPuk(memtx, tmptx, state)) {
-                    //    return error("ConnectBlock(): CheckInputs on %s failed with %s",
-                    //                 memtx.GetHash().ToString(), state.ToString());
-                    //    //<by. Crypthobin> FormatStateMessage -> state.ToString으로 변경
-                    //}
+
+                   
+                    uint256 tmphash1(0);
+                    uint256 tmphash2(0);
+                    CHashWriter tmpss1(SER_GETHASH, 0);
+                    CHashWriter tmpss2(SER_GETHASH, 0);
+                    for (int i = 0; i < tmptx.vin.size(); i++) {
+                        if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size()) {
+                            tmpss1 << tmptx.vin[i].scriptWitness.stack[0];
+                            tmphash1 = tmpss1.GetHash();
+                        }
+                        if (tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
+                            tmpss2 << tmptx.vin[i].scriptWitness.stack[1];
+                            tmphash2 = tmpss2.GetHash();
+                        }
+
+                        if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size() || tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
+                            tmptx.vin[i].scriptWitness.stack.clear();
+                            tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash1.ToString()));
+                            tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash2.ToString()));
+                        }
+                    }
+                   
+
+                    if (!CheckSigPuk(memtx, tmptx, state)) {
+                        return error("ConnectBlock(): CheckInputs on %s failed with %s",
+                                     memtx.GetHash().ToString(), state.ToString());
+                        //<by. Crypthobin> FormatStateMessage -> state.ToString으로 변경
+                    }
                     
 
                      if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
@@ -1966,12 +1981,12 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
                                      tx.GetHash().ToString(), state.ToString());
                     }
 
-                    /*if (!MakeSigPubHash(tmptx)) {
+                    if (!MakeSigPubHash(tmptx)) {
                         return error("ConnectBlock(): CheckInputs on %s failed with signature and publickey hashing",
                                      tmptx.GetHash().ToString());
-                    }*/
-             //   }
-          //  }
+                    }
+                }
+            }
 
 
             //<by. Crypthobin>
@@ -2043,13 +2058,6 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         GetTimeMicros() - nTimeStart, // in microseconds (µs)
         block.GetHash().data()
     );
-
-    // 시간 측정 끝
-    STOP_WATCH;
-    // cmd에 로그 프린트
-    PRINT_TIME("confirm(connect) block: "); 
-    // .csv에 파일로 저장
-    TestLogPrint("ConfirmBlock.csv", micro.count());
 
     return true;
 }
