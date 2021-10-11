@@ -71,6 +71,23 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
             return READ_STATUS_INVALID;
         }
         txn_available[lastprefilledindex] = cmpctblock.prefilledtxn[i].tx;
+
+        //// crypthobin
+        //for (size_t j = 0; j < txn_available[lastprefilledindex]->vin.size(); j++) {
+        //    uint256 sighash(0);
+        //    uint256 pkhash(0);
+        //    CHashWriter ser_sig(SER_GETHASH, 0);
+        //    CHashWriter ser_pk(SER_GETHASH, 0);
+
+        //    ser_sig << txn_available[lastprefilledindex]->vin[j].scriptWitness.stack[0];
+        //    sighash = ser_sig.GetHash();
+        //    ser_pk << txn_available[lastprefilledindex]->vin[j].scriptWitness.stack[1];
+        //    pkhash = ser_pk.GetHash();
+
+        //    txn_available[lastprefilledindex]->vin[j].scriptWitness.stack.clear();
+        //    txn_available[lastprefilledindex]->vin[j].scriptWitness.stack.push_back(ParseHex(sighash.ToString()));
+        //    txn_available[lastprefilledindex]->vin[j].scriptWitness.stack.push_back(ParseHex(pkhash.ToString()));
+        //}
     }
     prefilled_count = cmpctblock.prefilledtxn.size();
 
@@ -110,9 +127,35 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
         std::unordered_map<uint64_t, uint16_t>::iterator idit = shorttxids.find(shortid);
         if (idit != shorttxids.end()) {
             if (!have_txn[idit->second]) {
-                txn_available[idit->second] = pool->vTxHashes[i].second->GetSharedTx();
-                have_txn[idit->second]  = true;
+                //txn_available[idit->second] = pool->vTxHashes[i].second->GetSharedTx();
+                //have_txn[idit->second]  = true;
+                //mempool_count++;
+
+                // crypthobin
+                CTransaction hashtx = pool->vTxHashes[i].second->GetTx();
+
+                for (size_t j = 0; j < hashtx.vin.size(); j++) {
+                    uint256 sighash(0);
+                    uint256 pkhash(0);
+                    CHashWriter ser_sig(SER_GETHASH, 0);
+                    CHashWriter ser_pk(SER_GETHASH, 0);
+
+                    ser_sig << hashtx.vin[j].scriptWitness.stack[0];
+                    sighash = ser_sig.GetHash();
+                    ser_pk << hashtx.vin[j].scriptWitness.stack[1];
+                    pkhash = ser_pk.GetHash();
+
+                    //sighash = hashtx.GetWitnessHash();
+
+                    hashtx.vin[j].scriptWitness.stack.clear();
+                    hashtx.vin[j].scriptWitness.stack.push_back(ParseHex(sighash.ToString()));
+                    hashtx.vin[j].scriptWitness.stack.push_back(ParseHex(pkhash.ToString()));
+                }
+
+                txn_available[idit->second] = MakeTransactionRef(hashtx);
+                have_txn[idit->second] = true;
                 mempool_count++;
+
             } else {
                 // If we find two mempool txn that match the short id, just request it.
                 // This should be rare enough that the extra bandwidth doesn't matter,

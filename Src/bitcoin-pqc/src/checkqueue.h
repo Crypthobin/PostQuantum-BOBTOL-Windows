@@ -74,7 +74,10 @@ private:
         bool fOk = true;
         do {
             {
+                // crypthobin
                 WAIT_LOCK(m_mutex, lock);
+                //m_mutex.lock();
+
                 // first do the clean-up of the previous loop run (allowing us to do it in the same critsect)
                 if (nNow) {
                     fAllOk &= fOk;
@@ -94,10 +97,17 @@ private:
                         // reset the status for new work later
                         fAllOk = true;
                         // return the current status
+
+                        // crypthobin
+                        // m_mutex.unlock();
+                        
                         return fRet;
                     }
                     nIdle++;
+
+                    // crypthobin
                     cond.wait(lock); // wait
+
                     nIdle--;
                 }
                 if (m_request_stop) {

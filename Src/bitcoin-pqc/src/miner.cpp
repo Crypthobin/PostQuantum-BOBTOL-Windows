@@ -104,6 +104,7 @@ void BlockAssembler::resetBlock()
 /***********************************/
 /*Crypthobin Modify*/
 /***********************************/
+/*
 CBlock MakeSigPubHash(CBlock* pblock)
 {
     CBlock tpblock = *pblock;
@@ -152,7 +153,7 @@ CBlock MakeSigPubHash(CBlock* pblock)
 
     return tpblock;
 }
-
+*/
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn)
 {
@@ -167,6 +168,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     if (!pblocktemplate.get())
         return nullptr;
+    // < crypthobin >
     CBlock* const pblock = &pblocktemplate->block; // pointer for convenience
 
     // Add dummy coinbase tx as first transaction
@@ -210,10 +212,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     m_last_block_num_txs = nBlockTx;
     m_last_block_weight = nBlockWeight;
 
-
+    /*
     {
         *pblock = MakeSigPubHash(pblock); //<by. Crypthobin>
     }
+    */
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
@@ -287,7 +290,30 @@ bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& packa
 
 void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
 {
-    pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx());
+    // crypthobin
+
+    CTransaction tx = iter->GetTx();
+    for (size_t i = 0; i < tx.vin.size(); i++) {
+        CHashWriter tx_ss1(SER_GETHASH, 0);
+        CHashWriter tx_ss2(SER_GETHASH, 0);
+        uint256 hashsig;
+        uint256 hashpubkey;
+
+        if (tx.vin[i].scriptWitness.stack.size() == 2) {
+            tx_ss1 << tx.vin[i].scriptWitness.stack[0];
+            hashsig = tx_ss1.GetHash();
+            tx_ss2 << tx.vin[i].scriptWitness.stack[1];
+            hashpubkey = tx_ss2.GetHash();
+
+            tx.vin[i].scriptWitness.stack.clear();
+            tx.vin[i].scriptWitness.stack.push_back(ParseHex(hashsig.ToString()));
+            tx.vin[i].scriptWitness.stack.push_back(ParseHex(hashpubkey.ToString()));
+        }
+    }
+
+    pblocktemplate->block.vtx.emplace_back(MakeTransactionRef(tx));
+
+    //pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx());
     pblocktemplate->vTxFees.push_back(iter->GetFee());
     pblocktemplate->vTxSigOpsCost.push_back(iter->GetSigOpCost());
     nBlockWeight += iter->GetTxWeight();
