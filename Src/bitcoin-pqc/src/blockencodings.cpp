@@ -145,8 +145,6 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
                     ser_pk << hashtx.vin[j].scriptWitness.stack[1];
                     pkhash = ser_pk.GetHash();
 
-                    //sighash = hashtx.GetWitnessHash();
-
                     hashtx.vin[j].scriptWitness.stack.clear();
                     hashtx.vin[j].scriptWitness.stack.push_back(ParseHex(sighash.ToString()));
                     hashtx.vin[j].scriptWitness.stack.push_back(ParseHex(pkhash.ToString()));
@@ -179,7 +177,28 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
         std::unordered_map<uint64_t, uint16_t>::iterator idit = shorttxids.find(shortid);
         if (idit != shorttxids.end()) {
             if (!have_txn[idit->second]) {
-                txn_available[idit->second] = extra_txn[i].second;
+
+                // crypthobin
+                CTransaction extra_hashtx = (CTransaction)(*(extra_txn[i].second));
+                for (size_t j = 0; j < extra_hashtx.vin.size(); j++) {
+                    uint256 sighash(0);
+                    uint256 pkhash(0);
+                    CHashWriter ser_sig(SER_GETHASH, 0);
+                    CHashWriter ser_pk(SER_GETHASH, 0);
+
+                    ser_sig << extra_hashtx.vin[j].scriptWitness.stack[0];
+                    sighash = ser_sig.GetHash();
+                    ser_pk << extra_hashtx.vin[j].scriptWitness.stack[1];
+                    pkhash = ser_pk.GetHash();
+
+                    extra_hashtx.vin[j].scriptWitness.stack.clear();
+                    extra_hashtx.vin[j].scriptWitness.stack.push_back(ParseHex(sighash.ToString()));
+                    extra_hashtx.vin[j].scriptWitness.stack.push_back(ParseHex(pkhash.ToString()));
+                }
+
+                txn_available[idit->second] = MakeTransactionRef(extra_hashtx);
+                //txn_available[idit->second] = extra_txn[i].second;
+
                 have_txn[idit->second]  = true;
                 mempool_count++;
                 extra_count++;
