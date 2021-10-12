@@ -69,9 +69,29 @@ private:
     bool running GUARDED_BY(cs);
     const size_t maxDepth;
 
+    //// crypthobin
+    //int numThreads;
+
+    //class ThreadCounter
+    //{
+    //public:
+    //    WorkQueue& wq;
+    //    explicit ThreadCounter(WorkQueue& w) : wq(w)
+    //    {
+    //        std::lock_guard<std::mutex> lock(wq.cs);
+    //        wq.numThreads += 1;
+    //    }
+    //    ~ThreadCounter()
+    //    {
+    //        std::lock_guard<std::mutex> lock(wq.cs);
+    //        wq.numThreads -= 1;
+    //        wq.cond.notify_all();
+    //    }
+    //};
+
 public:
     explicit WorkQueue(size_t _maxDepth) : running(true),
-                                 maxDepth(_maxDepth)
+                                           maxDepth(_maxDepth) /*, numThreads(0)*/ /*crypthobin*/
     {
     }
     /** Precondition: worker threads have all stopped (they have been joined).
@@ -93,6 +113,9 @@ public:
     /** Thread function */
     void Run()
     {
+        // crypthobin
+        //ThreadCounter count(*this);
+
         while (true) {
             std::unique_ptr<WorkItem> i;
             {
@@ -114,6 +137,15 @@ public:
         running = false;
         cond.notify_all();
     }
+
+    // crypthobin
+    /** Wait for worker threads to exit */
+    /*void WaitExit()
+    {
+        std::unique_lock<std::mutex> lock(cs);
+        while (numThreads > 0)
+            cond.wait(lock);
+    }*/
 };
 
 struct HTTPPathHandler
@@ -421,6 +453,10 @@ void StartHTTPServer()
 
     for (int i = 0; i < rpcThreads; i++) {
         g_thread_http_workers.emplace_back(HTTPWorkQueueRun, g_work_queue.get(), i);
+
+        //// crypthobin
+        //std::thread rpc_worker(HTTPWorkQueueRun, g_work_queue);
+        //rpc_worker.detach();
     }
 }
 
@@ -445,6 +481,13 @@ void StopHTTPServer()
             thread.join();
         }
         g_thread_http_workers.clear();
+
+        //// crypthobin
+        //g_work_queue->WaitExit();
+
+        //delete &g_work_queue;
+        //g_work_queue = nullptr;
+
     }
     // Unlisten sockets, these are what make the event loop running, which means
     // that after this and all connections are closed the event loop will quit.

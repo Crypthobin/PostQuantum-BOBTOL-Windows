@@ -25,10 +25,6 @@
 #include <algorithm>
 #include <utility>
 
-#include <chrono>
-#include <util/system.h>
-
-
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
     int64_t nOldTime = pblock->nTime;
@@ -108,6 +104,7 @@ void BlockAssembler::resetBlock()
 /***********************************/
 /*Crypthobin Modify*/
 /***********************************/
+/*
 CBlock MakeSigPubHash(CBlock* pblock)
 {
     CBlock tpblock = *pblock;
@@ -156,16 +153,11 @@ CBlock MakeSigPubHash(CBlock* pblock)
 
     return tpblock;
 }
-
+*/
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn)
 {
     int64_t nTimeStart = GetTimeMicros();
-
-    // 시간 측정 시작
-    std::chrono::system_clock::time_point start;
-    std::chrono::microseconds micro;
-    START_WATCH;
 
     resetBlock();
 #ifdef _DEBUG
@@ -176,6 +168,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     if (!pblocktemplate.get())
         return nullptr;
+    // < crypthobin >
     CBlock* const pblock = &pblocktemplate->block; // pointer for convenience
 
     // Add dummy coinbase tx as first transaction
@@ -219,10 +212,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     m_last_block_num_txs = nBlockTx;
     m_last_block_weight = nBlockWeight;
 
-
-    //{
-    //    *pblock = MakeSigPubHash(pblock); //<by. Crypthobin>
-    //}
+    /*
+    {
+        *pblock = MakeSigPubHash(pblock); //<by. Crypthobin>
+    }
+    */
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
@@ -251,13 +245,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, state.ToString()));
     }
     int64_t nTime2 = GetTimeMicros();
-
-    // 시간 측정 끝
-    STOP_WATCH;
-    // cmd에 로그 프린트
-    PRINT_TIME("create block: "); // (예) 블록 생성 시간
-    // .csv에 파일로 저장
-    TestLogPrint("CreateBlock.csv", micro.count());
 
     LogPrint(BCLog::BENCH, "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
 
@@ -303,7 +290,30 @@ bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& packa
 
 void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
 {
-    pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx());
+    // crypthobin
+
+    CTransaction tx = iter->GetTx();
+    for (size_t i = 0; i < tx.vin.size(); i++) {
+        CHashWriter tx_ss1(SER_GETHASH, 0);
+        CHashWriter tx_ss2(SER_GETHASH, 0);
+        uint256 hashsig;
+        uint256 hashpubkey;
+
+        if (tx.vin[i].scriptWitness.stack.size() == 2) {
+            tx_ss1 << tx.vin[i].scriptWitness.stack[0];
+            hashsig = tx_ss1.GetHash();
+            tx_ss2 << tx.vin[i].scriptWitness.stack[1];
+            hashpubkey = tx_ss2.GetHash();
+
+            tx.vin[i].scriptWitness.stack.clear();
+            tx.vin[i].scriptWitness.stack.push_back(ParseHex(hashsig.ToString()));
+            tx.vin[i].scriptWitness.stack.push_back(ParseHex(hashpubkey.ToString()));
+        }
+    }
+
+    pblocktemplate->block.vtx.emplace_back(MakeTransactionRef(tx));
+
+    //pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx());
     pblocktemplate->vTxFees.push_back(iter->GetFee());
     pblocktemplate->vTxSigOpsCost.push_back(iter->GetSigOpCost());
     nBlockWeight += iter->GetTxWeight();

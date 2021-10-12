@@ -1319,7 +1319,8 @@ bool CheckInputScripts(const CTransaction& tx, TxValidationState& state,
     // transaction).
     uint256 hashCacheEntry;
     CSHA256 hasher = g_scriptExecutionCacheHasher;
-    hasher.Write(tx.GetWitnessHash().begin(), 32).Write((unsigned char*)&flags, sizeof(flags)).Finalize(hashCacheEntry.begin());
+    //hasher.Write(tx.GetWitnessHash().begin(), 32).Write((unsigned char*)&flags, sizeof(flags)).Finalize(hashCacheEntry.begin());
+    hashCacheEntry = tx.GetHash();
     AssertLockHeld(cs_main); //TODO: Remove this requirement by making CuckooCache not require external locks
     if (g_scriptExecutionCache.contains(hashCacheEntry, !cacheFullScriptStore)) {
         return true;
@@ -1672,6 +1673,7 @@ static int64_t nBlocksTotal = 0;
  *  can fail if those validity checks fail (among other reasons). */
 bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state, CBlockIndex* pindex,
                                CCoinsViewCache& view, bool fJustCheck)
+
 {
     AssertLockHeld(cs_main);
     assert(pindex);
@@ -1868,7 +1870,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
-        const CTransaction &tx = *(block.vtx[i]);
+        const CTransaction& tx = (CTransaction&)*(block.vtx[i]);
 
         nInputs += tx.vin.size();
 
@@ -1923,70 +1925,76 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             //<by. Crypthobin>
 
             	/* 블록체인을 시작한 시간보다 블록이 생성된 시간이 나중이면 거래내역을 확인함. */
-            if (fCheckStartTx && (block.GetBlockTime() > nStartTxTime) /* 거래가 시작된 시간 */) {
-                /**
-				* 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
-				* mempool의 거래 내용이 없으면 오류 처리
-				**/
-                const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
-                CTransaction tmptx = (CTransaction)*(block.vtx[i]);
-                //<by. Crypthobin> REJECT_INVALIID validation.h 에 정의
-                if (&memtx == NULL) {
-                    state.DoS(100, false, REJECT_INVALID, "tx-is-not-included-in-mempool");
-                    return error("ConnectBlock(): CheckInputs on %s failed with no tx in the mempool during mining",
-                                 tx.GetHash().ToString());
-                }
-                if (&memtx != NULL) {
-                    /**
-					*
-					* 1. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash를 비교
-					* 2. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash와 교체
-					**/
+    //        if (fCheckStartTx && (block.GetBlockTime() > nStartTxTime) /* 거래가 시작된 시간 */) {
+    //            /**
+				//* 블록의 거래 내용이 아닌 mempool의 거래 내용을 가져와 검증
+				//* mempool의 거래 내용이 없으면 오류 처리
+				//**/
+    //            const CTransaction& memtx = *(m_mempool->get(tx.GetHash()));
+    //            CTransaction& tmptx = (CTransaction&)*(block.vtx[i]);
+    //            //<by. Crypthobin> REJECT_INVALIID validation.h 에 정의
+    //            if (&memtx == NULL) {
+    //                state.DoS(100, false, REJECT_INVALID, "tx-is-not-included-in-mempool");
+    //                return error("ConnectBlock(): CheckInputs on %s failed with no tx in the mempool during mining",
+    //                             tx.GetHash().ToString());
+    //            }
+    //            if (&memtx != NULL) {
+    //                /**
+				//	*
+				//	* 1. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash를 비교
+				//	* 2. mempool에서 얻은 sig와 puk를 블록에 있는 sig hash와 puk hash와 교체
+				//	**/
 
-                   
-                    //uint256 tmphash1(0);
-                    //uint256 tmphash2(0);
-                    //CHashWriter tmpss1(SER_GETHASH, 0);
-                    //CHashWriter tmpss2(SER_GETHASH, 0);
-                    //for (int i = 0; i < tmptx.vin.size(); i++) {
-                    //    if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size()) {
-                    //        tmpss1 << tmptx.vin[i].scriptWitness.stack[0];
-                    //        tmphash1 = tmpss1.GetHash();
-                    //    }
-                    //    if (tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
-                    //        tmpss2 << tmptx.vin[i].scriptWitness.stack[1];
-                    //        tmphash2 = tmpss2.GetHash();
-                    //    }
+    //                //
+    //                //uint256 tmphash1(0);
+    //                //uint256 tmphash2(0);
+    //                //CHashWriter tmpss1(SER_GETHASH, 0);
+    //                //CHashWriter tmpss2(SER_GETHASH, 0);
+    //                //for (int i = 0; i < tmptx.vin.size(); i++) {
+    //                //    if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size()) {
+    //                //        tmpss1 << tmptx.vin[i].scriptWitness.stack[0];
+    //                //        tmphash1 = tmpss1.GetHash();
+    //                //    }
+    //                //    if (tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
+    //                //        tmpss2 << tmptx.vin[i].scriptWitness.stack[1];
+    //                //        tmphash2 = tmpss2.GetHash();
+    //                //    }
 
-                    //    if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size() || tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
-                    //        tmptx.vin[i].scriptWitness.stack.clear();
-                    //        tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash1.ToString()));
-                    //        tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash2.ToString()));
-                    //    }
-                    //}
-                   
+    //                //    if (tmptx.vin[i].scriptWitness.stack[0].size() != tmphash1.size() || tmptx.vin[i].scriptWitness.stack[1].size() != tmphash2.size()) {
+    //                //        tmptx.vin[i].scriptWitness.stack.clear();
+    //                //        tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash1.ToString()));
+    //                //        tmptx.vin[i].scriptWitness.stack.push_back(ParseHex(tmphash2.ToString()));
+    //                //    }
+    //                //}
+    //               
 
-                    //if (!CheckSigPuk(memtx, tmptx, state)) {
-                    //    return error("ConnectBlock(): CheckInputs on %s failed with %s",
-                    //                 memtx.GetHash().ToString(), state.ToString());
-                    //    //<by. Crypthobin> FormatStateMessage -> state.ToString으로 변경
-                    //}
-                    //
+    //                if (!CheckSigPuk(memtx, tmptx, state)) {
+    //                    return error("ConnectBlock(): CheckInputs on %s failed with %s",
+    //                                 memtx.GetHash().ToString(), state.ToString());
+    //                    //<by. Crypthobin> FormatStateMessage -> state.ToString으로 변경
+    //                }
+    //                
 
-                    // if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
-                    //    // Any transaction validation failure in ConnectBlock is a block consensus failure
-                    //    state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
-                    //                  tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-                    //    return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
-                    //                 tx.GetHash().ToString(), state.ToString());
-                    //}
+    //                 if (!CheckInputScripts(tmptx, (TxValidationState&)(state), view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
+    //                    // Any transaction validation failure in ConnectBlock is a block consensus failure
+    //                    state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+    //                                  state.GetRejectReason(), state.GetDebugMessage());
+    //                    return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
+    //                                 memtx.GetHash().ToString(), state.ToString());
+    //                 }
+    //                //if (tmptx.vin[i].scriptWitness.stack[0].size() != 256)
+    //                //    printf("No Hashing!!!!!!\n");
 
-                    //if (!MakeSigPubHash(tmptx)) {
-                    //    return error("ConnectBlock(): CheckInputs on %s failed with signature and publickey hashing",
-                    //                 tmptx.GetHash().ToString());
-                    //}
-                }
-            }
+    //                if (!MakeSigPubHash(tmptx)) {
+    //                    return error("ConnectBlock(): CheckInputs on %s failed with signature and publickey hashing",
+    //                                 tmptx.GetHash().ToString());
+    //                }
+    //                /*if (!MakeSigPubHash(memtx)) {
+    //                    return error("ConnectBlock(): CheckInputs on %s failed with signature and publickey hashing",
+    //                                 memtx.GetHash().ToString());
+    //                }*/
+    //            }
+    //        }
 
 
             //<by. Crypthobin>
@@ -1995,13 +2003,13 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
 
 
 
-            //if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
-            //    // Any transaction validation failure in ConnectBlock is a block consensus failure
-            //    state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
-            //                  tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-            //    return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
-            //        tx.GetHash().ToString(), state.ToString());
-            //}
+            if (fScriptChecks && !CheckInputScripts(tx, tx_state, view, flags, fCacheResults, fCacheResults, txsdata[i], g_parallel_script_checks ? &vChecks : nullptr)) {
+                // Any transaction validation failure in ConnectBlock is a block consensus failure
+                state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+                              tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+                return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
+                    tx.GetHash().ToString(), state.ToString());
+            }
             control.Add(vChecks);
         }
 
@@ -2431,6 +2439,7 @@ bool CChainState::ConnectTip(BlockValidationState& state, CBlockIndex* pindexNew
     } else {
         pthisBlock = pblock;
     }
+
     const CBlock& blockConnecting = *pthisBlock;
     // Apply the block atomically to the chain state.
     int64_t nTime2 = GetTimeMicros(); nTimeReadFromDisk += nTime2 - nTime1;

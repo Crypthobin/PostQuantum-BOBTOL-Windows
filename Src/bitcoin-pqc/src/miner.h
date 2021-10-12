@@ -129,6 +129,11 @@ private:
     // The constructed block template
     std::unique_ptr<CBlockTemplate> pblocktemplate;
 
+    /*
+    // < crypthobin > 
+    CBlock* pblock;
+    */
+
     // Configuration parameters for the block size
     bool fIncludeWitness;
     unsigned int nBlockMaxWeight;

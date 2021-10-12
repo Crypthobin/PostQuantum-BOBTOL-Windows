@@ -205,13 +205,13 @@ class CBOBKey
 {
 public:
     /**
-	* ZZang
-	* NTRU:
+	* crypthobin
+    * Dilithium : 
 	* private key는 실제 seed 값임. 
 	* 전자서명시 seed 값을 이용하여 진짜 개인키와 공개키를 생성 해야함.
 	* seed값 인 개인키 길이: 32byte (256 bit)
-	* 실제 개인키 길이: 2604 byte
-	* 공개키 길이: 2065 byte
+	* 실제 개인키 길이: 2528 byte
+	* 공개키 길이: 1312 byte
 	*/
     static const unsigned int SIZE = 32;
     static const unsigned int SECRET_KEY_SIZE = 2528;
