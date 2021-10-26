@@ -1674,7 +1674,6 @@ static int64_t nBlocksTotal = 0;
 bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state, CBlockIndex* pindex,
                                CCoinsViewCache& view, bool fJustCheck)
 
-
 {
     AssertLockHeld(cs_main);
     assert(pindex);

@@ -517,8 +517,7 @@ public:
         consensus.SegwitHeight = 0;   // SEGWIT is always activated on regtest unless overridden
         consensus.MinBIP9WarningHeight = 0;
         // 마이닝 난이도 설정
-        //consensus.powLimit = uint256S("0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); //
-         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 마이닝 난이도 최소화마이닝 난이도 최소화
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 마이닝 난이도 최소화
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;                                                  // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
