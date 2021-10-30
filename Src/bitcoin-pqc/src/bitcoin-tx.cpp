@@ -674,11 +674,13 @@ class Secp256k1Init
 public:
     Secp256k1Init()
     {
-        ECC_Start();
+        // 삭제!!3
+        // ECC_Start();
     }
     ~Secp256k1Init()
     {
-        ECC_Stop();
+        // 삭제!!3
+        // ECC_Stop();
     }
 };
 

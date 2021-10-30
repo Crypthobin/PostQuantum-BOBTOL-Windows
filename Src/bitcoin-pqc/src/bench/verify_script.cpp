@@ -19,7 +19,8 @@
 static void VerifyScriptBench(benchmark::Bench& bench)
 {
     const ECCVerifyHandle verify_handle;
-    ECC_Start();
+    // 삭제!!3
+    // ECC_Start();
 
     const uint32_t flags{SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH};
     const int witnessversion = 0;
@@ -73,6 +74,7 @@ static void VerifyScriptBench(benchmark::Bench& bench)
         assert(csuccess == 1);
 #endif
     });
+    // 삭제!!3
     ECC_Stop();
 }
 

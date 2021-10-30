@@ -319,21 +319,15 @@ const unsigned int BIP32_EXTPQKEY_SIZE = 1353; /*41+ 1312*/
 class CBOBPubKey
 {
 public:
-    /**
-     * secp256k1:
-     */
     static constexpr unsigned int SIZE = 1312;
     static constexpr unsigned int COMPRESSED_SIZE = 1312;
     static constexpr unsigned int SIGNATURE_SIZE = 2420;
-    // static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
 
     /**
      * see www.keylength.com
      * script supports up to 75 for single byte push
      */
-    /* static_assert(
-        SIZE >= COMPRESSED_SIZE,
-        "COMPRESSED_SIZE is larger than SIZE");*/
+
     unsigned char t_vch[SIZE];
 
 private:
@@ -342,22 +336,11 @@ private:
      * Its length can very cheaply be computed from the first byte.
      */
     unsigned char vch[SIZE];
-    /* unsigned char vch[SIZE];*/
 
     //! Compute the length of a pubkey with a given first byte.
     unsigned int static GetLen(unsigned char chHeader)
     {
-        /*if (chHeader == 2 || chHeader == 3)
-            return COMPRESSED_SIZE;
-        if (chHeader == 4 || chHeader == 6 || chHeader == 7)
-            return SIZE;
-        return 0;*/
-        //if (chHeader == 4)
-        //    return SIZE;
-        //else
-        //    printf("chHeader != 4\n");
         return SIZE;
-        //return 0;
     }
 
     //! Set this key data to be invalid

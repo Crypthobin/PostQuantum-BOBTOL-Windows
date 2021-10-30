@@ -108,7 +108,8 @@ BasicTestingSetup::BasicTestingSetup(const std::string& chainName, const std::ve
     AppInitParameterInteraction(*m_node.args);
     LogInstance().StartLogging();
     SHA256AutoDetect();
-    ECC_Start();
+    // 삭제!!3
+    // ECC_Start();
     SetupEnvironment();
     SetupNetworking();
     InitSignatureCache();
@@ -128,7 +129,8 @@ BasicTestingSetup::~BasicTestingSetup()
     LogInstance().DisconnectTestLogger();
     fs::remove_all(m_path_root);
     gArgs.ClearArgs();
-    ECC_Stop();
+    // 삭제!!3
+    //ECC_Stop();
 }
 
 ChainTestingSetup::ChainTestingSetup(const std::string& chainName, const std::vector<const char*>& extra_args)

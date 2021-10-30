@@ -26,6 +26,7 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
     if (GetNumCores() <= 1) return;
 
     const ECCVerifyHandle verify_handle;
+    // 삭제!!3
     ECC_Start();
 
     struct PrevectorJob {
@@ -66,6 +67,7 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
         control.Wait();
     });
     queue.StopWorkerThreads();
+    // 삭제!!3
     ECC_Stop();
 }
 BENCHMARK(CCheckQueueSpeedPrevectorJob);

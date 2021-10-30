@@ -28,20 +28,23 @@ void SetGlobals()
     std::string sha256_algo = SHA256AutoDetect();
     LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
     RandomInit();
-    ECC_Start();
+    // 삭제!!3
+    // ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 }
 
 void UnsetGlobals()
 {
     globalVerifyHandle.reset();
-    ECC_Stop();
+    // 삭제!!3
+    //ECC_Stop();
 }
 
 bool SanityChecks()
 {
-    if (!ECC_InitSanityCheck()) {
-        return InitError(Untranslated("Elliptic curve cryptography sanity check failure. Aborting."));
+    // 수정!!1
+    if (!Dilithium_InitSanityCheck()) {
+        return InitError(Untranslated("Dilithium cryptography sanity check failure. Aborting."));
     }
 
     if (!glibcxx_sanity_test())

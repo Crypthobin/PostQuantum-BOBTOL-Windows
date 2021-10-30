@@ -415,7 +415,6 @@ const secp256k1_context* GetVerifyContext()
     return secp256k1_context_verify;
 }
 
-
 // 추후 수정 < by. crypthobin >
 bool CBOBPubKey::Verify(const uint512& hash, const std::vector<unsigned char>& vchSig) const
 {
@@ -424,30 +423,9 @@ bool CBOBPubKey::Verify(const uint512& hash, const std::vector<unsigned char>& v
     unsigned char pk[SIZE];
     unsigned char sig[SIGNATURE_SIZE];
 
-    /*printf("\n\n size : %u\n\n", size());
-    printf("\n\nvchSig size : %zu\n\n", vchSig.size());*/
-
     memcpy(pk, &(*this)[0], size());
     memcpy(sig, vchSig.data(), vchSig.size());
 
-    // crypthobin - sig verifying fail test
-    // pk[0] = 0; //=> fail success
-
-    // int ret = crypto_sign_open((uint8_t*)hash.begin(), (size_t *)hash.size(), sig, vchSig.size(), pk);
-
-    //secp256k1_pubkey pubkey;
-    //secp256k1_ecdsa_signature sig;
-    //assert(secp256k1_context_verify && "secp256k1_context_verify must be initialized to use CPubKey.");
-    //if (!secp256k1_ec_pubkey_parse(secp256k1_context_verify, &pubkey, vch, size())) {
-    //    return false;
-    //}
-    //if (!ecdsa_signature_parse_der_lax(secp256k1_context_verify, &sig, vchSig.data(), vchSig.size())) {
-    //    return false;
-    //}
-    ///* libsecp256k1's ECDSA verification requires lower-S signatures, which have
-    // * not historically been enforced in Bitcoin, so normalize them first. */
-    //secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
-    //return true;
     int ret = crypto_sign_verify(sig, vchSig.size(), hash.begin(), hash.size(), pk);
     if (ret == 0) {
         printf("sig verifying success :)\n");
