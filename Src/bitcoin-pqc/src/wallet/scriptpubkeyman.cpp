@@ -32,7 +32,7 @@ bool LegacyScriptPubKeyMan::GetNewDestination(const OutputType type, CTxDestinat
     error.clear();
 
     // Generate a new key that is added to wallet
-    CPubKey new_key;
+    CBOBPubKey new_key;
     if (!GetKeyFromPool(new_key, type)) {
         error = _("Error: Keypool ran out, please call keypoolrefill first");
         return false;
@@ -52,8 +52,7 @@ namespace {
  * distinguish between top-level scriptPubKey execution and P2SH redeemScript
  * execution (a distinction that has no impact on consensus rules).
  */
-enum class IsMineSigVersion
-{
+enum class IsMineSigVersion {
     TOP = 0,        //!< scriptPubKey execution
     P2SH = 1,       //!< P2SH redeemScript
     WITNESS_V0 = 2, //!< P2WSH witness script execution
@@ -64,8 +63,7 @@ enum class IsMineSigVersion
  * Its order is significant, as we return the max of all explored
  * possibilities.
  */
-enum class IsMineResult
-{
+enum class IsMineResult {
     NO = 0,         //!< Not ours
     WATCH_ONLY = 1, //!< Included in watch-only balance
     SPENDABLE = 2,  //!< Included in all balances
@@ -94,7 +92,7 @@ bool HaveKeys(const std::vector<valtype>& pubkeys, const LegacyScriptPubKeyMan& 
 //! @param recurse_scripthash  whether to recurse into nested p2sh and p2wsh
 //!                            scripts or simply treat any script that has been
 //!                            stored in the keystore as spendable
-IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& scriptPubKey, IsMineSigVersion sigversion, bool recurse_scripthash=true)
+IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& scriptPubKey, IsMineSigVersion sigversion, bool recurse_scripthash = true)
 {
     IsMineResult ret = IsMineResult::NO;
 
@@ -117,8 +115,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
             ret = std::max(ret, IsMineResult::SPENDABLE);
         }
         break;
-    case TxoutType::WITNESS_V0_KEYHASH:
-    {
+    case TxoutType::WITNESS_V0_KEYHASH: {
         if (sigversion == IsMineSigVersion::WITNESS_V0) {
             // P2WPKH inside P2WSH is invalid.
             return IsMineResult::INVALID;
@@ -135,7 +132,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
     case TxoutType::PUBKEYHASH:
         keyID = CKeyID(uint160(vSolutions[0]));
         if (!PermitsUncompressed(sigversion)) {
-            CPubKey pubkey;
+            CBOBPubKey pubkey;
             if (keystore.GetPubKey(keyID, pubkey) && !pubkey.IsCompressed()) {
                 return IsMineResult::INVALID;
             }
@@ -144,8 +141,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
             ret = std::max(ret, IsMineResult::SPENDABLE);
         }
         break;
-    case TxoutType::SCRIPTHASH:
-    {
+    case TxoutType::SCRIPTHASH: {
         if (sigversion != IsMineSigVersion::TOP) {
             // P2SH inside P2WSH or P2SH is invalid.
             return IsMineResult::INVALID;
@@ -157,8 +153,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
         }
         break;
     }
-    case TxoutType::WITNESS_V0_SCRIPTHASH:
-    {
+    case TxoutType::WITNESS_V0_SCRIPTHASH: {
         if (sigversion == IsMineSigVersion::WITNESS_V0) {
             // P2WSH inside P2WSH is invalid.
             return IsMineResult::INVALID;
@@ -176,8 +171,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
         break;
     }
 
-    case TxoutType::MULTISIG:
-    {
+    case TxoutType::MULTISIG: {
         // Never treat bare multisig outputs as ours (they can still be made watchonly-though)
         if (sigversion == IsMineSigVersion::TOP) {
             break;
@@ -188,7 +182,7 @@ IsMineResult IsMineInner(const LegacyScriptPubKeyMan& keystore, const CScript& s
         // partially owned (somebody else has a key that can spend
         // them) enable spend-out-from-under-you attacks, especially
         // in shared-wallet situations.
-        std::vector<valtype> keys(vSolutions.begin()+1, vSolutions.begin()+vSolutions.size()-1);
+        std::vector<valtype> keys(vSolutions.begin() + 1, vSolutions.begin() + vSolutions.size() - 1);
         if (!PermitsUncompressed(sigversion)) {
             for (size_t i = 0; i < keys.size(); i++) {
                 if (keys[i].size() != 33) {
@@ -235,13 +229,11 @@ bool LegacyScriptPubKeyMan::CheckDecryptionKey(const CKeyingMaterial& master_key
         bool keyFail = false;
         CryptedKeyMap::const_iterator mi = mapCryptedKeys.begin();
         WalletBatch batch(m_storage.GetDatabase());
-        for (; mi != mapCryptedKeys.end(); ++mi)
-        {
-            const CPubKey &vchPubKey = (*mi).second.first;
-            const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
-            CKey key;
-            if (!DecryptKey(master_key, vchCryptedSecret, vchPubKey, key))
-            {
+        for (; mi != mapCryptedKeys.end(); ++mi) {
+            const CBOBPubKey& vchPubKey = (*mi).second.first;
+            const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
+            CBOBKey key;
+            if (!DecryptKey(master_key, vchCryptedSecret, vchPubKey, key)) {
                 keyFail = true;
                 break;
             }
@@ -253,8 +245,7 @@ bool LegacyScriptPubKeyMan::CheckDecryptionKey(const CKeyingMaterial& master_key
                 batch.WriteCryptedKey(vchPubKey, vchCryptedSecret, mapKeyMetadata[vchPubKey.GetID()]);
             }
         }
-        if (keyPass && keyFail)
-        {
+        if (keyPass && keyFail) {
             LogPrintf("The wallet is probably corrupted: Some keys decrypt but not all.\n");
             throw std::runtime_error("Error unlocking wallet: some keys decrypt but not all. Your wallet file may be corrupt.");
         }
@@ -276,10 +267,9 @@ bool LegacyScriptPubKeyMan::Encrypt(const CKeyingMaterial& master_key, WalletBat
 
     KeyMap keys_to_encrypt;
     keys_to_encrypt.swap(mapKeys); // Clear mapKeys so AddCryptedKeyInner will succeed.
-    for (const KeyMap::value_type& mKey : keys_to_encrypt)
-    {
-        const CKey &key = mKey.second;
-        CPubKey vchPubKey = key.GetPubKey();
+    for (const KeyMap::value_type& mKey : keys_to_encrypt) {
+        const CBOBKey& key = mKey.second;
+        CBOBPubKey vchPubKey = key.GetPubKey();
         CKeyingMaterial vchSecret(key.begin(), key.end());
         std::vector<unsigned char> vchCryptedSecret;
         if (!EncryptSecret(master_key, vchSecret, vchPubKey.GetHash(), vchCryptedSecret)) {
@@ -331,14 +321,14 @@ bool LegacyScriptPubKeyMan::TopUpInactiveHDChain(const CKeyID seed_id, int64_t i
     CHDChain& chain = it->second;
 
     // Top up key pool
-    int64_t target_size = std::max(gArgs.GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t) 1);
+    int64_t target_size = std::max(gArgs.GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t)1);
 
     // "size" of the keypools. Not really the size, actually the difference between index and the chain counter
     // Since chain counter is 1 based and index is 0 based, one of them needs to be offset by 1.
     int64_t kp_size = (internal ? chain.nInternalChainCounter : chain.nExternalChainCounter) - (index + 1);
 
     // make sure the keypool fits the user-selected target (-keypool)
-    int64_t missing = std::max(target_size - kp_size, (int64_t) 0);
+    int64_t missing = std::max(target_size - kp_size, (int64_t)0);
 
     if (missing > 0) {
         WalletBatch batch(m_storage.GetDatabase());
@@ -372,7 +362,7 @@ void LegacyScriptPubKeyMan::MarkUnusedAddresses(const CScript& script)
         // Find the key's metadata and check if it's seed id (if it has one) is inactive, i.e. it is not the current m_hd_chain seed id.
         // If so, TopUp the inactive hd chain
         auto it = mapKeyMetadata.find(keyid);
-        if (it != mapKeyMetadata.end()){
+        if (it != mapKeyMetadata.end()) {
             CKeyMetadata meta = it->second;
             if (!meta.hd_seed_id.IsNull() && meta.hd_seed_id != m_hd_chain.seed_id) {
                 bool internal = (meta.key_origin.path[1] & ~BIP32_HARDENED_KEY_LIMIT) != 0;
@@ -397,9 +387,9 @@ void LegacyScriptPubKeyMan::UpgradeKeyMetadata()
     for (auto& meta_pair : mapKeyMetadata) {
         CKeyMetadata& meta = meta_pair.second;
         if (!meta.hd_seed_id.IsNull() && !meta.has_key_origin && meta.hdKeypath != "s") { // If the hdKeypath is "s", that's the seed and it doesn't have a key origin
-            CKey key;
+            CBOBKey key;
             GetKey(meta.hd_seed_id, key);
-            CExtKey masterKey;
+            CExtBOBKey masterKey;
             masterKey.SetSeed(key.begin(), key.size());
             // Add to map
             CKeyID master_id = masterKey.key.GetPubKey().GetID();
@@ -413,7 +403,7 @@ void LegacyScriptPubKeyMan::UpgradeKeyMetadata()
             }
 
             // Write meta to wallet
-            CPubKey pubkey;
+            CBOBPubKey pubkey;
             if (GetPubKey(meta_pair.first, pubkey)) {
                 batch->WriteKeyMetadata(meta, pubkey, true);
             }
@@ -466,7 +456,7 @@ bool LegacyScriptPubKeyMan::Upgrade(int prev_version, int new_version, bilingual
         m_storage.SetMinVersion(FEATURE_HD);
 
         // generate a new master key
-        CPubKey masterPubKey = GenerateNewSeed();
+        CBOBPubKey masterPubKey = GenerateNewSeed();
         SetHDSeed(masterPubKey);
         hd_upgrade = true;
     }
@@ -514,7 +504,8 @@ void LegacyScriptPubKeyMan::RewriteDB()
     // that requires a new key.
 }
 
-static int64_t GetOldestKeyTimeInPool(const std::set<int64_t>& setKeyPool, WalletBatch& batch) {
+static int64_t GetOldestKeyTimeInPool(const std::set<int64_t>& setKeyPool, WalletBatch& batch)
+{
     if (setKeyPool.empty()) {
         return GetTime();
     }
@@ -599,7 +590,7 @@ bool LegacyScriptPubKeyMan::SignTransaction(CMutableTransaction& tx, const std::
 
 SigningResult LegacyScriptPubKeyMan::SignMessage(const std::string& message, const PKHash& pkhash, std::string& str_sig) const
 {
-    CKey key;
+    CBOBKey key;
     if (!GetKey(ToKeyID(pkhash), key)) {
         return SigningResult::PRIVATE_KEY_NOT_AVAILABLE;
     }
@@ -700,19 +691,19 @@ void LegacyScriptPubKeyMan::UpdateTimeFirstKey(int64_t nCreateTime)
     }
 }
 
-bool LegacyScriptPubKeyMan::LoadKey(const CKey& key, const CPubKey &pubkey)
+bool LegacyScriptPubKeyMan::LoadKey(const CBOBKey& key, const CBOBPubKey& pubkey)
 {
     return AddKeyPubKeyInner(key, pubkey);
 }
 
-bool LegacyScriptPubKeyMan::AddKeyPubKey(const CKey& secret, const CPubKey &pubkey)
+bool LegacyScriptPubKeyMan::AddKeyPubKey(const CBOBKey& secret, const CBOBPubKey& pubkey)
 {
     LOCK(cs_KeyStore);
     WalletBatch batch(m_storage.GetDatabase());
     return LegacyScriptPubKeyMan::AddKeyPubKeyWithDB(batch, secret, pubkey);
 }
 
-bool LegacyScriptPubKeyMan::AddKeyPubKeyWithDB(WalletBatch& batch, const CKey& secret, const CPubKey& pubkey)
+bool LegacyScriptPubKeyMan::AddKeyPubKeyWithDB(WalletBatch& batch, const CBOBKey& secret, const CBOBPubKey& pubkey)
 {
     AssertLockHeld(cs_KeyStore);
 
@@ -734,7 +725,8 @@ bool LegacyScriptPubKeyMan::AddKeyPubKeyWithDB(WalletBatch& batch, const CKey& s
 
     // check if we need to remove from watch-only
     CScript script;
-    script = GetScriptForDestination(PKHash(pubkey));
+    // 변경
+    script = GetScriptForWitness(script);
     if (HaveWatchOnly(script)) {
         RemoveWatchOnly(script);
     }
@@ -745,8 +737,8 @@ bool LegacyScriptPubKeyMan::AddKeyPubKeyWithDB(WalletBatch& batch, const CKey& s
 
     if (!m_storage.HasEncryptionKeys()) {
         return batch.WriteKey(pubkey,
-                                                 secret.GetPrivKey(),
-                                                 mapKeyMetadata[pubkey.GetID()]);
+                              secret.GetPrivKey(),
+                              mapKeyMetadata[pubkey.GetID()]);
     }
     m_storage.UnsetBlankWalletFlag(batch);
     return true;
@@ -757,8 +749,7 @@ bool LegacyScriptPubKeyMan::LoadCScript(const CScript& redeemScript)
     /* A sanity check was added in pull #3843 to avoid adding redeemScripts
      * that never can be redeemed. However, old wallets may still contain
      * these. Do not add them to the wallet and warn. */
-    if (redeemScript.size() > MAX_SCRIPT_ELEMENT_SIZE)
-    {
+    if (redeemScript.size() > MAX_SCRIPT_ELEMENT_SIZE) {
         std::string strAddr = EncodeDestination(ScriptHash(redeemScript));
         WalletLogPrintf("%s: Warning: This wallet contains a redeemScript of size %i which exceeds maximum size %i thus can never be redeemed. Do not use address %s.\n", __func__, redeemScript.size(), MAX_SCRIPT_ELEMENT_SIZE, strAddr);
         return true;
@@ -781,7 +772,7 @@ void LegacyScriptPubKeyMan::LoadScriptMetadata(const CScriptID& script_id, const
     m_script_metadata[script_id] = meta;
 }
 
-bool LegacyScriptPubKeyMan::AddKeyPubKeyInner(const CKey& key, const CPubKey &pubkey)
+bool LegacyScriptPubKeyMan::AddKeyPubKeyInner(const CBOBKey& key, const CBOBPubKey& pubkey)
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -804,7 +795,7 @@ bool LegacyScriptPubKeyMan::AddKeyPubKeyInner(const CKey& key, const CPubKey &pu
     return true;
 }
 
-bool LegacyScriptPubKeyMan::LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret, bool checksum_valid)
+bool LegacyScriptPubKeyMan::LoadCryptedKey(const CBOBPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, bool checksum_valid)
 {
     // Set fDecryptionThoroughlyChecked to false when the checksum is invalid
     if (!checksum_valid) {
@@ -814,7 +805,7 @@ bool LegacyScriptPubKeyMan::LoadCryptedKey(const CPubKey &vchPubKey, const std::
     return AddCryptedKeyInner(vchPubKey, vchCryptedSecret);
 }
 
-bool LegacyScriptPubKeyMan::AddCryptedKeyInner(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
+bool LegacyScriptPubKeyMan::AddCryptedKeyInner(const CBOBPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret)
 {
     LOCK(cs_KeyStore);
     assert(mapKeys.empty());
@@ -824,8 +815,8 @@ bool LegacyScriptPubKeyMan::AddCryptedKeyInner(const CPubKey &vchPubKey, const s
     return true;
 }
 
-bool LegacyScriptPubKeyMan::AddCryptedKey(const CPubKey &vchPubKey,
-                            const std::vector<unsigned char> &vchCryptedSecret)
+bool LegacyScriptPubKeyMan::AddCryptedKey(const CBOBPubKey& vchPubKey,
+                                          const std::vector<unsigned char>& vchCryptedSecret)
 {
     if (!AddCryptedKeyInner(vchPubKey, vchCryptedSecret))
         return false;
@@ -833,16 +824,14 @@ bool LegacyScriptPubKeyMan::AddCryptedKey(const CPubKey &vchPubKey,
         LOCK(cs_KeyStore);
         if (encrypted_batch)
             return encrypted_batch->WriteCryptedKey(vchPubKey,
-                                                        vchCryptedSecret,
-                                                        mapKeyMetadata[vchPubKey.GetID()]);
+                                                    vchCryptedSecret,
+                                                    mapKeyMetadata[vchPubKey.GetID()]);
         else
-            return WalletBatch(m_storage.GetDatabase()).WriteCryptedKey(vchPubKey,
-                                                            vchCryptedSecret,
-                                                            mapKeyMetadata[vchPubKey.GetID()]);
+            return WalletBatch(m_storage.GetDatabase()).WriteCryptedKey(vchPubKey, vchCryptedSecret, mapKeyMetadata[vchPubKey.GetID()]);
     }
 }
 
-bool LegacyScriptPubKeyMan::HaveWatchOnly(const CScript &dest) const
+bool LegacyScriptPubKeyMan::HaveWatchOnly(const CScript& dest) const
 {
     LOCK(cs_KeyStore);
     return setWatchOnly.count(dest) > 0;
@@ -854,19 +843,19 @@ bool LegacyScriptPubKeyMan::HaveWatchOnly() const
     return (!setWatchOnly.empty());
 }
 
-static bool ExtractPubKey(const CScript &dest, CPubKey& pubKeyOut)
+static bool ExtractPubKey(const CScript& dest, CBOBPubKey& pubKeyOut)
 {
     std::vector<std::vector<unsigned char>> solutions;
     return Solver(dest, solutions) == TxoutType::PUBKEY &&
-        (pubKeyOut = CPubKey(solutions[0])).IsFullyValid();
+           (pubKeyOut = CBOBPubKey(solutions[0])).IsFullyValid();
 }
 
-bool LegacyScriptPubKeyMan::RemoveWatchOnly(const CScript &dest)
+bool LegacyScriptPubKeyMan::RemoveWatchOnly(const CScript& dest)
 {
     {
         LOCK(cs_KeyStore);
         setWatchOnly.erase(dest);
-        CPubKey pubKey;
+        CBOBPubKey pubKey;
         if (ExtractPubKey(dest, pubKey)) {
             mapWatchKeys.erase(pubKey.GetID());
         }
@@ -882,16 +871,16 @@ bool LegacyScriptPubKeyMan::RemoveWatchOnly(const CScript &dest)
     return true;
 }
 
-bool LegacyScriptPubKeyMan::LoadWatchOnly(const CScript &dest)
+bool LegacyScriptPubKeyMan::LoadWatchOnly(const CScript& dest)
 {
     return AddWatchOnlyInMem(dest);
 }
 
-bool LegacyScriptPubKeyMan::AddWatchOnlyInMem(const CScript &dest)
+bool LegacyScriptPubKeyMan::AddWatchOnlyInMem(const CScript& dest)
 {
     LOCK(cs_KeyStore);
     setWatchOnly.insert(dest);
-    CPubKey pubKey;
+    CBOBPubKey pubKey;
     if (ExtractPubKey(dest, pubKey)) {
         mapWatchKeys[pubKey.GetID()] = pubKey;
         ImplicitlyLearnRelatedKeyScripts(pubKey);
@@ -899,7 +888,7 @@ bool LegacyScriptPubKeyMan::AddWatchOnlyInMem(const CScript &dest)
     return true;
 }
 
-bool LegacyScriptPubKeyMan::AddWatchOnlyWithDB(WalletBatch &batch, const CScript& dest)
+bool LegacyScriptPubKeyMan::AddWatchOnlyWithDB(WalletBatch& batch, const CScript& dest)
 {
     if (!AddWatchOnlyInMem(dest))
         return false;
@@ -913,7 +902,7 @@ bool LegacyScriptPubKeyMan::AddWatchOnlyWithDB(WalletBatch &batch, const CScript
     return false;
 }
 
-bool LegacyScriptPubKeyMan::AddWatchOnlyWithDB(WalletBatch &batch, const CScript& dest, int64_t create_time)
+bool LegacyScriptPubKeyMan::AddWatchOnlyWithDB(WalletBatch& batch, const CScript& dest, int64_t create_time)
 {
     m_script_metadata[CScriptID(dest)].nCreateTime = create_time;
     return AddWatchOnlyWithDB(batch, dest);
@@ -959,7 +948,7 @@ void LegacyScriptPubKeyMan::AddInactiveHDChain(const CHDChain& chain)
     m_inactive_hd_chains[chain.seed_id] = chain;
 }
 
-bool LegacyScriptPubKeyMan::HaveKey(const CKeyID &address) const
+bool LegacyScriptPubKeyMan::HaveKey(const CKeyID& address) const
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -968,7 +957,7 @@ bool LegacyScriptPubKeyMan::HaveKey(const CKeyID &address) const
     return mapCryptedKeys.count(address) > 0;
 }
 
-bool LegacyScriptPubKeyMan::GetKey(const CKeyID &address, CKey& keyOut) const
+bool LegacyScriptPubKeyMan::GetKey(const CKeyID& address, CBOBKey& keyOut) const
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -976,10 +965,9 @@ bool LegacyScriptPubKeyMan::GetKey(const CKeyID &address, CKey& keyOut) const
     }
 
     CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-    if (mi != mapCryptedKeys.end())
-    {
-        const CPubKey &vchPubKey = (*mi).second.first;
-        const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
+    if (mi != mapCryptedKeys.end()) {
+        const CBOBPubKey& vchPubKey = (*mi).second.first;
+        const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
         return DecryptKey(m_storage.GetEncryptionKey(), vchCryptedSecret, vchPubKey, keyOut);
     }
     return false;
@@ -1004,7 +992,7 @@ bool LegacyScriptPubKeyMan::GetKeyOrigin(const CKeyID& keyID, KeyOriginInfo& inf
     return true;
 }
 
-bool LegacyScriptPubKeyMan::GetWatchPubKey(const CKeyID &address, CPubKey &pubkey_out) const
+bool LegacyScriptPubKeyMan::GetWatchPubKey(const CKeyID& address, CBOBPubKey& pubkey_out) const
 {
     LOCK(cs_KeyStore);
     WatchKeyMap::const_iterator it = mapWatchKeys.find(address);
@@ -1015,7 +1003,7 @@ bool LegacyScriptPubKeyMan::GetWatchPubKey(const CKeyID &address, CPubKey &pubke
     return false;
 }
 
-bool LegacyScriptPubKeyMan::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const
+bool LegacyScriptPubKeyMan::GetPubKey(const CKeyID& address, CBOBPubKey& vchPubKeyOut) const
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -1026,8 +1014,7 @@ bool LegacyScriptPubKeyMan::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyO
     }
 
     CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-    if (mi != mapCryptedKeys.end())
-    {
+    if (mi != mapCryptedKeys.end()) {
         vchPubKeyOut = (*mi).second.first;
         return true;
     }
@@ -1035,14 +1022,14 @@ bool LegacyScriptPubKeyMan::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyO
     return GetWatchPubKey(address, vchPubKeyOut);
 }
 
-CPubKey LegacyScriptPubKeyMan::GenerateNewKey(WalletBatch &batch, CHDChain& hd_chain, bool internal)
+CBOBPubKey LegacyScriptPubKeyMan::GenerateNewKey(WalletBatch& batch, CHDChain& hd_chain, bool internal)
 {
     assert(!m_storage.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS));
     assert(!m_storage.IsWalletFlagSet(WALLET_FLAG_BLANK_WALLET));
     AssertLockHeld(cs_KeyStore);
     bool fCompressed = m_storage.CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.6.0 wallets
 
-    CKey secret;
+    CBOBKey secret;
 
     // Create new metadata
     int64_t nCreationTime = GetTime();
@@ -1052,16 +1039,11 @@ CPubKey LegacyScriptPubKeyMan::GenerateNewKey(WalletBatch &batch, CHDChain& hd_c
     if (IsHDEnabled()) {
         DeriveNewChildKey(batch, metadata, secret, hd_chain, (m_storage.CanSupportFeature(FEATURE_HD_SPLIT) ? internal : false));
     } else {
-        secret.MakeNewKey(fCompressed);
+        secret.MakeNewKey();
     }
 
-    // Compressed public keys were introduced in version 0.6.0
-    if (fCompressed) {
-        m_storage.SetMinVersion(FEATURE_COMPRPUBKEY);
-    }
-
-    CPubKey pubkey = secret.GetPubKey();
-    assert(secret.VerifyPubKey(pubkey));
+    CBOBPubKey pubkey = secret.GetPubKey();
+    //assert(secret.VerifyPubKey(pubkey));
 
     mapKeyMetadata[pubkey.GetID()] = metadata;
     UpdateTimeFirstKey(nCreationTime);
@@ -1072,14 +1054,14 @@ CPubKey LegacyScriptPubKeyMan::GenerateNewKey(WalletBatch &batch, CHDChain& hd_c
     return pubkey;
 }
 
-void LegacyScriptPubKeyMan::DeriveNewChildKey(WalletBatch &batch, CKeyMetadata& metadata, CKey& secret, CHDChain& hd_chain, bool internal)
+void LegacyScriptPubKeyMan::DeriveNewChildKey(WalletBatch& batch, CKeyMetadata& metadata, CBOBKey& secret, CHDChain& hd_chain, bool internal)
 {
     // for now we use a fixed keypath scheme of m/0'/0'/k
-    CKey seed;                     //seed (256bit)
-    CExtKey masterKey;             //hd master key
-    CExtKey accountKey;            //key at m/0'
-    CExtKey chainChildKey;         //key at m/0'/0' (external) or m/0'/1' (internal)
-    CExtKey childKey;              //key at m/0'/0'/<n>'
+    CBOBKey seed;             //seed (256bit)
+    CExtBOBKey masterKey;     //hd master key
+    CExtBOBKey accountKey;    //key at m/0'
+    CExtBOBKey chainChildKey; //key at m/0'/0' (external) or m/0'/1' (internal)
+    CExtBOBKey childKey;      //key at m/0'/0'/<n>'
 
     // try to get the seed
     if (!GetKey(hd_chain.seed_id, seed))
@@ -1093,7 +1075,7 @@ void LegacyScriptPubKeyMan::DeriveNewChildKey(WalletBatch &batch, CKeyMetadata& 
 
     // derive m/0'/0' (external chain) OR m/0'/1' (internal chain)
     assert(internal ? m_storage.CanSupportFeature(FEATURE_HD_SPLIT) : true);
-    accountKey.Derive(chainChildKey, BIP32_HARDENED_KEY_LIMIT+(internal ? 1 : 0));
+    accountKey.Derive(chainChildKey, BIP32_HARDENED_KEY_LIMIT + (internal ? 1 : 0));
 
     // derive child key at next index, skip keys already known to the wallet
     do {
@@ -1107,8 +1089,7 @@ void LegacyScriptPubKeyMan::DeriveNewChildKey(WalletBatch &batch, CKeyMetadata& 
             metadata.key_origin.path.push_back(1 | BIP32_HARDENED_KEY_LIMIT);
             metadata.key_origin.path.push_back(hd_chain.nInternalChainCounter | BIP32_HARDENED_KEY_LIMIT);
             hd_chain.nInternalChainCounter++;
-        }
-        else {
+        } else {
             chainChildKey.Derive(childKey, hd_chain.nExternalChainCounter | BIP32_HARDENED_KEY_LIMIT);
             metadata.hdKeypath = "m/0'/0'/" + ToString(hd_chain.nExternalChainCounter) + "'";
             metadata.key_origin.path.push_back(0 | BIP32_HARDENED_KEY_LIMIT);
@@ -1127,7 +1108,7 @@ void LegacyScriptPubKeyMan::DeriveNewChildKey(WalletBatch &batch, CKeyMetadata& 
         throw std::runtime_error(std::string(__func__) + ": writing HD chain model failed");
 }
 
-void LegacyScriptPubKeyMan::LoadKeyPool(int64_t nIndex, const CKeyPool &keypool)
+void LegacyScriptPubKeyMan::LoadKeyPool(int64_t nIndex, const CKeyPool& keypool)
 {
     LOCK(cs_KeyStore);
     if (keypool.m_pre_split) {
@@ -1155,25 +1136,25 @@ bool LegacyScriptPubKeyMan::CanGenerateKeys() const
     return IsHDEnabled() || !m_storage.CanSupportFeature(FEATURE_HD);
 }
 
-CPubKey LegacyScriptPubKeyMan::GenerateNewSeed()
+CBOBPubKey LegacyScriptPubKeyMan::GenerateNewSeed()
 {
     assert(!m_storage.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS));
-    CKey key;
-    key.MakeNewKey(true);
+    CBOBKey key;
+    key.MakeNewKey();
     return DeriveNewSeed(key);
 }
 
-CPubKey LegacyScriptPubKeyMan::DeriveNewSeed(const CKey& key)
+CBOBPubKey LegacyScriptPubKeyMan::DeriveNewSeed(const CBOBKey& key)
 {
     int64_t nCreationTime = GetTime();
     CKeyMetadata metadata(nCreationTime);
 
     // calculate the seed
-    CPubKey seed = key.GetPubKey();
+    CBOBPubKey seed = key.GetPubKey();
     assert(key.VerifyPubKey(seed));
 
     // set the hd keypath to "s" -> Seed, refers the seed to itself
-    metadata.hdKeypath     = "s";
+    metadata.hdKeypath = "s";
     metadata.has_key_origin = false;
     metadata.hd_seed_id = seed.GetID();
 
@@ -1191,7 +1172,7 @@ CPubKey LegacyScriptPubKeyMan::DeriveNewSeed(const CKey& key)
     return seed;
 }
 
-void LegacyScriptPubKeyMan::SetHDSeed(const CPubKey& seed)
+void LegacyScriptPubKeyMan::SetHDSeed(const CBOBPubKey& seed)
 {
     LOCK(cs_KeyStore);
     // store the keyid (hash160) together with
@@ -1259,27 +1240,25 @@ bool LegacyScriptPubKeyMan::TopUp(unsigned int kpSize)
         if (kpSize > 0)
             nTargetSize = kpSize;
         else
-            nTargetSize = std::max(gArgs.GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t) 0);
+            nTargetSize = std::max(gArgs.GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t)0);
 
         // count amount of available keys (internal, external)
         // make sure the keypool of external and internal keys fits the user selected target (-keypool)
-        int64_t missingExternal = std::max(std::max((int64_t) nTargetSize, (int64_t) 1) - (int64_t)setExternalKeyPool.size(), (int64_t) 0);
-        int64_t missingInternal = std::max(std::max((int64_t) nTargetSize, (int64_t) 1) - (int64_t)setInternalKeyPool.size(), (int64_t) 0);
+        int64_t missingExternal = std::max(std::max((int64_t)nTargetSize, (int64_t)1) - (int64_t)setExternalKeyPool.size(), (int64_t)0);
+        int64_t missingInternal = std::max(std::max((int64_t)nTargetSize, (int64_t)1) - (int64_t)setInternalKeyPool.size(), (int64_t)0);
 
-        if (!IsHDEnabled() || !m_storage.CanSupportFeature(FEATURE_HD_SPLIT))
-        {
+        if (!IsHDEnabled() || !m_storage.CanSupportFeature(FEATURE_HD_SPLIT)) {
             // don't create extra internal keys
             missingInternal = 0;
         }
         bool internal = false;
         WalletBatch batch(m_storage.GetDatabase());
-        for (int64_t i = missingInternal + missingExternal; i--;)
-        {
+        for (int64_t i = missingInternal + missingExternal; i--;) {
             if (i < missingInternal) {
                 internal = true;
             }
 
-            CPubKey pubkey(GenerateNewKey(batch, m_hd_chain, internal));
+            CBOBPubKey pubkey(GenerateNewKey(batch, m_hd_chain, internal));
             AddKeypoolPubkeyWithDB(pubkey, internal, batch);
         }
         if (missingInternal + missingExternal > 0) {
@@ -1290,7 +1269,7 @@ bool LegacyScriptPubKeyMan::TopUp(unsigned int kpSize)
     return true;
 }
 
-void LegacyScriptPubKeyMan::AddKeypoolPubkeyWithDB(const CPubKey& pubkey, const bool internal, WalletBatch& batch)
+void LegacyScriptPubKeyMan::AddKeypoolPubkeyWithDB(const CBOBPubKey& pubkey, const bool internal, WalletBatch& batch)
 {
     LOCK(cs_KeyStore);
     assert(m_max_keypool_index < std::numeric_limits<int64_t>::max()); // How in the hell did you use so many keys?
@@ -1312,7 +1291,7 @@ void LegacyScriptPubKeyMan::KeepDestination(int64_t nIndex, const OutputType& ty
     // Remove from key pool
     WalletBatch batch(m_storage.GetDatabase());
     batch.ErasePool(nIndex);
-    CPubKey pubkey;
+    CBOBPubKey pubkey;
     bool have_pk = GetPubKey(m_index_to_reserved_key.at(nIndex), pubkey);
     assert(have_pk);
     LearnRelatedScripts(pubkey, type);
@@ -1340,7 +1319,7 @@ void LegacyScriptPubKeyMan::ReturnDestination(int64_t nIndex, bool fInternal, co
     WalletLogPrintf("keypool return %d\n", nIndex);
 }
 
-bool LegacyScriptPubKeyMan::GetKeyFromPool(CPubKey& result, const OutputType type, bool internal)
+bool LegacyScriptPubKeyMan::GetKeyFromPool(CBOBPubKey& result, const OutputType type, bool internal)
 {
     assert(type != OutputType::BECH32M);
     if (!CanGetAddresses(internal)) {
@@ -1366,7 +1345,7 @@ bool LegacyScriptPubKeyMan::GetKeyFromPool(CPubKey& result, const OutputType typ
 bool LegacyScriptPubKeyMan::ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& keypool, bool fRequestedInternal)
 {
     nIndex = -1;
-    keypool.vchPubKey = CPubKey();
+    keypool.vchPubKey = CBOBPubKey();
     {
         LOCK(cs_KeyStore);
 
@@ -1388,7 +1367,7 @@ bool LegacyScriptPubKeyMan::ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& key
         if (!batch.ReadPool(nIndex, keypool)) {
             throw std::runtime_error(std::string(__func__) + ": read failed");
         }
-        CPubKey pk;
+        CBOBPubKey pk;
         if (!GetPubKey(keypool.vchPubKey.GetID(), pk)) {
             throw std::runtime_error(std::string(__func__) + ": unknown key in key pool");
         }
@@ -1409,7 +1388,7 @@ bool LegacyScriptPubKeyMan::ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& key
     return true;
 }
 
-void LegacyScriptPubKeyMan::LearnRelatedScripts(const CPubKey& key, OutputType type)
+void LegacyScriptPubKeyMan::LearnRelatedScripts(const CBOBPubKey& key, OutputType type)
 {
     assert(type != OutputType::BECH32M);
     if (key.IsCompressed() && (type == OutputType::P2SH_SEGWIT || type == OutputType::BECH32)) {
@@ -1421,7 +1400,7 @@ void LegacyScriptPubKeyMan::LearnRelatedScripts(const CPubKey& key, OutputType t
     }
 }
 
-void LegacyScriptPubKeyMan::LearnAllRelatedScripts(const CPubKey& key)
+void LegacyScriptPubKeyMan::LearnAllRelatedScripts(const CBOBPubKey& key)
 {
     // OutputType::P2SH_SEGWIT always adds all necessary scripts for all types.
     LearnRelatedScripts(key, OutputType::P2SH_SEGWIT);
@@ -1432,7 +1411,7 @@ void LegacyScriptPubKeyMan::MarkReserveKeysAsUsed(int64_t keypool_id)
     AssertLockHeld(cs_KeyStore);
     bool internal = setInternalKeyPool.count(keypool_id);
     if (!internal) assert(setExternalKeyPool.count(keypool_id) || set_pre_split_keypool.count(keypool_id));
-    std::set<int64_t> *setKeyPool = internal ? &setInternalKeyPool : (set_pre_split_keypool.empty() ? &setExternalKeyPool : &set_pre_split_keypool);
+    std::set<int64_t>* setKeyPool = internal ? &setInternalKeyPool : (set_pre_split_keypool.empty() ? &setExternalKeyPool : &set_pre_split_keypool);
     auto it = setKeyPool->begin();
 
     WalletBatch batch(m_storage.GetDatabase());
@@ -1498,7 +1477,7 @@ bool LegacyScriptPubKeyMan::AddCScriptWithDB(WalletBatch& batch, const CScript& 
     return false;
 }
 
-bool LegacyScriptPubKeyMan::AddKeyOriginWithDB(WalletBatch& batch, const CPubKey& pubkey, const KeyOriginInfo& info)
+bool LegacyScriptPubKeyMan::AddKeyOriginWithDB(WalletBatch& batch, const CBOBPubKey& pubkey, const KeyOriginInfo& info)
 {
     LOCK(cs_KeyStore);
     std::copy(info.fingerprint, info.fingerprint + 4, mapKeyMetadata[pubkey.GetID()].key_origin.fingerprint);
@@ -1532,12 +1511,12 @@ bool LegacyScriptPubKeyMan::ImportScripts(const std::set<CScript> scripts, int64
     return true;
 }
 
-bool LegacyScriptPubKeyMan::ImportPrivKeys(const std::map<CKeyID, CKey>& privkey_map, const int64_t timestamp)
+bool LegacyScriptPubKeyMan::ImportPrivKeys(const std::map<CKeyID, CBOBKey>& privkey_map, const int64_t timestamp)
 {
     WalletBatch batch(m_storage.GetDatabase());
     for (const auto& entry : privkey_map) {
-        const CKey& key = entry.second;
-        CPubKey pubkey = key.GetPubKey();
+        const CBOBKey& key = entry.second;
+        CBOBPubKey pubkey = key.GetPubKey();
         const CKeyID& id = entry.first;
         assert(key.VerifyPubKey(pubkey));
         // Skip if we already have the key
@@ -1555,7 +1534,7 @@ bool LegacyScriptPubKeyMan::ImportPrivKeys(const std::map<CKeyID, CKey>& privkey
     return true;
 }
 
-bool LegacyScriptPubKeyMan::ImportPubKeys(const std::vector<CKeyID>& ordered_pubkeys, const std::map<CKeyID, CPubKey>& pubkey_map, const std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>>& key_origins, const bool add_keypool, const bool internal, const int64_t timestamp)
+bool LegacyScriptPubKeyMan::ImportPubKeys(const std::vector<CKeyID>& ordered_pubkeys, const std::map<CKeyID, CBOBPubKey>& pubkey_map, const std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>>& key_origins, const bool add_keypool, const bool internal, const int64_t timestamp)
 {
     WalletBatch batch(m_storage.GetDatabase());
     for (const auto& entry : key_origins) {
@@ -1566,8 +1545,8 @@ bool LegacyScriptPubKeyMan::ImportPubKeys(const std::vector<CKeyID>& ordered_pub
         if (entry == pubkey_map.end()) {
             continue;
         }
-        const CPubKey& pubkey = entry->second;
-        CPubKey temp;
+        const CBOBPubKey& pubkey = entry->second;
+        CBOBPubKey temp;
         if (GetPubKey(id, temp)) {
             // Already have pubkey, skipping
             WalletLogPrintf("Already have pubkey %s, skipping\n", HexStr(temp));
@@ -1676,9 +1655,9 @@ bool DescriptorScriptPubKeyMan::CheckDecryptionKey(const CKeyingMaterial& master
     bool keyPass = m_map_crypted_keys.empty(); // Always pass when there are no encrypted keys
     bool keyFail = false;
     for (const auto& mi : m_map_crypted_keys) {
-        const CPubKey &pubkey = mi.second.first;
-        const std::vector<unsigned char> &crypted_secret = mi.second.second;
-        CKey key;
+        const CBOBPubKey& pubkey = mi.second.first;
+        const std::vector<unsigned char>& crypted_secret = mi.second.second;
+        CBOBKey key;
         if (!DecryptKey(master_key, crypted_secret, pubkey, key)) {
             keyFail = true;
             break;
@@ -1705,10 +1684,9 @@ bool DescriptorScriptPubKeyMan::Encrypt(const CKeyingMaterial& master_key, Walle
         return false;
     }
 
-    for (const KeyMap::value_type& key_in : m_map_keys)
-    {
-        const CKey &key = key_in.second;
-        CPubKey pubkey = key.GetPubKey();
+    for (const KeyMap::value_type& key_in : m_map_keys) {
+        const CBOBKey& key = key_in.second;
+        CBOBPubKey pubkey = key.GetPubKey();
         CKeyingMaterial secret(key.begin(), key.end());
         std::vector<unsigned char> crypted_secret;
         if (!EncryptSecret(master_key, secret, pubkey.GetHash(), crypted_secret)) {
@@ -1740,15 +1718,15 @@ void DescriptorScriptPubKeyMan::ReturnDestination(int64_t index, bool internal, 
     NotifyCanGetAddressesChanged();
 }
 
-std::map<CKeyID, CKey> DescriptorScriptPubKeyMan::GetKeys() const
+std::map<CKeyID, CBOBKey> DescriptorScriptPubKeyMan::GetKeys() const
 {
     AssertLockHeld(cs_desc_man);
     if (m_storage.HasEncryptionKeys() && !m_storage.IsLocked()) {
         KeyMap keys;
         for (auto key_pair : m_map_crypted_keys) {
-            const CPubKey& pubkey = key_pair.second.first;
+            const CBOBPubKey& pubkey = key_pair.second.first;
             const std::vector<unsigned char>& crypted_secret = key_pair.second.second;
-            CKey key;
+            CBOBKey key;
             DecryptKey(m_storage.GetEncryptionKey(), crypted_secret, pubkey, key);
             keys[pubkey.GetID()] = key;
         }
@@ -1764,7 +1742,7 @@ bool DescriptorScriptPubKeyMan::TopUp(unsigned int size)
     if (size > 0) {
         target_size = size;
     } else {
-        target_size = std::max(gArgs.GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t) 1);
+        target_size = std::max(gArgs.GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t)1);
     }
 
     // Calculate the new range_end
@@ -1795,7 +1773,7 @@ bool DescriptorScriptPubKeyMan::TopUp(unsigned int size)
             m_map_script_pub_keys[script] = i;
         }
         for (const auto& pk_pair : out_keys.pubkeys) {
-            const CPubKey& pubkey = pk_pair.second;
+            const CBOBPubKey& pubkey = pk_pair.second;
             if (m_map_pubkeys.count(pubkey) != 0) {
                 // We don't need to give an error here.
                 // It doesn't matter which of many valid indexes the pubkey has, we just need an index where we can derive it and it's private key
@@ -1835,7 +1813,7 @@ void DescriptorScriptPubKeyMan::MarkUnusedAddresses(const CScript& script)
     }
 }
 
-void DescriptorScriptPubKeyMan::AddDescriptorKey(const CKey& key, const CPubKey &pubkey)
+void DescriptorScriptPubKeyMan::AddDescriptorKey(const CBOBKey& key, const CBOBPubKey& pubkey)
 {
     LOCK(cs_desc_man);
     WalletBatch batch(m_storage.GetDatabase());
@@ -1844,7 +1822,7 @@ void DescriptorScriptPubKeyMan::AddDescriptorKey(const CKey& key, const CPubKey 
     }
 }
 
-bool DescriptorScriptPubKeyMan::AddDescriptorKeyWithDB(WalletBatch& batch, const CKey& key, const CPubKey &pubkey)
+bool DescriptorScriptPubKeyMan::AddDescriptorKeyWithDB(WalletBatch& batch, const CBOBKey& key, const CBOBPubKey& pubkey)
 {
     AssertLockHeld(cs_desc_man);
     assert(!m_storage.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS));
@@ -1874,7 +1852,7 @@ bool DescriptorScriptPubKeyMan::AddDescriptorKeyWithDB(WalletBatch& batch, const
     }
 }
 
-bool DescriptorScriptPubKeyMan::SetupDescriptorGeneration(const CExtKey& master_key, OutputType addr_type, bool internal)
+bool DescriptorScriptPubKeyMan::SetupDescriptorGeneration(const CExtBOBKey& master_key, OutputType addr_type, bool internal)
 {
     if (addr_type == OutputType::BECH32M) {
         // Don't allow setting up taproot descriptors yet
@@ -1912,7 +1890,7 @@ bool DescriptorScriptPubKeyMan::SetupDescriptorGeneration(const CExtKey& master_
         break;
     }
     case OutputType::BECH32M: assert(false); // TODO: Setup taproot descriptor
-    } // no default case, so the compiler can warn about missing cases
+    }                                        // no default case, so the compiler can warn about missing cases
     assert(!desc_prefix.empty());
 
     // Mainnet derives at 0', testnet and regtest derive at 1'
@@ -2004,7 +1982,7 @@ std::unique_ptr<FlatSigningProvider> DescriptorScriptPubKeyMan::GetSigningProvid
     return GetSigningProvider(index, include_private);
 }
 
-std::unique_ptr<FlatSigningProvider> DescriptorScriptPubKeyMan::GetSigningProvider(const CPubKey& pubkey) const
+std::unique_ptr<FlatSigningProvider> DescriptorScriptPubKeyMan::GetSigningProvider(const CBOBPubKey& pubkey) const
 {
     LOCK(cs_desc_man);
 
@@ -2018,6 +1996,7 @@ std::unique_ptr<FlatSigningProvider> DescriptorScriptPubKeyMan::GetSigningProvid
     // Always try to get the signing provider with private keys. This function should only be called during signing anyways
     return GetSigningProvider(index, true);
 }
+
 
 std::unique_ptr<FlatSigningProvider> DescriptorScriptPubKeyMan::GetSigningProvider(int32_t index, bool include_private) const
 {
@@ -2067,7 +2046,7 @@ SigningResult DescriptorScriptPubKeyMan::SignMessage(const std::string& message,
         return SigningResult::PRIVATE_KEY_NOT_AVAILABLE;
     }
 
-    CKey key;
+    CBOBKey key;
     if (!keys->GetKey(ToKeyID(pkhash), key)) {
         return SigningResult::PRIVATE_KEY_NOT_AVAILABLE;
     }
@@ -2119,8 +2098,8 @@ TransactionError DescriptorScriptPubKeyMan::FillPSBT(PartiallySignedTransaction&
         } else {
             // Maybe there are pubkeys listed that we can sign for
             script_keys = std::make_unique<FlatSigningProvider>();
-            for (const auto& pk_pair : input.hd_keypaths) {
-                const CPubKey& pubkey = pk_pair.first;
+            for (const auto& pk_pair : input.hd_keypaths_pqc) {
+                const CBOBPubKey& pubkey = pk_pair.first;
                 std::unique_ptr<FlatSigningProvider> pk_keys = GetSigningProvider(pubkey);
                 if (pk_keys) {
                     *keys = Merge(*keys, *pk_keys);
@@ -2196,7 +2175,7 @@ void DescriptorScriptPubKeyMan::SetCache(const DescriptorCache& cache)
             m_map_script_pub_keys[script] = i;
         }
         for (const auto& pk_pair : out_keys.pubkeys) {
-            const CPubKey& pubkey = pk_pair.second;
+            const CBOBPubKey& pubkey = pk_pair.second;
             if (m_map_pubkeys.count(pubkey) != 0) {
                 // We don't need to give an error here.
                 // It doesn't matter which of many valid indexes the pubkey has, we just need an index where we can derive it and it's private key
@@ -2208,14 +2187,14 @@ void DescriptorScriptPubKeyMan::SetCache(const DescriptorCache& cache)
     }
 }
 
-bool DescriptorScriptPubKeyMan::AddKey(const CKeyID& key_id, const CKey& key)
+bool DescriptorScriptPubKeyMan::AddKey(const CKeyID& key_id, const CBOBKey& key)
 {
     LOCK(cs_desc_man);
     m_map_keys[key_id] = key;
     return true;
 }
 
-bool DescriptorScriptPubKeyMan::AddCryptedKey(const CKeyID& key_id, const CPubKey& pubkey, const std::vector<unsigned char>& crypted_key)
+bool DescriptorScriptPubKeyMan::AddCryptedKey(const CKeyID& key_id, const CBOBPubKey& pubkey, const std::vector<unsigned char>& crypted_key)
 {
     LOCK(cs_desc_man);
     if (!m_map_keys.empty()) {
@@ -2252,7 +2231,7 @@ const std::vector<CScript> DescriptorScriptPubKeyMan::GetScriptPubKeys() const
     std::vector<CScript> script_pub_keys;
     script_pub_keys.reserve(m_map_script_pub_keys.size());
 
-    for (auto const& script_pub_key: m_map_script_pub_keys) {
+    for (auto const& script_pub_key : m_map_script_pub_keys) {
         script_pub_keys.push_back(script_pub_key.first);
     }
     return script_pub_keys;
@@ -2293,7 +2272,7 @@ void DescriptorScriptPubKeyMan::UpgradeDescriptorCache()
     FlatSigningProvider out_keys;
     std::vector<CScript> scripts_temp;
     DescriptorCache temp_cache;
-    if (!m_wallet_descriptor.descriptor->Expand(0, provider, scripts_temp, out_keys, &temp_cache)){
+    if (!m_wallet_descriptor.descriptor->Expand(0, provider, scripts_temp, out_keys, &temp_cache)) {
         throw std::runtime_error("Unable to expand descriptor");
     }
 

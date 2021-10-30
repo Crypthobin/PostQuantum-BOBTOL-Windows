@@ -19,7 +19,8 @@
 static void CCoinsCaching(benchmark::Bench& bench)
 {
     const ECCVerifyHandle verify_handle;
-    ECC_Start();
+    // 삭제!!3
+    // ECC_Start();
 
     FillableSigningProvider keystore;
     CCoinsView coinsDummy;
@@ -48,7 +49,8 @@ static void CCoinsCaching(benchmark::Bench& bench)
         bool success = AreInputsStandard(tx_1, coins, false);
         assert(success);
     });
-    ECC_Stop();
+    // 삭제!!3
+    // ECC_Stop();
 }
 
 BENCHMARK(CCoinsCaching);

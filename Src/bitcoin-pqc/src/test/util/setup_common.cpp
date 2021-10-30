@@ -108,7 +108,8 @@ BasicTestingSetup::BasicTestingSetup(const std::string& chainName, const std::ve
     AppInitParameterInteraction(*m_node.args);
     LogInstance().StartLogging();
     SHA256AutoDetect();
-    ECC_Start();
+    // 삭제!!3
+    // ECC_Start();
     SetupEnvironment();
     SetupNetworking();
     InitSignatureCache();
@@ -128,7 +129,8 @@ BasicTestingSetup::~BasicTestingSetup()
     LogInstance().DisconnectTestLogger();
     fs::remove_all(m_path_root);
     gArgs.ClearArgs();
-    ECC_Stop();
+    // 삭제!!3
+    //ECC_Stop();
 }
 
 ChainTestingSetup::ChainTestingSetup(const std::string& chainName, const std::vector<const char*>& extra_args)
@@ -246,7 +248,8 @@ CBlock TestChain100Setup::CreateAndProcessBlock(const std::vector<CMutableTransa
     }
     RegenerateCommitments(block, *Assert(m_node.chainman));
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) ++block.nNonce;
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus()))
+        ++block.nNonce;
 
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
     Assert(m_node.chainman)->ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
@@ -258,7 +261,7 @@ CBlock TestChain100Setup::CreateAndProcessBlock(const std::vector<CMutableTransa
 CMutableTransaction TestChain100Setup::CreateValidMempoolTransaction(CTransactionRef input_transaction,
                                                                      int input_vout,
                                                                      int input_height,
-                                                                     CKey input_signing_key,
+                                                                     CBOBKey input_signing_key,
                                                                      CScript output_destination,
                                                                      CAmount output_amount,
                                                                      bool submit)

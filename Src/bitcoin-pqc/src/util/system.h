@@ -34,6 +34,8 @@
 #include <utility>
 #include <vector>
 
+#include <chrono>
+
 class UniValue;
 
 // Application startup time (used for uptime calculation)
@@ -539,5 +541,27 @@ private:
 #endif
 
 } // namespace util
+
+// crypthobion test - stopwatch
+
+#define START_WATCH \
+{\
+    start = std::chrono::system_clock::now(); \
+}
+
+#define STOP_WATCH \
+{\
+    std::chrono::system_clock::time_point end = std::chrono::system_clock::now(); \
+    micro = std::chrono::duration_cast<std::chrono::microseconds>(end - start); \
+}
+
+#define PRINT_TIME(item) \
+{\
+    std::cout << item << ": " << micro.count() << " microseconds" << std::endl; \
+}\
+
+#define PQC_LOG_PATH "C:\\Users\\hartw\\AppData\\Roaming\\BitcoinTest\\"
+bool TestLogPrint(const char* pFileName, uint64_t time);
+
 
 #endif // BITCOIN_UTIL_SYSTEM_H

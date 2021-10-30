@@ -12,6 +12,8 @@
 #include <primitives/transaction.h>
 #include <primitives/block.h>
 
+static const unsigned char REJECT_INVALID = 0x10; // <by. Crypthobin>
+
 /** Index marker for when no witness commitment is present in a coinbase transaction. */
 static constexpr int NO_WITNESS_COMMITMENT{-1};
 
@@ -94,11 +96,37 @@ private:
         M_INVALID, //!< network rule violation (DoS value may be set)
         M_ERROR,   //!< run-time error
     } m_mode{ModeState::M_VALID};
-    Result m_result{};
+    
     std::string m_reject_reason;
     std::string m_debug_message;
+    Result m_result{}; //<by. Crypthobin> 변수 추가
+    bool corruptionPossible;//<by. Crypthobin> 변수 추가
+    unsigned int chRejectCode;//<by. Crypthobin> 변수 추가
+    int nDoS;//<by. Crypthobin> 변수 추가
 
 public:
+
+    //<by. Crypthobin> validation.cpp에서 쓰이는 Dos 추가
+    bool DoS(int level, bool ret = false,
+             unsigned int chRejectCodeIn = 0, const std::string& strRejectReasonIn = "",
+             bool corruptionIn = false,
+             const std::string& strDebugMessageIn = "")
+    {
+        chRejectCode = chRejectCodeIn;
+        m_reject_reason = strRejectReasonIn;
+        corruptionPossible = corruptionIn;
+        m_debug_message = strDebugMessageIn;
+        if (m_mode == ModeState::M_ERROR) //<by. Crypthobin> MODE_ERROR ->ModeState::M_ERROR 변경
+            return ret;
+        nDoS += level;
+        m_mode = ModeState::M_INVALID; //<by. Crypthobin> mode = MODE_INVALID -> m_mode = ModeState::M_INVALID;변수 이름 변경
+        return ret;
+    }
+    //<by. Crypthobin>
+
+
+
+
     bool Invalid(Result result,
                  const std::string& reject_reason = "",
                  const std::string& debug_message = "")

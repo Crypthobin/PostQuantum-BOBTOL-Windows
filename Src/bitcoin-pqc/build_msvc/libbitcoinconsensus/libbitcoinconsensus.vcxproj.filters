@@ -1,38 +1,28 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\src\base58.cpp" />
-    <ClCompile Include="..\..\src\bech32.cpp" />
-    <ClCompile Include="..\..\src\bloom.cpp" />
-    <ClCompile Include="..\..\src\chainparams.cpp" />
-    <ClCompile Include="..\..\src\coins.cpp" />
-    <ClCompile Include="..\..\src\compressor.cpp" />
-    <ClCompile Include="..\..\src\core_read.cpp" />
-    <ClCompile Include="..\..\src\core_write.cpp" />
-    <ClCompile Include="..\..\src\deploymentinfo.cpp" />
-    <ClCompile Include="..\..\src\external_signer.cpp" />
-    <ClCompile Include="..\..\src\init\common.cpp" />
-    <ClCompile Include="..\..\src\key.cpp" />
-    <ClCompile Include="..\..\src\key_io.cpp" />
-    <ClCompile Include="..\..\src\merkleblock.cpp" />
-    <ClCompile Include="..\..\src\net_types.cpp" />
-    <ClCompile Include="..\..\src\netaddress.cpp" />
-    <ClCompile Include="..\..\src\netbase.cpp" />
-    <ClCompile Include="..\..\src\net_permissions.cpp" />
-    <ClCompile Include="..\..\src\outputtype.cpp" />
-    <ClCompile Include="..\..\src\policy\feerate.cpp" />
-    <ClCompile Include="..\..\src\policy\policy.cpp" />
-    <ClCompile Include="..\..\src\protocol.cpp" />
-    <ClCompile Include="..\..\src\psbt.cpp" />
-    <ClCompile Include="..\..\src\rpc\rawtransaction_util.cpp" />
-    <ClCompile Include="..\..\src\rpc\external_signer.cpp" />
-    <ClCompile Include="..\..\src\rpc\util.cpp" />
-    <ClCompile Include="..\..\src\scheduler.cpp" />
-    <ClCompile Include="..\..\src\script\descriptor.cpp" />
-    <ClCompile Include="..\..\src\script\sign.cpp" />
-    <ClCompile Include="..\..\src\script\signingprovider.cpp" />
-    <ClCompile Include="..\..\src\script\standard.cpp" />
-    <ClCompile Include="..\..\src\warnings.cpp" />
+    <ClCompile Include="..\..\src\arith_uint256.cpp" />
+    <ClCompile Include="..\..\src\consensus\merkle.cpp" />
+    <ClCompile Include="..\..\src\consensus\tx_check.cpp" />
+    <ClCompile Include="..\..\src\crypto\aes.cpp" />
+    <ClCompile Include="..\..\src\crypto\chacha20.cpp" />
+    <ClCompile Include="..\..\src\crypto\hmac_sha256.cpp" />
+    <ClCompile Include="..\..\src\crypto\hmac_sha512.cpp" />
+    <ClCompile Include="..\..\src\crypto\ripemd160.cpp" />
+    <ClCompile Include="..\..\src\crypto\sha1.cpp" />
+    <ClCompile Include="..\..\src\crypto\sha256.cpp" />
+    <ClCompile Include="..\..\src\crypto\sha256_sse4.cpp" />
+    <ClCompile Include="..\..\src\crypto\sha512.cpp" />
+    <ClCompile Include="..\..\src\hash.cpp" />
+    <ClCompile Include="..\..\src\primitives\block.cpp" />
+    <ClCompile Include="..\..\src\primitives\transaction.cpp" />
+    <ClCompile Include="..\..\src\pubkey.cpp" />
+    <ClCompile Include="..\..\src\script\bitcoinconsensus.cpp" />
+    <ClCompile Include="..\..\src\script\interpreter.cpp" />
+    <ClCompile Include="..\..\src\script\script.cpp" />
+    <ClCompile Include="..\..\src\script\script_error.cpp" />
+    <ClCompile Include="..\..\src\uint256.cpp" />
+    <ClCompile Include="..\..\src\util\strencodings.cpp" />
     <ClCompile Include="..\..\src\dilithium\aes256ctr.cpp">
       <Filter>dilithium</Filter>
     </ClCompile>
@@ -78,7 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dilithium">
-      <UniqueIdentifier>{88654a64-3ee4-40a4-ba70-e47b64d0ec78}</UniqueIdentifier>
+      <UniqueIdentifier>{768bff6f-4fa0-4e23-8e83-e00210dbb537}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

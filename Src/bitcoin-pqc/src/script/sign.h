@@ -15,7 +15,7 @@
 #include <span.h>
 #include <streams.h>
 
-class CKey;
+class CBOBKey;
 class CKeyID;
 class CScript;
 class CTransaction;
@@ -25,18 +25,20 @@ struct bilingual_str;
 struct CMutableTransaction;
 
 /** Interface for signature creators. */
-class BaseSignatureCreator {
+class BaseSignatureCreator
+{
 public:
     virtual ~BaseSignatureCreator() {}
-    virtual const BaseSignatureChecker& Checker() const =0;
+    virtual const BaseSignatureChecker& Checker() const = 0;
 
     /** Create a singular (non-script) signature. */
-    virtual bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const =0;
-    virtual bool CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* merkle_root, SigVersion sigversion) const =0;
+    virtual bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const = 0;
+    virtual bool CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* merkle_root, SigVersion sigversion) const = 0;
 };
 
 /** A signature creator for transactions. */
-class MutableTransactionSignatureCreator : public BaseSignatureCreator {
+class MutableTransactionSignatureCreator : public BaseSignatureCreator
+{
     const CMutableTransaction* txTo;
     unsigned int nIn;
     int nHashType;
@@ -57,27 +59,27 @@ extern const BaseSignatureCreator& DUMMY_SIGNATURE_CREATOR;
 /** A signature creator that just produces 72-byte empty signatures. */
 extern const BaseSignatureCreator& DUMMY_MAXIMUM_SIGNATURE_CREATOR;
 
-typedef std::pair<CPubKey, std::vector<unsigned char>> SigPair;
+typedef std::pair<CBOBPubKey, std::vector<unsigned char>> SigPair;
 
 // This struct contains information from a transaction input and also contains signatures for that input.
 // The information contained here can be used to create a signature and is also filled by ProduceSignature
 // in order to construct final scriptSigs and scriptWitnesses.
 struct SignatureData {
-    bool complete = false; ///< Stores whether the scriptSig and scriptWitness are complete
-    bool witness = false; ///< Stores whether the input this SigData corresponds to is a witness input
-    CScript scriptSig; ///< The scriptSig of an input. Contains complete signatures or the traditional partial signatures format
-    CScript redeem_script; ///< The redeemScript (if any) for the input
-    CScript witness_script; ///< The witnessScript (if any) for the input. witnessScripts are used in P2WSH outputs.
-    CScriptWitness scriptWitness; ///< The scriptWitness of an input. Contains complete signatures or the traditional partial signatures format. scriptWitness is part of a transaction input per BIP 144.
-    TaprootSpendData tr_spenddata; ///< Taproot spending data.
+    bool complete = false;                ///< Stores whether the scriptSig and scriptWitness are complete
+    bool witness = false;                 ///< Stores whether the input this SigData corresponds to is a witness input
+    CScript scriptSig;                    ///< The scriptSig of an input. Contains complete signatures or the traditional partial signatures format
+    CScript redeem_script;                ///< The redeemScript (if any) for the input
+    CScript witness_script;               ///< The witnessScript (if any) for the input. witnessScripts are used in P2WSH outputs.
+    CScriptWitness scriptWitness;         ///< The scriptWitness of an input. Contains complete signatures or the traditional partial signatures format. scriptWitness is part of a transaction input per BIP 144.
+    TaprootSpendData tr_spenddata;        ///< Taproot spending data.
     std::map<CKeyID, SigPair> signatures; ///< BIP 174 style partial signatures for the input. May contain all signatures necessary for producing a final scriptSig or scriptWitness.
-    std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>> misc_pubkeys;
-    std::vector<unsigned char> taproot_key_path_sig; /// Schnorr signature for key path spending
+    std::map<CKeyID, std::pair<CBOBPubKey, KeyOriginInfo>> misc_pubkeys;
+    std::vector<unsigned char> taproot_key_path_sig;                                           /// Schnorr signature for key path spending
     std::map<std::pair<XOnlyPubKey, uint256>, std::vector<unsigned char>> taproot_script_sigs; ///< (Partial) schnorr signatures, indexed by XOnlyPubKey and leaf_hash.
-    std::vector<CKeyID> missing_pubkeys; ///< KeyIDs of pubkeys which could not be found
-    std::vector<CKeyID> missing_sigs; ///< KeyIDs of pubkeys for signatures which could not be found
-    uint160 missing_redeem_script; ///< ScriptID of the missing redeemScript (if any)
-    uint256 missing_witness_script; ///< SHA256 of the missing witnessScript (if any)
+    std::vector<CKeyID> missing_pubkeys;                                                       ///< KeyIDs of pubkeys which could not be found
+    std::vector<CKeyID> missing_sigs;                                                          ///< KeyIDs of pubkeys for signatures which could not be found
+    uint160 missing_redeem_script;                                                             ///< ScriptID of the missing redeemScript (if any)
+    uint256 missing_witness_script;                                                            ///< SHA256 of the missing witnessScript (if any)
 
     SignatureData() {}
     explicit SignatureData(const CScript& script) : scriptSig(script) {}
@@ -86,7 +88,7 @@ struct SignatureData {
 
 // Takes a stream and multiple arguments and serializes them as if first serialized into a vector and then into the stream
 // The resulting output into the stream has the total serialized length of all of the objects followed by all objects concatenated with each other.
-template<typename Stream, typename... X>
+template <typename Stream, typename... X>
 void SerializeToVector(Stream& s, const X&... args)
 {
     WriteCompactSize(s, GetSerializeSizeMany(s.GetVersion(), args...));
@@ -94,7 +96,7 @@ void SerializeToVector(Stream& s, const X&... args)
 }
 
 // Takes a stream and multiple arguments and unserializes them first as a vector then each object individually in the order provided in the arguments
-template<typename Stream, typename... X>
+template <typename Stream, typename... X>
 void UnserializeFromVector(Stream& s, X&... args)
 {
     size_t expected_size = ReadCompactSize(s);
@@ -107,7 +109,7 @@ void UnserializeFromVector(Stream& s, X&... args)
 }
 
 // Deserialize HD keypaths into a map
-template<typename Stream>
+template <typename Stream>
 void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std::map<CPubKey, KeyOriginInfo>& hd_keypaths)
 {
     // Make sure that the key is the size of pubkey + 1
@@ -117,7 +119,7 @@ void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std
     // Read in the pubkey from key
     CPubKey pubkey(key.begin() + 1, key.end());
     if (!pubkey.IsFullyValid()) {
-       throw std::ios_base::failure("Invalid pubkey");
+        throw std::ios_base::failure("Invalid pubkey");
     }
     if (hd_keypaths.count(pubkey) > 0) {
         throw std::ios_base::failure("Duplicate Key, pubkey derivation path already provided");
@@ -142,7 +144,7 @@ void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std
 }
 
 // Serialize HD keypaths to a stream from a map
-template<typename Stream>
+template <typename Stream>
 void SerializeHDKeypaths(Stream& s, const std::map<CPubKey, KeyOriginInfo>& hd_keypaths, uint8_t type)
 {
     for (auto keypath_pair : hd_keypaths) {
@@ -162,8 +164,8 @@ void SerializeHDKeypaths(Stream& s, const std::map<CPubKey, KeyOriginInfo>& hd_k
 bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreator& creator, const CScript& scriptPubKey, SignatureData& sigdata);
 
 /** Produce a script signature for a transaction. */
-bool SignSignature(const SigningProvider &provider, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, const CAmount& amount, int nHashType);
-bool SignSignature(const SigningProvider &provider, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType);
+bool SignSignature(const SigningProvider& provider, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, const CAmount& amount, int nHashType);
+bool SignSignature(const SigningProvider& provider, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType);
 
 /** Extract signature data from a transaction input, and insert it. */
 SignatureData DataFromTransaction(const CMutableTransaction& tx, unsigned int nIn, const CTxOut& txout);

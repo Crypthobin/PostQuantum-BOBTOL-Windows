@@ -61,7 +61,7 @@ MessageVerificationResult MessageVerify(
  * @param[out] signature Signature, base64 encoded, only set if true is returned.
  * @return true if signing was successful. */
 bool MessageSign(
-    const CKey& privkey,
+    const CBOBKey& privkey,
     const std::string& message,
     std::string& signature);
 
@@ -69,7 +69,7 @@ bool MessageSign(
  * Hashes a message for signing and verification in a manner that prevents
  * inadvertently signing a transaction.
  */
-uint256 MessageHash(const std::string& message);
+uint512 MessageHash(const std::string& message);
 
 std::string SigningResultString(const SigningResult res);
 

@@ -19,20 +19,22 @@
 static void VerifyScriptBench(benchmark::Bench& bench)
 {
     const ECCVerifyHandle verify_handle;
-    ECC_Start();
+    // 삭제!!3
+    // ECC_Start();
 
     const uint32_t flags{SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_P2SH};
     const int witnessversion = 0;
 
     // Key pair.
-    CKey key;
+    //CKey key;
+    CBOBKey key;
     static const std::array<unsigned char, 32> vchKey = {
         {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
         }
     };
     key.Set(vchKey.begin(), vchKey.end(), false);
-    CPubKey pubkey = key.GetPubKey();
+    CBOBPubKey pubkey = key.GetPubKey();
     uint160 pubkeyHash;
     CHash160().Write(pubkey).Finalize(pubkeyHash);
 
@@ -44,7 +46,7 @@ static void VerifyScriptBench(benchmark::Bench& bench)
     CMutableTransaction txSpend = BuildSpendingTransaction(scriptSig, CScriptWitness(), CTransaction(txCredit));
     CScriptWitness& witness = txSpend.vin[0].scriptWitness;
     witness.stack.emplace_back();
-    key.Sign(SignatureHash(witScriptPubkey, txSpend, 0, SIGHASH_ALL, txCredit.vout[0].nValue, SigVersion::WITNESS_V0), witness.stack.back());
+    key.Sign(PQSignatureHash(witScriptPubkey, txSpend, 0, SIGHASH_ALL, txCredit.vout[0].nValue, SigVersion::WITNESS_V0), witness.stack.back());
     witness.stack.back().push_back(static_cast<unsigned char>(SIGHASH_ALL));
     witness.stack.push_back(ToByteVector(pubkey));
 
@@ -72,6 +74,7 @@ static void VerifyScriptBench(benchmark::Bench& bench)
         assert(csuccess == 1);
 #endif
     });
+    // 삭제!!3
     ECC_Stop();
 }
 
