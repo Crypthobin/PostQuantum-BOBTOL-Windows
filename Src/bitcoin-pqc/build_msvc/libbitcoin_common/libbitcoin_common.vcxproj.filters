@@ -75,6 +75,9 @@
     <ClCompile Include="..\..\src\dilithium\symmetric-shake.cpp">
       <Filter>dilithium</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\dilithium\pqsign.cpp">
+      <Filter>dilithium</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dilithium">
