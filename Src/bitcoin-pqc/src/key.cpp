@@ -471,7 +471,7 @@ CBOBPubKey CBOBKey::GetPubKey() const
     crypto_sign_keypair(seedbuf, pk, sk);
     
     memcpy((unsigned char*)result.begin(), pk, clen);
-    memcpy((unsigned char*)seckey, sk, SECRET_KEY_SIZE);
+    // memcpy((unsigned char*)seckey, sk, SECRET_KEY_SIZE);
 
     assert(result.size() == clen);
     assert(result.IsValid());
@@ -487,8 +487,14 @@ bool CBOBKey::Sign(const uint512& hash, std::vector<unsigned char>& vchSig, bool
 
     uint8_t sig[CBOBPubKey::SIGNATURE_SIZE] = {0};
     size_t sig_len = 0;
+    uint8_t pk[CRYPTO_PUBLICKEYBYTES] = {0};
+    uint8_t sk[CRYPTO_SECRETKEYBYTES] = {0};
+    uint8_t seedbuf[2 * SEEDBYTES + CRHBYTES] = {0};
 
-    crypto_sign_signature(sig, &sig_len, hash.begin(), hash.size(), seckey);
+    shake256(seedbuf, 2 * SEEDBYTES + CRHBYTES, begin(), SEEDBYTES);
+
+    crypto_sign_keypair(seedbuf, pk, sk);
+    crypto_sign_signature(sig, &sig_len, hash.begin(), hash.size(), sk);
 
     memcpy(vchSig.data(), sig, sig_len);
     vchSig.resize(sig_len);
@@ -527,6 +533,7 @@ bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild,
     std::vector<unsigned char, secure_allocator<unsigned char>> vout(64);
     if ((nChild >> 31) == 0) {
         CBOBPubKey pubkey = GetPubKey();
+
         BIP32Hash(cc, nChild, *pubkey.begin(), pubkey.begin() + 1, vout.data());
     } else {
         assert(size() == 32);
@@ -534,7 +541,6 @@ bool CBOBKey::Derive(CBOBKey& keyChild, ChainCode& ccChild, unsigned int nChild,
     }
     memcpy(ccChild.begin(), vout.data() + 32, 32);
     memcpy((unsigned char*)keyChild.begin(), begin(), 32);
-
     bool ret = secp256k1_ec_seckey_tweak_add(secp256k1_context_sign, (unsigned char*)keyChild.begin(), vout.data());
 
     keyChild.fValid = ret;
