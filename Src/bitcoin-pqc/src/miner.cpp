@@ -25,10 +25,6 @@
 #include <algorithm>
 #include <utility>
 
-#include <util/system.h>
-#include <chrono>
-
-
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
     int64_t nOldTime = pblock->nTime;
@@ -104,60 +100,20 @@ void BlockAssembler::resetBlock()
     nFees = 0;
 }
 
-
-/***********************************/
-/*Crypthobin Modify*/
-/***********************************/
-CBlock MakeSigPubHash(CBlock* pblock)
-{
-    CBlock tpblock = *pblock;
-
-    int i = 0;
-    int j = 0;
-
-    for (i = 1; i < pblock->vtx.size(); i++) {
-        CTransaction tx = (CTransaction)*pblock->vtx[i];
-        for (j = 0; j < tx.vin.size(); j++) {
-            CHashWriter ss1(SER_GETHASH, 0);
-            CHashWriter ss2(SER_GETHASH, 0);
-            uint256 hashsig;
-            uint256 hashpuk;
-
-            if (tx.vin[j].scriptWitness.stack.size() == 2) {
-                ss1 << tx.vin[j].scriptWitness.stack[0];
-                hashsig = ss1.GetHash();
-                ss2 << tx.vin[j].scriptWitness.stack[1];
-                hashpuk = ss2.GetHash();
-                tx.vin[j].scriptWitness.stack.clear();
-                tx.vin[j].scriptWitness.stack.push_back(ParseHex(hashsig.ToString()));
-                tx.vin[j].scriptWitness.stack.push_back(ParseHex(hashpuk.ToString()));
-            }
-        }
-        tpblock.vtx[i] = MakeTransactionRef(tx);
-    }
-
-    return tpblock;
-}
-
-
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn)
 {
     int64_t nTimeStart = GetTimeMicros();
 
-    // 시간 측정 시작
-    std::chrono::system_clock::time_point start;
-    std::chrono::microseconds micro;
-    START_WATCH;
-
     resetBlock();
 #ifdef _DEBUG
-    printf("PQC mining11!!\n\n");
+
 #endif
 
     pblocktemplate.reset(new CBlockTemplate());
 
     if (!pblocktemplate.get())
         return nullptr;
+    // < crypthobin >
     CBlock* const pblock = &pblocktemplate->block; // pointer for convenience
 
     // Add dummy coinbase tx as first transaction
@@ -201,11 +157,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     m_last_block_num_txs = nBlockTx;
     m_last_block_weight = nBlockWeight;
 
-
-    //{
-    //    *pblock = MakeSigPubHash(pblock); //<by. Crypthobin>
-    //}
-
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
     coinbaseTx.vin.resize(1);
@@ -218,7 +169,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxFees[0] = -nFees;
 
-    // 여기까지는 찍힘. !! (9월 19일)
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
@@ -233,13 +183,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, state.ToString()));
     }
     int64_t nTime2 = GetTimeMicros();
-
-    // 시간 측정 끝
-    STOP_WATCH;
-    // cmd에 로그 프린트
-    PRINT_TIME("create block: "); // (예) 블록 생성 시간
-    // .csv에 파일로 저장
-    TestLogPrint("CreateBlock.csv", micro.count());
 
     LogPrint(BCLog::BENCH, "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
 
@@ -285,7 +228,7 @@ bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& packa
 
 void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
 {
-    pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx());
+    pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx()); // 이부분 주석 해제
     pblocktemplate->vTxFees.push_back(iter->GetFee());
     pblocktemplate->vTxSigOpsCost.push_back(iter->GetSigOpCost());
     nBlockWeight += iter->GetTxWeight();

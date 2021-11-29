@@ -1710,7 +1710,7 @@ template <class T>
 bool GenericTransactionSignatureChecker<T>::VerifySignature(const std::vector<unsigned char>& vchSig, const CBOBPubKey& pubkey, const uint512& sighash) const
 {
     return pubkey.Verify(sighash, vchSig);
-}
+} 
 
 template <class T>
 bool GenericTransactionSignatureChecker<T>::VerifySchnorrSignature(Span<const unsigned char> sig, const XOnlyPubKey& pubkey, const uint256& sighash) const

@@ -27,7 +27,7 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
 
     const ECCVerifyHandle verify_handle;
     // 삭제!!3
-    ECC_Start();
+    // ECC_Start();
 
     struct PrevectorJob {
         prevector<PREVECTOR_SIZE, uint8_t> p;
@@ -68,6 +68,6 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
     });
     queue.StopWorkerThreads();
     // 삭제!!3
-    ECC_Stop();
+    // ECC_Stop();
 }
 BENCHMARK(CCheckQueueSpeedPrevectorJob);
