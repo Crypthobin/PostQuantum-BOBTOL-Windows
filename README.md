@@ -21,13 +21,13 @@ datadir=C:\...\bitcoin-pqc\data # This is the path of the data folder you create
 ### Build (Windows) ###
 - Visual Studio 2019  and higher.
 - Linux here: https://github.com/Crypthobin/bob-pqc-Ubuntu
-#### Run msvc-autogen.py ####
+#### 1) Run msvc-autogen.py ####
 - Copy the configuration file and create additional project files.
 ```
 cd bitcoin-pqc\Src\bitcoin-pqc\build_msvc
 py -3 msvc-autogen.py
 ```
-#### Installing an external library through vcpkg. ####
+#### 2) Installing an external library through vcpkg. ####
 ```
 cd ~
 git clone https://github.com/microsoft/vcpkg
@@ -39,7 +39,7 @@ cd vcpkg
 ```
 vcpkg integrate install
 ```
-#### Build ####
+#### 3) Build ####
 - Set "bitcoind" as Startup Project.
 - Build  in x64Debug mode in Visual Studio.
 ### Start PQCnet ###
