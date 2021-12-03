@@ -6,7 +6,7 @@ BOB-TOL is the safest and fastest cryptocurrency that can respond to quantum com
 - Whitepaper: (...)
 ## Guidelines ##
 ### Cloning a repository ###
-````
+```
 git clone https://github.com/Crypthobin/bitcoin-pqc
 ```
 ### Set Data directory ###
