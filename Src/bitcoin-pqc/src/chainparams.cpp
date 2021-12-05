@@ -502,10 +502,10 @@ public:
         consensus.MinBIP9WarningHeight = 0;
         // 마이닝 난이도 설정
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 마이닝 난이도 최소화
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;                                                  // two weeks
-        consensus.nPowTargetSpacing = 10 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = true;
-        consensus.fPowNoRetargeting = true;             // 난이도 조정 XX (=regtest)
+        consensus.nPowTargetTimespan = /*14 * 24 * 60 * 60*/30;                                                  // two weeks
+        consensus.nPowTargetSpacing = 10;
+        consensus.fPowAllowMinDifficultyBlocks = false;
+        consensus.fPowNoRetargeting = false;             // 난이도 조정 XX (=regtest)
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144;       // Faster than normal for regtest (144 instead of 2016)
 

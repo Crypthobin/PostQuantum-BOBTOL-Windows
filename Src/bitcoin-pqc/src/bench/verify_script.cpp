@@ -75,7 +75,7 @@ static void VerifyScriptBench(benchmark::Bench& bench)
 #endif
     });
     // 삭제!!3
-    ECC_Stop();
+    // ECC_Stop();
 }
 
 static void VerifyNestedIfScript(benchmark::Bench& bench)
