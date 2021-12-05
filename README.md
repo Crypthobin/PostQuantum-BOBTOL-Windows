@@ -40,10 +40,10 @@ cd vcpkg
 vcpkg integrate install
 ```
 #### 3) Build ####
-- Set "bitcoind" as Startup Project.
+- Set "bobtold" as Startup Project.
 - Build  in x64Debug mode in Visual Studio.
 ### Start PQCnet ###
 ```
 cd bitcoin-pqc\Build\x64Debug
-bitcoind -pqcnet
+bobtold -pqcnet
 ```
