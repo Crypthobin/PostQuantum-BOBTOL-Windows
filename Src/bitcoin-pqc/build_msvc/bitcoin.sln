@@ -4,8 +4,6 @@ VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbitcoinconsensus", "libbitcoinconsensus\libbitcoinconsensus.vcxproj", "{2B384FA8-9EE1-4544-93CB-0D733C25E8CE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bitcoind", "bitcoind\bitcoind.vcxproj", "{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbitcoin_util", "libbitcoin_util\libbitcoin_util.vcxproj", "{B53A5535-EE9D-4C6F-9A26-F79EE3BC3754}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbitcoin_common", "libbitcoin_common\libbitcoin_common.vcxproj", "{7C87E378-DF58-482E-AA2F-1BC129BC19CE}"
@@ -22,13 +20,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbitcoin_zmq", "libbitcoi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbitcoin_cli", "libbitcoin_cli\libbitcoin_cli.vcxproj", "{0667528C-D734-4009-ADF9-C0D6C4A5A5A6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bitcoin-cli", "bitcoin-cli\bitcoin-cli.vcxproj", "{0B2D7431-F876-4A58-87BF-F748338CD3BF}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbitcoin_wallet_tool", "libbitcoin_wallet_tool\libbitcoin_wallet_tool.vcxproj", "{F91AC55E-6F5E-4C58-9AC5-B40DB7DEEF93}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsecp256k1", "libsecp256k1\libsecp256k1.vcxproj", "{BB493552-3B8C-4A8C-BF69-A6E7A51D2EA6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libleveldb", "libleveldb\libleveldb.vcxproj", "{18430FEF-6B61-4C53-B396-718E02850F1B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bobtol-cli", "bobtol-cli\bobtol-cli.vcxproj", "{0B2D7431-F876-4A58-87BF-F748338CD3BF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bobtold", "bobtold\bobtold.vcxproj", "{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -40,10 +40,6 @@ Global
 		{2B384FA8-9EE1-4544-93CB-0D733C25E8CE}.Debug|x64.Build.0 = Debug|x64
 		{2B384FA8-9EE1-4544-93CB-0D733C25E8CE}.Release|x64.ActiveCfg = Release|x64
 		{2B384FA8-9EE1-4544-93CB-0D733C25E8CE}.Release|x64.Build.0 = Release|x64
-		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Debug|x64.ActiveCfg = Debug|x64
-		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Debug|x64.Build.0 = Debug|x64
-		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Release|x64.ActiveCfg = Release|x64
-		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Release|x64.Build.0 = Release|x64
 		{B53A5535-EE9D-4C6F-9A26-F79EE3BC3754}.Debug|x64.ActiveCfg = Debug|x64
 		{B53A5535-EE9D-4C6F-9A26-F79EE3BC3754}.Debug|x64.Build.0 = Debug|x64
 		{B53A5535-EE9D-4C6F-9A26-F79EE3BC3754}.Release|x64.ActiveCfg = Release|x64
@@ -76,10 +72,6 @@ Global
 		{0667528C-D734-4009-ADF9-C0D6C4A5A5A6}.Debug|x64.Build.0 = Debug|x64
 		{0667528C-D734-4009-ADF9-C0D6C4A5A5A6}.Release|x64.ActiveCfg = Release|x64
 		{0667528C-D734-4009-ADF9-C0D6C4A5A5A6}.Release|x64.Build.0 = Release|x64
-		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Debug|x64.ActiveCfg = Debug|x64
-		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Debug|x64.Build.0 = Debug|x64
-		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Release|x64.ActiveCfg = Release|x64
-		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Release|x64.Build.0 = Release|x64
 		{F91AC55E-6F5E-4C58-9AC5-B40DB7DEEF93}.Debug|x64.ActiveCfg = Debug|x64
 		{F91AC55E-6F5E-4C58-9AC5-B40DB7DEEF93}.Debug|x64.Build.0 = Debug|x64
 		{F91AC55E-6F5E-4C58-9AC5-B40DB7DEEF93}.Release|x64.ActiveCfg = Release|x64
@@ -92,14 +84,22 @@ Global
 		{18430FEF-6B61-4C53-B396-718E02850F1B}.Debug|x64.Build.0 = Debug|x64
 		{18430FEF-6B61-4C53-B396-718E02850F1B}.Release|x64.ActiveCfg = Release|x64
 		{18430FEF-6B61-4C53-B396-718E02850F1B}.Release|x64.Build.0 = Release|x64
+		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Debug|x64.ActiveCfg = Debug|x64
+		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Debug|x64.Build.0 = Debug|x64
+		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Release|x64.ActiveCfg = Release|x64
+		{0B2D7431-F876-4A58-87BF-F748338CD3BF}.Release|x64.Build.0 = Release|x64
+		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Debug|x64.ActiveCfg = Debug|x64
+		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Debug|x64.Build.0 = Debug|x64
+		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Release|x64.ActiveCfg = Release|x64
+		{D4513DDF-6013-44DC-ADCC-12EAF6D1F038}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		        SolutionGuid = {58AAB032-7274-49BD-845E-5EF4DBB69B70}
-		                SolutionGuid = {8607C0F4-F33D-41B8-8D51-18E366A0F8DF}
-		                        SolutionGuid = {8AA72EDA-2CD4-4564-B1E4-688B760EEEE9}
 		SolutionGuid = {DB9FB267-96E9-40CE-A20E-5A2BB8686890}
+		                        SolutionGuid = {8AA72EDA-2CD4-4564-B1E4-688B760EEEE9}
+		                SolutionGuid = {8607C0F4-F33D-41B8-8D51-18E366A0F8DF}
+		        SolutionGuid = {58AAB032-7274-49BD-845E-5EF4DBB69B70}
 	EndGlobalSection
 EndGlobal

@@ -250,7 +250,6 @@ UniValue RPCConvertValues(const std::string &strMethod, const std::vector<std::s
             params.push_back(ParseNonRFCJSONValue(strVal));
         }
     }
-
     return params;
 }
 
