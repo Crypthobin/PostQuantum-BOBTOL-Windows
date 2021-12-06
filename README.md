@@ -20,7 +20,7 @@ datadir=C:\...\bitcoin-pqc\data # This is the path of the data folder you create
 ```
 ### Build (Windows) ###
 - Visual Studio 2019  and higher.
-- Linux here: https://github.com/Crypthobin/bob-pqc-Ubuntu
+- Linux here: https://github.com/Crypthobin/PostQuantum-BOBTOL-Windows.git
 #### 1) Run msvc-autogen.py ####
 - Copy the configuration file and create additional project files.
 ```
