@@ -45,5 +45,5 @@ vcpkg integrate install
 ### Start PQCnet ###
 ```
 cd bitcoin-pqc\Build\x64Debug
-bobtold -pqcnet
+bobtold
 ```
