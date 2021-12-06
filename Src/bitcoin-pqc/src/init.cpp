@@ -355,16 +355,17 @@ void SetupServerArgs(ArgsManager& argsman)
 
     init::AddLoggingArgs(argsman);
 
-    const auto defaultBaseParams = CreateBaseChainParams(CBaseChainParams::MAIN);
+    const auto defaultBaseParams = CreateBaseChainParams(CBaseChainParams::PQCNET);
     const auto testnetBaseParams = CreateBaseChainParams(CBaseChainParams::TESTNET);
     const auto signetBaseParams = CreateBaseChainParams(CBaseChainParams::SIGNET);
     const auto regtestBaseParams = CreateBaseChainParams(CBaseChainParams::REGTEST);
     const auto pqcnetBaseParams = CreateBaseChainParams(CBaseChainParams::PQCNET);
-    const auto defaultChainParams = CreateChainParams(argsman, CBaseChainParams::MAIN);
+    const auto defaultChainParams = CreateChainParams(argsman, CBaseChainParams::PQCNET);
     const auto testnetChainParams = CreateChainParams(argsman, CBaseChainParams::TESTNET);
     const auto signetChainParams = CreateChainParams(argsman, CBaseChainParams::SIGNET);
     const auto regtestChainParams = CreateChainParams(argsman, CBaseChainParams::REGTEST);
     const auto pqcnetChainParams = CreateChainParams(argsman, CBaseChainParams::PQCNET);
+
 
     // Hidden Options
     std::vector<std::string> hidden_args = {

